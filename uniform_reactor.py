@@ -1,4 +1,5 @@
 from reactant_selection import ReactantSelection
+from state_record import StateRecord
 
 import random
 
@@ -25,3 +26,9 @@ class UniformReactor(ReactantSelection):
 
         :return: StateRecord
         '''
+
+        for x in reaction.reactants:
+            self.population.remove(x)
+        self.population.extend(reaction.products)
+
+        return StateRecord(reaction)
