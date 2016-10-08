@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
 
-class ReactantSelection(object):
+class IReactantSelection(object):
     __metaclass__ = ABCMeta
 
     '''

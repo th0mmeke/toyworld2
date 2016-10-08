@@ -1,9 +1,9 @@
-from reactant_selection import ReactantSelection
+from reactant_selection import IReactantSelection
 from state_record import StateRecord
 
 import random
 
-class UniformReactor(ReactantSelection):
+class UniformReactor(IReactantSelection):
 
     def __init__(self, population):
 
