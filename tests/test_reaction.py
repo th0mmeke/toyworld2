@@ -1,10 +1,9 @@
-
 import unittest
 
 from reaction import Reaction
 
 
-class Test(unittest.TestCase):
+class TestReaction(unittest.TestCase):
 
     def test_init(self):
         element = type('test', (), {})()
