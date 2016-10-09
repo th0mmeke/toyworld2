@@ -1,7 +1,7 @@
 import unittest
 
-from uniform_selection import UniformSelection
 from atom import Atom
+from uniform_selection import UniformSelection
 
 
 class TestUniformSelection(unittest.TestCase):
