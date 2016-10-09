@@ -1,4 +1,6 @@
-class Atom(object):
+from i_element import IElement
+
+class Atom(IElement):
 
     """
     An Atom is the smallest element in ToyWorld2.
