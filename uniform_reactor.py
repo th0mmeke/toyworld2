@@ -1,7 +1,8 @@
+import random
+
 from i_reactant_selection import IReactantSelection
 from state_record import StateRecord
 
-import random
 
 class UniformReactor(IReactantSelection):
 

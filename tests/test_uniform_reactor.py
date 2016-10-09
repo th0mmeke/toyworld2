@@ -1,8 +1,8 @@
 import unittest
 
-from uniform_reactor import UniformReactor
 from reaction import Reaction
 from state_record import StateRecord
+from uniform_reactor import UniformReactor
 
 
 class TestUniformReactor(unittest.TestCase):
