@@ -1,7 +1,9 @@
 import random
 
+from i_product_selection import IProductSelection
 
-class UniformSelection(object):
+
+class UniformSelection(IProductSelection):
 
     @classmethod
     def get_products(cls, reactants):

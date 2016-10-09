@@ -6,6 +6,8 @@ from atom import Atom
 class TestAtom(unittest.TestCase):
 
     def test_init(self):
+        with self.assertRaises(TypeError):
+            Atom()
         with self.assertRaises(ValueError):
             Atom(symbol='')
         with self.assertRaises(ValueError):
