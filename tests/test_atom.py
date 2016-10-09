@@ -14,3 +14,9 @@ class TestAtom(unittest.TestCase):
 
     def test_get_symbol(self):
         self.assertEqual(Atom(symbol="A").get_symbol(), "A")
+
+    def test_eq(self):
+        self.assertEqual(Atom('A'), Atom('A'))
+        self.assertNotEqual(Atom('A'), Atom('B'))
+        self.assertIn(Atom('A'), [Atom('A'), Atom('C')])
+        self.assertListEqual([Atom('A'), Atom('C')], [Atom('A'), Atom('C')])

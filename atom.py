@@ -17,3 +17,6 @@ class Atom(object):
 
     def get_symbol(self):
         return self.symbol
+
+    def __cmp__(self, other):
+        return cmp(self.symbol, other.symbol)
