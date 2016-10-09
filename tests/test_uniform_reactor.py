@@ -17,7 +17,7 @@ class TestUniformReactor(unittest.TestCase):
     def test_get_reactants(self):
         '''
         Given a UniformReactor that contains only <Elements> elements
-        When get_reactants is called
+        When get_reactants() is called
         Then the response equals <Reactants>
 
         | Elements  | Reactants |
