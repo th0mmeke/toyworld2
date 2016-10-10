@@ -22,3 +22,6 @@ class Atom(IElement):
 
     def __cmp__(self, other):
         return cmp(self.symbol, other.symbol)
+
+    def __str__(self):
+        return self.symbol
