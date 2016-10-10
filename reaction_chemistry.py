@@ -3,9 +3,9 @@ from i_product_selection import IProductSelection
 
 class ReactionChemistry(IProductSelection):
 
-    def __init__(self, chemistry, selection):
+    def __init__(self, chemistry, product_selection):
         self.chemistry = chemistry
-        self.selection = selection
+        self.product_selection = product_selection
 
     def get_products(self, reactants):
 
@@ -24,4 +24,4 @@ class ReactionChemistry(IProductSelection):
         intermediate = self.chemistry.join(reactants)
         products = self.chemistry.split(intermediate)
 
-        return self.selection(products)
+        return self.product_selection(products)

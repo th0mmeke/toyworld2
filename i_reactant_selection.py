@@ -16,7 +16,3 @@ class IReactantSelection(object):
         '''
 
         pass
-
-    @abstractmethod
-    def react(self, reaction):
-        pass
