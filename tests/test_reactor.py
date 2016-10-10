@@ -9,7 +9,7 @@ class TestReactor(unittest.TestCase):
 
     def test_init(self):
         element = type('element', (), {})()
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             Reactor(population=element, reactant_selection=lambda x: x)
         r = Reactor(population=[element], reactant_selection=lambda x: x)
         self.assertIsInstance(r, Reactor)

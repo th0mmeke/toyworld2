@@ -9,7 +9,7 @@ class Reactor(object):
     def __init__(self, population, reactant_selection):
 
         if not isinstance(population, list):
-            raise ValueError
+            raise TypeError
         self.population = population
         self.reactant_selection = reactant_selection
 
@@ -37,7 +37,7 @@ class Reactor(object):
             self.population.remove(x)  # raises ValueError if this reactant is not in the population
         self.population.extend(reaction.products)
 
-        return StateRecord(reaction)
+        return StateRecord(reaction.as_dict())
 
     def __str__(self):
         return ",".join([str(x) for x in self.population])
