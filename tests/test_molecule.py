@@ -8,7 +8,7 @@ class TestMolecule(unittest.TestCase):
     def test_init(self):
         with self.assertRaises(TypeError):
             Molecule()
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             Molecule(symbol=12)
         self.assertIsInstance(Molecule(symbol="AB"), Molecule)
 

@@ -18,7 +18,10 @@ class ReactionChemistry(IProductSelection):
         :return: [IElements]
         """
 
-        if not isinstance(reactants, list) or len(reactants) < 1:
+        if not isinstance(reactants, list):
+            raise TypeError
+
+        if len(reactants) < 1:
             raise ValueError
 
         intermediate = self.chemistry.join(reactants)

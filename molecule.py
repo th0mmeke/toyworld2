@@ -10,7 +10,7 @@ class Molecule(IElement):
         """
 
         if not isinstance(symbol, basestring):
-            raise ValueError
+            raise TypeError
 
         self.symbol = symbol
 

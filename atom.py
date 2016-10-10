@@ -12,7 +12,10 @@ class Atom(IElement):
         :param symbol: Single character symbol
         """
 
-        if not isinstance(symbol, basestring) or len(symbol) != 1:
+        if not isinstance(symbol, basestring):
+            raise TypeError
+
+        if len(symbol) != 1:
             raise ValueError
 
         self.symbol = symbol

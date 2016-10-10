@@ -17,13 +17,13 @@ class TestReactionChemistry(unittest.TestCase):
         Then the response is given by <Products>
 
         | Reactants         | Products      | Notes
-        | Atom('A')         | -             | Raises ValueError
+        | Atom('A')         | -             | Raises TypeError
         | []                | []            | Raises ValueError
 
         """
 
         rc = ReactionChemistry(StubChemistry, lambda x: x)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             rc.get_products(Atom('A'))
         with self.assertRaises(ValueError):
             rc.get_products([])
