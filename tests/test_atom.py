@@ -22,3 +22,4 @@ class TestAtom(unittest.TestCase):
         self.assertNotEqual(Atom('A'), Atom('B'))
         self.assertIn(Atom('A'), [Atom('A'), Atom('C')])
         self.assertListEqual([Atom('A'), Atom('C')], [Atom('A'), Atom('C')])
+        self.assertListEqual(sorted([Atom('C'), Atom('A')]), sorted([Atom('A'), Atom('C')]))
