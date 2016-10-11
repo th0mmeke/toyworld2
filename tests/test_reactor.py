@@ -1,7 +1,6 @@
 import unittest
 
 from reaction import Reaction
-from state_record import StateRecord
 from reactor import Reactor
 
 
@@ -52,12 +51,12 @@ class TestReactor(unittest.TestCase):
         r = Reactor(population=[], reactant_selection=lambda x: x )
         sr = r.react(Reaction(reactants=[], products=[]))
         self.assertItemsEqual(r.get_reactants(), [])
-        self.assertIsInstance(sr, StateRecord)
+        self.assertIsInstance(sr, dict)
 
         r = Reactor(population=['A'], reactant_selection=lambda x: x)
         sr = r.react(Reaction(reactants=['A'], products=['B', 'C']))
         self.assertItemsEqual(r.get_reactants(), ['B', 'C'])
-        self.assertIsInstance(sr, StateRecord)
+        self.assertIsInstance(sr, dict)
 
     def test_react_errors(self):
         """

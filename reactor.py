@@ -1,9 +1,3 @@
-import random
-
-from i_reactant_selection import IReactantSelection
-from state_record import StateRecord
-
-
 class Reactor(object):
 
     def __init__(self, population, reactant_selection):
@@ -37,7 +31,7 @@ class Reactor(object):
             self.population.remove(x)  # raises ValueError if this reactant is not in the population
         self.population.extend(reaction.products)
 
-        return StateRecord(reaction.as_dict())
+        return reaction.as_dict()
 
     def __str__(self):
         return ",".join([str(x) for x in self.population])
