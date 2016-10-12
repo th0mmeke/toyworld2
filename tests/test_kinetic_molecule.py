@@ -3,6 +3,7 @@ import unittest
 from rdkit.Chem import AllChem as Chem
 from rdkit.rdBase import DisableLog, EnableLog
 from kinetic_molecule import KineticMolecule
+from semi_realistic_chemistry import SemiRealisticChemistry
 
 
 class Test(unittest.TestCase):
@@ -31,14 +32,15 @@ class Test(unittest.TestCase):
         mol = KineticMolecule('[H+].[OH-]')
         self.assertEqual('[H+].[H][O-]', Chem.MolToSmiles(mol))  # RDKit converts to this...
 
-    @unittest.skip("Waiting for implementation of a standard Chemistry")
     def testPotentialEnergy(self):
-        chem = ChemistryFactory.new()
+        bond_energies = {'O1O': 20, 'O2O': 30, 'O1H': 40}
+        chem = SemiRealisticChemistry(bond_energies=bond_energies)
+
         self.assertEqual(0, KineticMolecule('[O].[O]').get_potential_energy(chem))
-        self.assertEqual(chem.get_bond_energy(Chem.Atom('O'), Chem.Atom('O'), end_bond_type=2), KineticMolecule('[O]=[O]').get_potential_energy(chem))
+        self.assertEqual(chem.get_bond_energy(Chem.Atom('O'), Chem.Atom('O'), to_bond_type=2), KineticMolecule('[O]=[O]').get_potential_energy(chem))
         self.assertTrue(KineticMolecule('[O]=[O]').get_potential_energy(chem) < KineticMolecule('[O].[O]').get_potential_energy(chem))  # bonds have NEGATIVE energy, so adding bonds REDUCES PE
-        O1H_bond = chem.get_bond_energy(Chem.Atom('O'), Chem.Atom('H'), end_bond_type=1)
-        O2O_bond = chem.get_bond_energy(Chem.Atom('O'), Chem.Atom('O'), end_bond_type=2)
+        O1H_bond = chem.get_bond_energy(Chem.Atom('O'), Chem.Atom('H'), to_bond_type=1)
+        O2O_bond = chem.get_bond_energy(Chem.Atom('O'), Chem.Atom('O'), to_bond_type=2)
         self.assertEqual(O2O_bond, KineticMolecule('[O]=[O]').get_potential_energy(chem))
         self.assertEqual(2 * O1H_bond, KineticMolecule('[H]O[H]').get_potential_energy(chem))
         self.assertEqual(O1H_bond, KineticMolecule('[H+].[OH-]').get_potential_energy(chem))

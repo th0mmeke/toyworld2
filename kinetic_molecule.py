@@ -94,7 +94,7 @@ class KineticMolecule(Chem.Mol):
         :rtype: float
         """
 
-        return sum([chemistry.get_bond_energy(bond.GetBeginAtom(), bond.GetEndAtom(), end_bond_type=int(bond.GetBondType())) for bond in self.GetBonds()])
+        return sum([chemistry.get_bond_energy(bond.GetBeginAtom(), bond.GetEndAtom(), to_bond_type=int(bond.GetBondType())) for bond in self.GetBonds()])
 
     def get_internal_energy(self):
         return self._internal_energy
