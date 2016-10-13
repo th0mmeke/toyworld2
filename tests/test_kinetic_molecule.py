@@ -48,7 +48,7 @@ class Test(unittest.TestCase):
     def testGetStronglyConnectedComponents(self):
         mol = KineticMolecule("O=C=O.O")
         self.assertEqual(6, mol.GetNumAtoms())
-        self.assertEqual([set([0, 1, 2]), set([3, 4, 5])], mol._get_strongly_connected_components())
+        self.assertListEqual([[0, 1, 2], [3, 4, 5]], mol._get_strongly_connected_components())
         mol = KineticMolecule("[H]")
         self.assertEqual([[0]], mol._get_strongly_connected_components())
 
