@@ -46,46 +46,46 @@ class TestSemiRealisticChemistry(unittest.TestCase):
         
     def testBondEnergy(self):
         # energy is energy REQUIRED => - means releases energy
-        self.assertEqual(-38.4, self.chem.get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), to_bond_type=1))  # create single bond
-        self.assertEqual(-38.4, self.chem.get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), from_bond_type=0, to_bond_type=1))  # create single bond
-        self.assertEqual(38.4, self.chem.get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), from_bond_type=1, to_bond_type=0))  # destroy single bond
-        self.assertEqual(149 - 38.4, self.chem.get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), from_bond_type=2, to_bond_type=1))  # from double to single
-        self.assertEqual(38.4 - 149, self.chem.get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), from_bond_type=1, to_bond_type=2))  # from single to double
-        self.assertEqual(38.4, self.chem.get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), from_bond_type=1))  # delete single bond
+        self.assertEqual(-38.4, self.chem._get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), to_bond_type=1))  # create single bond
+        self.assertEqual(-38.4, self.chem._get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), from_bond_type=0, to_bond_type=1))  # create single bond
+        self.assertEqual(38.4, self.chem._get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), from_bond_type=1, to_bond_type=0))  # destroy single bond
+        self.assertEqual(149 - 38.4, self.chem._get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), from_bond_type=2, to_bond_type=1))  # from double to single
+        self.assertEqual(38.4 - 149, self.chem._get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), from_bond_type=1, to_bond_type=2))  # from single to double
+        self.assertEqual(38.4, self.chem._get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), from_bond_type=1))  # delete single bond
 
     def testGetBondPotential(self):
         mol = KineticMolecule('[CH2-2].[CH2-2]')
-        self.assertEqual(4, self.chem.get_bond_potential(mol.GetAtoms()[0]))
+        self.assertEqual(4, self.chem._get_bond_potential(mol.GetAtoms()[0]))
 
         mol = KineticMolecule('O')  # H2O
         self.assertEqual(3, mol.GetNumAtoms())
         self.assertEqual(8, mol.GetAtoms()[0].GetAtomicNum())
-        self.assertEqual(0, self.chem.get_bond_potential(mol.GetAtoms()[0]))
+        self.assertEqual(0, self.chem._get_bond_potential(mol.GetAtoms()[0]))
 
         mol = KineticMolecule('O')  # H2O, implicit Hs
         self.assertEqual(3, mol.GetNumAtoms())  # implicit no longer...
         self.assertEqual(8, mol.GetAtoms()[0].GetAtomicNum())
-        self.assertEqual(0, self.chem.get_bond_potential(mol.GetAtoms()[0]))
+        self.assertEqual(0, self.chem._get_bond_potential(mol.GetAtoms()[0]))
 
         mol = KineticMolecule('[H]')
         self.assertEqual(1, mol.GetAtoms()[0].GetAtomicNum())
-        self.assertEqual(1, self.chem.get_bond_potential(mol.GetAtoms()[0]))
+        self.assertEqual(1, self.chem._get_bond_potential(mol.GetAtoms()[0]))
 
         mol = KineticMolecule('O=C=O')  # CO2 - bond potentials of zero all round (full octets)
         for atom in mol.GetAtoms():
-            self.assertEqual(0, self.chem.get_bond_potential(atom))
+            self.assertEqual(0, self.chem._get_bond_potential(atom))
 
         mol = KineticMolecule('[OH-]')  # = [H][O-] Hydroxl anion
         self.assertEqual(8, mol.GetAtoms()[0].GetAtomicNum())
         self.assertEqual(1, mol.GetAtoms()[1].GetAtomicNum())
-        self.assertEqual(2, self.chem.get_bond_potential(mol.GetAtoms()[0]))
-        self.assertEqual(0, self.chem.get_bond_potential(mol.GetAtoms()[1]))
+        self.assertEqual(2, self.chem._get_bond_potential(mol.GetAtoms()[0]))
+        self.assertEqual(0, self.chem._get_bond_potential(mol.GetAtoms()[1]))
 
         mol = KineticMolecule('[H].[OH-]')
         self.assertEqual(1, mol.GetAtoms()[0].GetAtomicNum())  # the H in [OH-]
-        self.assertEqual(1, self.chem.get_bond_potential(mol.GetAtoms()[0]))
+        self.assertEqual(1, self.chem._get_bond_potential(mol.GetAtoms()[0]))
         self.assertEqual(1, mol.GetAtoms()[2].GetAtomicNum())  # the H in [OH-]
-        self.assertEqual(0, self.chem.get_bond_potential(mol.GetAtoms()[2]))
+        self.assertEqual(0, self.chem._get_bond_potential(mol.GetAtoms()[2]))
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testInit']

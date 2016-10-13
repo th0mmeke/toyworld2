@@ -1,6 +1,7 @@
 from i_chemistry import IChemistry
 from molecule import Molecule
 
+
 class StubChemistry(IChemistry):
 
     @classmethod

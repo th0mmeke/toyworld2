@@ -7,7 +7,6 @@ import pymunk as pm
 
 
 class KineticMolecule(Chem.Mol):
-
     """A base representation of a Molecule with potential and kinetic energy.
 
     * Potential energy is the energy required to form all bonds in the Molecule (therefore always negative as bond formation releases energy).
@@ -33,7 +32,8 @@ class KineticMolecule(Chem.Mol):
 
         self._smiles = Chem.MolToSmiles(self)
 
-        if components is None and self._smiles.find(".") == -1:  # if simple molecule with only one component, set components manually
+        if components is None and self._smiles.find(
+                ".") == -1:  # if simple molecule with only one component, set components manually
             components = [set(range(source.GetNumAtoms()))]
 
         self.radius = 1
@@ -49,6 +49,33 @@ class KineticMolecule(Chem.Mol):
 
         self.set_kinetic_energy(kinetic_energy)
         self.set_internal_energy(internal_energy)
+
+    def join(self, elements):
+        """Combine a number of molecules into one. Bookkeeping rather than Chemistry - does not connect molecules with bonds,
+        just groups them in RDKit. Preserves momentum and KE.
+
+        :rtype: Molecule or subclass"""
+
+        combined_mol = mols[0]
+        combined_IE = mols[0].get_internal_energy()
+        num_atoms = mols[0].GetNumAtoms()
+        components = mols[0]._components
+        for mol in mols[1:]:
+            combined_mol = Chem.CombineMols(combined_mol, mol)
+            combined_IE += mol.get_internal_energy()
+            components.append(set(range(num_atoms, num_atoms + mol.GetNumAtoms())))
+            num_atoms = num_atoms + mol.GetNumAtoms()
+
+        combined_mol = type(self)(combined_mol, internal_energy=combined_IE, components=components)  # same type as mols
+
+        # Adjust velocity of combined molecule to preserve momentum and KE
+        combined_momentum = []
+        for dim in range(2):
+            combined_momentum.append(sum(mol.get_mass() * mol.get_velocity()[dim] for mol in mols))
+
+        combined_velocity = tuple(i / combined_mol.get_mass() for i in combined_momentum)
+        combined_mol.set_velocity(*combined_velocity)
+        return combined_mol
 
     def set_position(self, x, y):
         self.body.position = x, y
@@ -80,13 +107,12 @@ class KineticMolecule(Chem.Mol):
         return self.body.velocity
 
     def set_velocity(self, vel):
-        self.body.velocity = (vel.x,vel.y)
+        self.body.velocity = (vel.x, vel.y)
 
     def get_mass(self):
         return self._mass
 
     def get_potential_energy(self, chemistry):
-
         """
         Return the energy required to form all of the molecule's bonds (therefore a negative quantity as bond formation releases energy)
         WARNING: assumes formation energy = energy of breaking (symmetrical)
@@ -94,7 +120,7 @@ class KineticMolecule(Chem.Mol):
         :rtype: float
         """
 
-        return sum([chemistry.get_bond_energy(bond.GetBeginAtom(), bond.GetEndAtom(), to_bond_type=int(bond.GetBondType())) for bond in self.GetBonds()])
+        return sum([chemistry._get_bond_energy(bond.GetBeginAtom(), bond.GetEndAtom(), to_bond_type=int(bond.GetBondType())) for bond in self.GetBonds()])
 
     def get_internal_energy(self):
         return self._internal_energy
@@ -183,7 +209,9 @@ class KineticMolecule(Chem.Mol):
 
     def __deepcopy__(self, memo):
         # don't mess with current structure - just leave it exactly as it is
-        return Molecule(self, internal_energy=self.get_internal_energy(), kinetic_energy=self.get_kinetic_energy(), canonize=False)
+        return Molecule(self, internal_energy=self.get_internal_energy(), kinetic_energy=self.get_kinetic_energy(),
+                        canonize=False)
+
 
     def __str__(self):
         return Chem.MolToSmiles(self)

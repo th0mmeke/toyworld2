@@ -17,5 +17,13 @@ class Molecule(IElement):
     def get_symbol(self):
         return self.symbol
 
+    @classmethod
+    def join(cls, elements):
+        pass
+
+    @classmethod
+    def split(cls, element):
+        pass
+
     def __cmp__(self, other):
         return cmp(self.symbol, other.symbol)

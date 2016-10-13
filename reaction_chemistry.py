@@ -1,13 +1,10 @@
-from i_product_selection import IProductSelection
-
-
-class ReactionChemistry(IProductSelection):
+class ReactionChemistry(object):
 
     def __init__(self, chemistry, product_selection):
         self.chemistry = chemistry
         self.product_selection = product_selection
 
-    def get_products(self, reactants):
+    def get_product(cls, reactions):
 
         """
         Return one set of products from the set of all possible sets of products of the
@@ -24,7 +21,7 @@ class ReactionChemistry(IProductSelection):
         if len(reactants) < 1:
             raise ValueError
 
-        intermediate = self.chemistry.join(reactants)
-        products = self.chemistry.split(intermediate)
+        intermediate = cls.chemistry.join(reactants)
+        products = cls.chemistry.split(intermediate)
 
-        return self.product_selection(products)
+        return cls.product_selection(products)
