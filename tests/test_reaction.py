@@ -19,12 +19,16 @@ class TestReaction(unittest.TestCase):
         r = Reaction(reactants=[element], products=[element])
         self.assertIsInstance(r, Reaction)
 
-    def test_get_attributes(self):
-        products = [1,2]
+    def test_get_molecules(self):
+        products = [1, 2]
         reactants = [3]
         r = Reaction(reactants=reactants, products=products)
-        self.assertEqual(r.products, products)
-        self.assertEqual(r.reactants, reactants)
+        self.assertEqual(r.get_products(), products)
+        self.assertEqual(r.get_reactants(), reactants)
+
+    def test_weights(self):
+        self.assertEqual(Reaction(reactants=[], products=[]).get_weight(), 1)
+        self.assertEqual(Reaction(reactants=[], products=[], weight=10).get_weight(), 10)
 
     def test_as_dict(self):
         products = [1, 2]

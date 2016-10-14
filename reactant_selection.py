@@ -1,21 +1,25 @@
-class Reactor(object):
+from abc import ABCMeta, abstractmethod
 
-    def __init__(self, population, reactant_selection):
+
+class ReactantSelection(object):
+    __metaclass__ = ABCMeta
+
+    def __init__(self, population):
 
         if not isinstance(population, list):
             raise TypeError
         self.population = population
-        self.reactant_selection = reactant_selection
 
+    @abstractmethod
     def get_reactants(self):
 
         """
         Idempotent method to identify the next reactants from the reactor population.
-        Just calls the class reactant_selection method.
+
         :return: [IElement]
         """
 
-        return self.reactant_selection(self.population)
+        pass
 
     def react(self, reaction):
         '''
@@ -27,9 +31,9 @@ class Reactor(object):
 
         '''
 
-        for x in reaction.reactants:
+        for x in reaction.get_reactants():
             self.population.remove(x)  # raises ValueError if this reactant is not in the population
-        self.population.extend(reaction.products)
+        self.population.extend(reaction.get_products())
 
         return reaction.as_dict()
 

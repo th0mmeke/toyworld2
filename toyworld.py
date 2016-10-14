@@ -1,6 +1,3 @@
-from reaction import Reaction
-
-
 class ToyWorld:
 
     def __init__(self, reactor, generate_reaction_set, product_selection):

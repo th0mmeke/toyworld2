@@ -1,45 +1,26 @@
 import unittest
 
 from reaction import Reaction
-from reactor import Reactor
+from uniform_reactant_selection import UniformReactantSelection
 
 
-class TestReactor(unittest.TestCase):
+class TestUniformReactantSelection(unittest.TestCase):
 
     def test_init(self):
         element = type('element', (), {})()
         with self.assertRaises(TypeError):
-            Reactor(population=element, reactant_selection=lambda x: x)
-        r = Reactor(population=[element], reactant_selection=lambda x: x)
-        self.assertIsInstance(r, Reactor)
+            UniformReactantSelection(population=element)
+        r = UniformReactantSelection(population=[element])
+        self.assertIsInstance(r, UniformReactantSelection)
 
     def test_get_reactants(self):
-        """
-        Test idempotence of get_reactants()
-        """
-
-        p = ['A', 'B', 'C']
-        r = Reactor(population=p, reactant_selection=lambda x: x)
-        self.assertEqual(r.get_reactants(), p)
-        self.assertEqual(r.get_reactants(), p)
-
-    def test_get_reactants_with_reactant_selection(self):
-        """
-        Given a Reactor that contains only <Elements> elements
-        And there are at least 2 elements
-        And the reactant_selection method is to return the first two elements
-        When get_reactants is called
-        Then the response contains the first two elements of the population
-        """
-
-        r = Reactor(population=['A', 'B', 'C', 'D'], reactant_selection=lambda x: x[:2])
-        self.assertEqual(r.get_reactants(), ['A', 'B'])
+        self.assertEqual(UniformReactantSelection(population=['A']).get_reactants(), ['A'])
 
     def test_react(self):
         """
-        Given a Reactor that contains <Population> elements
+        Given a SimpleReactor that contains <Population> elements
         When react is called with a Reaction where reactants=<Reactants> and products=<Products>
-        Then the Reactor contains <Expected> elements
+        Then the SimpleReactor contains <Expected> elements
 
         | Population  | Reactants | Products  | Expected  |
         | []        | []        | []        | []        |
@@ -48,12 +29,12 @@ class TestReactor(unittest.TestCase):
         Rather than checking private variables we look for the implications of the change through existing methods.
         """
 
-        r = Reactor(population=[], reactant_selection=lambda x: x )
+        r = UniformReactantSelection(population=[])
         sr = r.react(Reaction(reactants=[], products=[]))
         self.assertItemsEqual(r.get_reactants(), [])
         self.assertIsInstance(sr, dict)
 
-        r = Reactor(population=['A'], reactant_selection=lambda x: x)
+        r = UniformReactantSelection(population=['A'])
         sr = r.react(Reaction(reactants=['A'], products=['B', 'C']))
         self.assertItemsEqual(r.get_reactants(), ['B', 'C'])
         self.assertIsInstance(sr, dict)
@@ -67,11 +48,11 @@ class TestReactor(unittest.TestCase):
         | ['A']         | ['A','D'] | -         | -         |
         """
 
-        r = Reactor(population=['A'], reactant_selection=lambda x: x)
+        r = UniformReactantSelection(population=['A'])
         with self.assertRaises(ValueError):
             r.react(Reaction(reactants=['D'], products=['B', 'C']))
 
-        r = Reactor(population=['A'], reactant_selection=lambda x: x)
+        r = UniformReactantSelection(population=['A'])
         with self.assertRaises(ValueError):
             r.react(Reaction(reactants=['A', 'D'], products=['B', 'C']))
 

@@ -3,7 +3,7 @@ import json
 from my_json import MyJSON
 
 from toyworld import ToyWorld
-from reactor import Reactor
+from reactant_selection import Reactor
 from molecule import Molecule
 from state import State
 from semi_realistic_chemistry import SemiRealisticChemistry
