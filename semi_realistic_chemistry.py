@@ -1,11 +1,13 @@
 from rdkit.Chem import AllChem as Chem
 import copy
+import logging
 
 from i_chemistry import IChemistry
+from reaction import Reaction
+from molecule import Molecule
 
 
 class SemiRealisticChemistry(IChemistry):
-
     """
     A simple Chemistry based on RDKit.
     """
@@ -36,14 +38,19 @@ class SemiRealisticChemistry(IChemistry):
         for i in count.keys():
             self.default_bond_energies[i] = self.default_bond_energies[i] / count[i]
 
+        self._components = None  # Lazy evaluation in self._get_components
+
     def enumerate(self):
 
         """
         Discover all possible options for reactions between the separate components of this Molecule, based on the
-        Chemistry provided. The options are based on possible bond changes; each option is returned in a Reaction object as a list of product Molecules along
-        with the associated change in potential energy.
+        Chemistry provided. The options are based on possible bond changes:
 
-        That is, self.get_potential_energy() + rxn.get_energy_delta() = sum(product molecule potential energy)
+        1. Breaking of existing bonds
+        2. Switch one bond type for another
+        3. Addition of bonds
+
+        In each of these cases we update the formal charges to reflect the changes, and test the resulting product for sanity
 
         If any Hs have been added earlier this will preserve them.
 
@@ -58,65 +65,71 @@ class SemiRealisticChemistry(IChemistry):
         :rtype: [Reaction]
         """
 
-        reaction_options = []
+        reaction_options = self.get_change_options()
+        reaction_options.append(self.get_addition_options())
 
-        # Reaction options:
-        # 1. breaking of existing bonds
-        # 2. addition of bonds
-        # 3. switch one bond type for another
-        # In each of these cases we update the formal charges to reflect the changes, and test the resulting product for sanity
+        logging.debug("{} reaction options found".format(len(reaction_options)))
+        return reaction_options
 
-        # Bond breaking and substitution options...
+    def get_change_options(self):
+        options = []
         for bond in self.reactant.GetBonds():
+            begin_atom_idx = bond.GetBeginAtomIdx()
+            end_atom_idx = bond.GetEndAtomIdx()
             old_bond_order = int(bond.GetBondType())
 
             for new_bond_order in range(0, old_bond_order):  # all bond options between none (break bond) and one-less-than-current
-                # change of energy from bond of GetBondType() to bond_order
-                bond_energy = self._get_bond_energy(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx(), to_bond_type=old_bond_order, from_bond_type=new_bond_order)
-                if self.weight_option(reaction_energy, bond_energy) > 0:
-                    reactants_copy = copy.deepcopy(element)  # operate on copy of self, so options are not cumulative
-                    try:
-                        new_mol = self._change_bond(reactants_copy, bond.GetBeginAtomIdx(), bond.GetEndAtomIdx(), new_bond_order)
-                    except ValueError:
-                        pass  # just ignore if this option isn't possible
-                    else:  # no exception, so managed to execute _change_bond()...
-                        reaction_options.append(Reaction(new_mol.split_molecule(), bond_energy))
+                reactant_copy = copy.deepcopy(self.reactant)  # operate on copy of self, so options are not cumulative
+                try:
+                    SemiRealisticChemistry._change_bond(reactant_copy, begin_atom_idx, end_atom_idx, new_bond_order)
+                except ValueError:
+                    pass  # just ignore if this option isn't possible
+                else:  # no exception, so managed to execute _change_bond()...
+                    bond_energy = self.get_bond_energy(reactant_copy.GetAtomWithIdx(begin_atom_idx),
+                                                       reactant_copy.GetAtomWithIdx(end_atom_idx),
+                                                       start_bond_type=old_bond_order,
+                                                       end_bond_type=new_bond_order)
+                    options.append(Reaction(reactants=SemiRealisticChemistry.split(self.reactant),
+                                            products=SemiRealisticChemistry.split(reactant_copy),
+                                            weight=bond_energy))
+        return options
 
-        # Bond addition options...
+    def get_addition_options(self):
+        options = []
         bond_potential = []
-        for atom in element.GetAtoms():
-            bond_potential.append(self._get_bond_potential(atom))
+        for atom in self.reactant.GetAtoms():
+            bond_potential.append(SemiRealisticChemistry.get_bond_potential(atom))
 
         # Check for possible bonds between all atoms with the potential for one or more additional bonds...
         for begin_atom_idx in range(len(bond_potential)):
             for end_atom_idx in range(begin_atom_idx + 1, len(bond_potential)):
-                if not element.same_component(begin_atom_idx, end_atom_idx):
+                if not self.reactant.same_component(begin_atom_idx, end_atom_idx):
 
                     # Add options for bonds of various order between begin_atom and end_atom...
-                    begin_atom_valence = bond_potential[begin_atom_idx]
-                    end_atom_valence = bond_potential[end_atom_idx]
-                    max_bond_order = min(begin_atom_valence, end_atom_valence)
-                    # to meet RDKit restriction from organic self._chemistry that maximum likely bond is triple-bond
+                    max_bond_order = min(bond_potential[begin_atom_idx], bond_potential[end_atom_idx])
+                    # to meet RDKit restriction from organic self that maximum likely bond is triple-bond
                     max_bond_order = min(max_bond_order, 3)
 
                     if max_bond_order > 0:
 
                         for bond_order in range(1, max_bond_order + 1):  # all bond options up to and including max_bond_order
-                            reactants_copy = copy.deepcopy(element)  # operate on fresh copy so options don't accumulate
+                            reactant_copy = copy.deepcopy(self.reactant)  # operate on fresh copy so options don't accumulate
                             try:
-                                new_mol = self._change_bond(reactants_copy, begin_atom_idx, end_atom_idx, bond_order)
+                                self._change_bond(reactant_copy, begin_atom_idx, end_atom_idx, bond_order)
                             except ValueError:
                                 pass  # just ignore invalid options
                             else:
-                                # bond creation of order bond_order
-                                bond_energy = self._get_bond_energy(new_mol.GetAtomWithIdx(begin_atom_idx), new_mol.GetAtomWithIdx(end_atom_idx), end_bond_type=bond_order)
+                                bond_energy = self.get_bond_energy(reactant_copy.GetAtomWithIdx(begin_atom_idx),
+                                                                   reactant_copy.GetAtomWithIdx(end_atom_idx),
+                                                                   end_bond_type=bond_order)  # bond creation of order bond_order
+                                options.append(Reaction(reactants=SemiRealisticChemistry.split(self.reactant),
+                                                        products=SemiRealisticChemistry.split(reactant_copy),
+                                                        weight=bond_energy))
+        return options
 
-                                assert Ulps.almost_equal(element.get_potential_energy(self._chemistry) + bond_energy, Molecule(new_mol).get_potential_energy(self._chemistry))
-                                reaction_options.append(Reaction(new_mol.split_molecule(), bond_energy))
-
-        logging.debug("{} reaction options found".format(len(reaction_options)))
-
-        return reaction_options
+    @staticmethod
+    def split(molecule):
+        return [Molecule(smiles) for smiles in Chem.MolToSmiles(molecule).split(".")]
 
     def _get_bond_energy(self, atom_1, atom_2, to_bond_type=0, from_bond_type=0):
         """
@@ -177,25 +190,12 @@ class SemiRealisticChemistry(IChemistry):
             return 8 - (valence_electrons + bonded_electrons + atom.GetFormalCharge())
 
     @staticmethod
-    def _adjust_formal_charge(begin_atom, end_atom, bond_order):
-        """Bring the functional charges on the atoms in a bond to as close to zero as possible..."""
-
-        begin_atom_fc = begin_atom.GetFormalCharge()
-        end_atom_fc = end_atom.GetFormalCharge()
-        # logging.debug("Adjusting test on {} ({}) and {} ({})".format(begin_atom.GetSymbol(), begin_atom_fc, end_atom.GetSymbol(), end_atom_fc))
-
-        if cmp(begin_atom_fc, 0) != cmp(end_atom_fc, 0):  # must be opposite sign for this to work
-            adjustment = min(abs(begin_atom_fc), abs(end_atom_fc), bond_order)
-            begin_atom.SetFormalCharge(begin_atom_fc - adjustment * cmp(begin_atom_fc, 0))
-            end_atom.SetFormalCharge(end_atom_fc - adjustment * cmp(end_atom_fc, 0))
-
-    @staticmethod
     def _change_bond(mol, begin_atom_idx, end_atom_idx, new_bond_order):
-        """Change type of bond - throw exception if cannot legitimately be changed.
 
-        :rtype: same type as caller"""
-
-        # logging.debug("Attempting to change bond between {} and {} to {}".format(begin_atom_idx, end_atom_idx, new_bond_order))
+        """
+        Change type of bond in place.
+        Raise ValueError if cannot be changed.
+        """
 
         if new_bond_order > 3:
             raise ValueError  # to meet RDKit restriction from organic reactions that maximum likely bond is triple-bond
@@ -206,24 +206,17 @@ class SemiRealisticChemistry(IChemistry):
             e_mol.RemoveBond(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
         if new_bond_order != 0:  # add in any new bond
             e_mol.AddBond(begin_atom_idx, end_atom_idx, Chem.BondType.values[new_bond_order])
-        new_mol = e_mol.GetMol()
 
         # Adjust formal charges if using bond based on charge_order...goal is to make fc of both zero
-        self._adjust_formal_charge(new_mol.GetAtomWithIdx(begin_atom_idx), new_mol.GetAtomWithIdx(end_atom_idx), new_bond_order)
+        begin_atom = mol.GetAtomWithIdx(begin_atom_idx)
+        end_atom = mol.GetAtomWithIdx(end_atom_idx)
+        begin_atom_fc = begin_atom.GetFormalCharge()
+        end_atom_fc = end_atom.GetFormalCharge()
 
-        try:
-            new_mol = type(mol)(new_mol, kinetic_energy=mol.get_kinetic_energy())
-        except:
-            new_mol = type(mol)(new_mol)
-
-        Chem.SanitizeMol(new_mol, catchErrors=False)  # possibly not required
-        assert mol.GetNumAtoms(onlyExplicit=False) == new_mol.GetNumAtoms(onlyExplicit=False)  # reaction must preserve matter
-        return new_mol  # return same type as caller, self defined in parent method
-
-
-    def get_total_formal_charge(self):
-        return sum([i.GetFormalCharge() for i in self.GetAtoms()])
-
+        if cmp(begin_atom_fc, 0) != cmp(end_atom_fc, 0):  # must be opposite sign for this to work
+            adjustment = min(abs(begin_atom_fc), abs(end_atom_fc), bond_order)
+            begin_atom.SetFormalCharge(begin_atom_fc - adjustment * cmp(begin_atom_fc, 0))
+            end_atom.SetFormalCharge(end_atom_fc - adjustment * cmp(end_atom_fc, 0))
 
     def _assign_formal_charge(self):
         """
@@ -271,23 +264,16 @@ class SemiRealisticChemistry(IChemistry):
     def same_component(self, idx1, idx2):
         # Components is a list of sets of atom indexes in molecule - same set = same component
         if self._components is None:  # Catch-all - components should have been set in init() and multiple components initialized in previous call to combine_molecules
-            self._components = self._get_strongly_connected_components()
+            g = nx.Graph()
+            for bond in self.GetBonds():
+                g.add_edge(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
+                self._components = list(nx.connected_components(g))
+            # Add single atoms as independent components
+            for idx in range(self.GetNumAtoms()):
+                if len(self.GetAtomWithIdx(idx).GetBonds()) == 0:
+                    self._components.append([idx])
 
         for component in self._components:
             if idx1 in component and idx2 in component:
                 return True
         return False
-
-
-    def _get_strongly_connected_components(self):
-        logging.info("Call to _get_strongly_connected_components")
-        g = nx.Graph()
-        for bond in self.GetBonds():
-            g.add_edge(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
-        connected_components = list(nx.connected_components(g))
-        # Add single atoms as independent components
-        for idx in range(self.GetNumAtoms()):
-            if len(self.GetAtomWithIdx(idx).GetBonds()) == 0:
-                connected_components.append([idx])
-
-        return connected_components
