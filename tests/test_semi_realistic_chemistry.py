@@ -3,6 +3,7 @@ import unittest
 from rdkit.Chem import AllChem as Chem
 from semi_realistic_chemistry import SemiRealisticChemistry
 from molecule import Molecule
+from reaction import Reaction
 
 
 class TestSemiRealisticChemistry(unittest.TestCase):
@@ -33,22 +34,28 @@ class TestSemiRealisticChemistry(unittest.TestCase):
             'C4C': 200  # theoretically possible from valences, but in nature forms a C2C bond instead
         }
 
-    def test_init(self):
-        with self.assertRaises(TypeError):
-            SemiRealisticChemistry(Molecule('O'))
-        self.assertIsInstance(SemiRealisticChemistry([Molecule('O')], bond_energies={}).reactant, Chem.Mol)
-        chem = SemiRealisticChemistry([Molecule('[H]'), Molecule('[OH]')], bond_energies=self.bond_energies)
-        self.assertEqual('[H].[H][O]', Chem.MolToSmiles(chem.reactant))
-
     def test_get_bond_energy(self):
         # energy is energy REQUIRED => - means releases energy
-        chem = SemiRealisticChemistry([], bond_energies=self.bond_energies)
-        self.assertEqual(-38.4, chem._get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), to_bond_type=1))  # create single bond
-        self.assertEqual(-38.4, chem._get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), from_bond_type=0, to_bond_type=1))  # create single bond
-        self.assertEqual(38.4, chem._get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), from_bond_type=1, to_bond_type=0))  # destroy single bond
-        self.assertEqual(149 - 38.4, chem._get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), from_bond_type=2, to_bond_type=1))  # from double to single
-        self.assertEqual(38.4 - 149, chem._get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), from_bond_type=1, to_bond_type=2))  # from single to double
-        self.assertEqual(38.4, chem._get_bond_energy(Chem.Atom('N'), Chem.Atom('N'), from_bond_type=1))  # delete single bond
+        chem = SemiRealisticChemistry(bond_energies=self.bond_energies)
+        self.assertEqual(-38.4, chem._get_bond_energy('N', 'N', to_bond_type=1))  # create single bond
+        self.assertEqual(-38.4, chem._get_bond_energy('N', 'N', from_bond_type=0, to_bond_type=1))  # create single bond
+        self.assertEqual(38.4, chem._get_bond_energy('N', 'N', from_bond_type=1, to_bond_type=0))  # destroy single bond
+        self.assertEqual(149 - 38.4, chem._get_bond_energy('N', 'N', from_bond_type=2, to_bond_type=1))  # from double to single
+        self.assertEqual(38.4 - 149, chem._get_bond_energy('N', 'N', from_bond_type=1, to_bond_type=2))  # from single to double
+        self.assertEqual(38.4, chem._get_bond_energy('N', 'N', from_bond_type=1))  # delete single bond
+
+    def test_change_options(self):
+        chem = SemiRealisticChemistry(bond_energies=self.bond_energies)
+        l = chem.get_change_options(Chem.MolFromSmiles('C'))
+        self.assertIsInstance(l, list)
+        self.assertEqual(0, len(l))
+
+        l = chem.get_change_options(Chem.MolFromSmiles('O=C=O'))
+        for r in l:
+            self.assertIsInstance(r, Reaction)
+            self.assertIsInstance(r.get_reactants()[0], Molecule)
+            if len(r.get_products()) > 0:
+                self.assertIsInstance(r.get_products()[0], Molecule)
 
     def test_split(self):
         r = SemiRealisticChemistry.split(Chem.MolFromSmiles('O'))
@@ -59,7 +66,7 @@ class TestSemiRealisticChemistry(unittest.TestCase):
         self.assertEqual('[CH2-2]', r[1].get_symbol())
 
     def test_get_bond_potential(self):
-        chem = SemiRealisticChemistry([], bond_energies=self.bond_energies)
+        chem = SemiRealisticChemistry(bond_energies=self.bond_energies)
 
         mol = Chem.AddHs(Chem.MolFromSmiles('[CH2-2].[CH2-2]'))
         self.assertEqual(4, chem._get_bond_potential(mol.GetAtoms()[0]))
@@ -93,18 +100,6 @@ class TestSemiRealisticChemistry(unittest.TestCase):
         self.assertEqual(1, chem._get_bond_potential(mol.GetAtoms()[0]))
         self.assertEqual(1, mol.GetAtoms()[2].GetAtomicNum())  # the H in [OH-]
         self.assertEqual(0, chem._get_bond_potential(mol.GetAtoms()[2]))
-
-    def test_same_components(self):
-        chem = SemiRealisticChemistry([Molecule("O=C=O.[H]O[H]")], bond_energies={})
-        self.assertFalse(chem.same_component(0, 5))
-        self.assertTrue(chem.same_component(0, 1))
-
-    def test_assign_formal_charge(self):
-        # [H]O[H] -> [OH-]+[H+] Hydroxyl plus proton
-        chem = SemiRealisticChemistry([Molecule('[H]'), Molecule('[OH]')], bond_energies=self.bond_energies)
-        self.assertEqual('[H].[H][O]', Chem.MolToSmiles(chem.reactant))
-        chem._assign_formal_charge()
-        self.assertEqual('[H+].[H][O-]', Chem.MolToSmiles(chem.reactant))
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testInit']
