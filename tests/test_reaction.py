@@ -16,6 +16,8 @@ class TestReaction(unittest.TestCase):
             Reaction(reactants=[element], products=element)
         with self.assertRaises(TypeError):
             Reaction(reactants='string', products='string')
+        with self.assertRaises(ValueError):
+            Reaction(reactants=[], products=[element])
         r = Reaction(reactants=[element], products=[element])
         self.assertIsInstance(r, Reaction)
 
@@ -27,8 +29,8 @@ class TestReaction(unittest.TestCase):
         self.assertEqual(r.get_reactants(), reactants)
 
     def test_weights(self):
-        self.assertEqual(Reaction(reactants=[], products=[]).get_weight(), 1)
-        self.assertEqual(Reaction(reactants=[], products=[], weight=10).get_weight(), 10)
+        self.assertEqual(Reaction(reactants=[1], products=[1]).get_weight(), 1)
+        self.assertEqual(Reaction(reactants=[1], products=[1], weight=10).get_weight(), 10)
 
     def test_as_dict(self):
         products = [1, 2]

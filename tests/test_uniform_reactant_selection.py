@@ -29,9 +29,9 @@ class TestUniformReactantSelection(unittest.TestCase):
         Rather than checking private variables we look for the implications of the change through existing methods.
         """
 
-        r = UniformReactantSelection(population=[])
-        sr = r.react(Reaction(reactants=[], products=[]))
-        self.assertItemsEqual(r.get_reactants(), [])
+        r = UniformReactantSelection(population=[1])
+        sr = r.react(Reaction(reactants=[1], products=[]))
+        self.assertItemsEqual(r.population, [])
         self.assertIsInstance(sr, dict)
 
         r = UniformReactantSelection(population=['A'])

@@ -13,6 +13,8 @@ class UniformReactantSelection(ReactantSelection):
         """
 
         if len(self.population) > 1:
-            return random.sample(self.population, 2)
+            reactants = random.sample(self.population, 2)
         else:
-            return self.population
+            reactants = self.population
+        assert type(reactants) == list
+        return reactants

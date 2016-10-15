@@ -60,27 +60,22 @@ class SemiRealisticChemistry(IChemistry):
         :rtype: [Reaction]
         """
 
-        if len(reactants) > 1:
-            reactant = reduce(lambda x, y: Chem.CombineMols(x, y), map(lambda z: Chem.MolFromSmiles(z.get_symbol()), reactants))
-        elif len(reactants) == 1:
-            reactant = Chem.MolFromSmiles(reactants[0].get_symbol())
-
-        if len(reactants) > 0:
-            reactant = Chem.AddHs(reactant)
-
-        reaction_options = self.get_change_options(reactant)
-        reaction_options.append(self.get_addition_options(reactant))
+        reaction_options = self.get_change_options(reactants)
+        addition_options = self.get_addition_options(reactants)
+        if len(addition_options) > 0:
+            reaction_options.append(addition_options)
 
         logging.debug("{} reaction options found".format(len(reaction_options)))
         return reaction_options
 
-    def get_change_options(self, reactant):
+    def get_change_options(self, reactants):
 
         """
-
-        :param reactant: RDKit Mol
+        :param reactants: [Molecule]
         :return:
         """
+
+        reactant = SemiRealisticChemistry.join(reactants)
 
         options = []
         for bond in reactant.GetBonds():
@@ -99,22 +94,22 @@ class SemiRealisticChemistry(IChemistry):
                                                         reactant_copy.GetAtomWithIdx(end_atom_idx).GetSymbol(),
                                                         from_bond_type=old_bond_order,
                                                         to_bond_type=new_bond_order)
-                    options.append(Reaction(reactants=SemiRealisticChemistry.split(reactant),
+                    options.append(Reaction(reactants=reactants,
                                             products=SemiRealisticChemistry.split(reactant_copy),
                                             weight=bond_energy))
         return options
 
-    def get_addition_options(self, reactant):
+    def get_addition_options(self, reactants):
 
         """
-
-        :param reactant: RDKit Mol
+        :param reactants: Molecule
         :return:
         """
 
+        reactant = SemiRealisticChemistry.join(reactants)
         options = []
 
-        bond_potential = map(lambda x: SemiRealisticChemistry.get_bond_potential(x), reactant.GetAtoms())
+        bond_potential = map(lambda x: SemiRealisticChemistry._get_bond_potential(x), reactant.GetAtoms())
 
         g = nx.Graph()
         for bond in reactant.GetBonds():
@@ -151,7 +146,7 @@ class SemiRealisticChemistry(IChemistry):
                                 bond_energy = self._get_bond_energy(reactant_copy.GetAtomWithIdx(begin_atom_idx).GetSymbol(),
                                                                     reactant_copy.GetAtomWithIdx(end_atom_idx).GetSymbol(),
                                                                     end_bond_type=bond_order)  # bond creation of order bond_order
-                                options.append(Reaction(reactants=SemiRealisticChemistry.split(reactant),
+                                options.append(Reaction(reactants=reactants,
                                                         products=SemiRealisticChemistry.split(reactant_copy),
                                                         weight=bond_energy))
         return options
@@ -159,6 +154,19 @@ class SemiRealisticChemistry(IChemistry):
     @staticmethod
     def split(molecule):
         return [Molecule(smiles) for smiles in Chem.MolToSmiles(molecule).split(".")]
+
+    @staticmethod
+    def join(reactants):
+
+        if len(reactants) > 1:
+            mols = map(lambda z: Chem.MolFromSmiles(z.get_symbol()), reactants)
+            reactant = reduce(lambda x, y: Chem.CombineMols(x, y), mols)
+        elif len(reactants) == 1:
+            reactant = Chem.MolFromSmiles(reactants[0].get_symbol())
+
+        reactant = Chem.AddHs(reactant)
+
+        return reactant
 
     def _get_bond_energy(self, atom_1, atom_2, to_bond_type=0, from_bond_type=0):
         """

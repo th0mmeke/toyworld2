@@ -10,6 +10,9 @@ class Reaction(object):
         if not isinstance(reactants, list) or not isinstance(products, list):
             raise TypeError
 
+        if len(reactants) == 0:
+            raise ValueError
+
         self.reactants = reactants
         self.products = products
         self.weight = weight

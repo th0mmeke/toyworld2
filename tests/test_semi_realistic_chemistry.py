@@ -46,11 +46,11 @@ class TestSemiRealisticChemistry(unittest.TestCase):
 
     def test_change_options(self):
         chem = SemiRealisticChemistry(bond_energies=self.bond_energies)
-        l = chem.get_change_options(Chem.MolFromSmiles('C'))
+        l = chem.get_change_options([Molecule('C')])
         self.assertIsInstance(l, list)
-        self.assertEqual(0, len(l))
+        self.assertEqual(4, len(l))
 
-        l = chem.get_change_options(Chem.MolFromSmiles('O=C=O'))
+        l = chem.get_change_options([Molecule('O=C=O')])
         for r in l:
             self.assertIsInstance(r, Reaction)
             self.assertIsInstance(r.get_reactants()[0], Molecule)

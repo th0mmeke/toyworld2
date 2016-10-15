@@ -3,16 +3,16 @@ import json
 from my_json import MyJSON
 
 from toyworld import ToyWorld
-from reactant_selection import Reactor
+from uniform_reactant_selection import UniformReactantSelection
 from molecule import Molecule
 from state import State
 from semi_realistic_chemistry import SemiRealisticChemistry
 
 
 def uniform_selection(population):
-    if len(population) > 1:
-        random.sample(population, 2)
-    return population
+    if len(population) > 0:
+        return random.sample(population, 1)[0]
+    return []
 
 
 def dummy(x):
@@ -46,8 +46,8 @@ if __name__ == "__main__":
 
     chem = SemiRealisticChemistry(bond_energies=bond_energies)
 
-    population = [Molecule(i) for i in ['C', 'O', 'C', 'H', 'H']]
-    tw = ToyWorld(reactor=Reactor(population=population, reactant_selection=uniform_selection),
-                  generate_reaction_set=chem.generate_reaction_options,
+    population = [Molecule(i) for i in ['C', 'O', 'C']]
+    tw = ToyWorld(reactor=UniformReactantSelection(population=population),
+                  chemistry=SemiRealisticChemistry(bond_energies=bond_energies),
                   product_selection=uniform_selection)
     tw.run(generations=20, state=State(persistence=dummy))
