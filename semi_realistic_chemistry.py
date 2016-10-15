@@ -1,6 +1,7 @@
 from rdkit.Chem import AllChem as Chem
 import copy
 import logging
+import networkx as nx
 
 from i_chemistry import IChemistry
 from reaction import Reaction
@@ -14,10 +15,13 @@ class SemiRealisticChemistry(IChemistry):
 
     def __init__(self, reactants, **kwargs):
 
+        if len(reactants) > 1:
+            self.reactant = reduce(lambda x, y: Chem.CombineMols(x, y), map(lambda z: Chem.MolFromSmiles(z.get_symbol()), reactants))
+        elif len(reactants) == 1:
+            self.reactant = Chem.MolFromSmiles(reactants[0].get_symbol())
+
         if len(reactants) > 0:
-            self.reactant = Chem.Mol(reactants[0].get_symbol())
-            for reactant in reactants:
-                self.reactant = Chem.CombineMols(self.reactant, Chem.Mol(reactant.get_symbol()))
+            self.reactant = Chem.AddHs(self.reactant)
 
         try:
             self.bond_energies = kwargs['bond_energies']
@@ -214,7 +218,7 @@ class SemiRealisticChemistry(IChemistry):
         end_atom_fc = end_atom.GetFormalCharge()
 
         if cmp(begin_atom_fc, 0) != cmp(end_atom_fc, 0):  # must be opposite sign for this to work
-            adjustment = min(abs(begin_atom_fc), abs(end_atom_fc), bond_order)
+            adjustment = min(abs(begin_atom_fc), abs(end_atom_fc), new_bond_order)
             begin_atom.SetFormalCharge(begin_atom_fc - adjustment * cmp(begin_atom_fc, 0))
             end_atom.SetFormalCharge(end_atom_fc - adjustment * cmp(end_atom_fc, 0))
 
@@ -231,7 +235,7 @@ class SemiRealisticChemistry(IChemistry):
         Oxygen: If the valence is one, the formal charge is -1, and if the valence is three the formal charge is +1.
         """
 
-        for i in self.GetAtoms():
+        for i in self.reactant.GetAtoms():
 
             valence = i.GetDegree()
             formal_charge = 0
@@ -265,12 +269,12 @@ class SemiRealisticChemistry(IChemistry):
         # Components is a list of sets of atom indexes in molecule - same set = same component
         if self._components is None:  # Catch-all - components should have been set in init() and multiple components initialized in previous call to combine_molecules
             g = nx.Graph()
-            for bond in self.GetBonds():
+            for bond in self.reactant.GetBonds():
                 g.add_edge(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
                 self._components = list(nx.connected_components(g))
             # Add single atoms as independent components
-            for idx in range(self.GetNumAtoms()):
-                if len(self.GetAtomWithIdx(idx).GetBonds()) == 0:
+            for idx in range(self.reactant.GetNumAtoms()):
+                if len(self.reactant.GetAtomWithIdx(idx).GetBonds()) == 0:
                     self._components.append([idx])
 
         for component in self._components:
