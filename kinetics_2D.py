@@ -17,7 +17,7 @@ class Kinetics2D(object):
         """
         Return KE of Centre of Mass: _ke = 1/2mv^2, where mv for the centre of mass = sum (mi * vi) for all particles i
 
-        :param mols: [pm.Vec2d]
+        :param mols: [pm.Body]
         :rtype: float
         """
 
@@ -29,7 +29,7 @@ class Kinetics2D(object):
 
         """
         Return the momentum (mdx,mdy) of the centre of mass for these particles
-        :param mols: [pm.Vec2d]
+        :param mols: [pm.Body]
         :rtype: pm.Vec2d
         """
 
@@ -38,11 +38,10 @@ class Kinetics2D(object):
         for mol in mols:
             cm_momentum += mol.velocity * mol.mass
         cm_velocity = cm_momentum / total_mass
-        logging.debug("CM velocity = {}".format(cm_velocity))
         return cm_velocity
 
     @classmethod
-    def inelastic_collision(cls, reactants, products, energy_delta):
+    def inelastic_collision(cls, reactants, products):
         """Determine velocities of product molecules following a collision of reactant molecules, for between one and three product molecules.
 
         Model as a collision, followed by an explosion, meaning that the total momentum of the system is conserved - if two particles, each has equal and opposite momentum in CoM frame
@@ -83,35 +82,40 @@ class Kinetics2D(object):
 
         # Bound energy_of_collision to above zero (rounding errors for small values)
         # consistent sense with that in discover_reaction - final_PE = initial_PE + energy_delta => final_KE = initial_KE - energy_delta
-        energy_of_collision = max(0, in_ke - energy_delta - cls.get_cm_energy(reactants))
+        energy_of_collision = max(0, in_ke - cls.get_cm_energy(reactants))
         if energy_of_collision <= 0:
             raise ValueError
 
-        out_v_in_CoM_frame = []
-
         if len(out_mass) == 1:
             # One out particle is stationary in out_CoM frame
-            out_v_in_CoM_frame.append(pm.Vec2d(0,0))
+            out_v_in_com_frame = [pm.Vec2d(0, 0)]
 
         elif len(out_mass) == 2:
             ke_in_cm_frame = random.uniform(0, energy_of_collision)
             mv = math.sqrt((2.0 * ke_in_cm_frame * out_mass[0] * out_mass[1]) / (out_mass[0] + out_mass[1]))
-            out_v_in_CoM_frame.append(cm_in_v.angle + math.pi * 0.5, mv)
-            out_v_in_CoM_frame.append(cm_in_v.angle + math.pi * 1.5, mv)
+            v1 = pm.Vec2d([mv,0])
+            v2 = pm.Vec2d([mv,0])
+            v1.angle = cm_in_v.angle + math.pi * 0.5
+            v2.angle = cm_in_v.angle + math.pi * 1.5
+            out_v_in_com_frame = [v1, v2]
 
         elif len(out_mass) == 3:
             # Sum of vector momentums = 0, and in centre of momentum frame arranged as equilateral triangle, side mv
             # Must then convert to velocities by dividing by particle mass, which means no longer equilateral...but unimportant, as only needed equilateral to initially arrange
             ke_in_cm_frame = random.uniform(0, energy_of_collision)  # The energy of the collision - over and above the energy of the centre of mass, which is invariant
             mv = math.sqrt((2.0 * ke_in_cm_frame * out_mass[0] * out_mass[1] * out_mass[2]) / (out_mass[0] * out_mass[1] + out_mass[1] * out_mass[2] + out_mass[0] * out_mass[2]))
-            out_v_in_CoM_frame.append(cm_in_v.angle + math.pi / 3.0, mv)
-            out_v_in_CoM_frame.append(cm_in_v.angle - math.pi / 3.0, mv)
-            out_v_in_CoM_frame.append(cm_in_v.angle + math.pi, mv)
+            v1 = pm.Vec2d([mv,0])
+            v2 = pm.Vec2d([mv,0])
+            v3 = pm.Vec2d([mv,0])
+            v1.angle = cm_in_v.angle + math.pi / 3.0
+            v2.angle = cm_in_v.angle - math.pi / 3.0
+            v3.angle = cm_in_v.angle + math.pi
+            out_v_in_com_frame = [v1, v2, v3]
 
         # Now convert from momentums to velocities by scaling by 1/mass
-        out_v_in_CoM_frame = [[mv_component / mass for mv_component in particle_mv] for particle_mv, mass in zip(out_v_in_CoM_frame, out_mass)]
+        out_v_in_com_frame = [particle_mv/mass for particle_mv, mass in zip(out_v_in_com_frame, out_mass)]
         # Finally convert back from CoM frame to lab frame
-        out_v = [[v_ + cm_v_ for v_, cm_v_ in zip(v, cm_in_v)] for v in out_v_in_CoM_frame]
+        out_v = [v+cm_in_v for v in out_v_in_com_frame]
 
         #########################
         # Confirm post-conditions
@@ -129,6 +133,6 @@ class Kinetics2D(object):
 
         # 3. Energy
         out_ke = sum([cls.get_ke(m, *v) for m, v in zip(out_mass, out_v)])
-        assert Ulps.almost_equal(in_ke, out_ke + energy_delta, max_diff=config.EnergyTolerance)
+        assert Ulps.almost_equal(in_ke, out_ke, max_diff=3000)
 
         return out_v
