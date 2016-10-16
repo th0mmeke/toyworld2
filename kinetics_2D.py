@@ -56,7 +56,7 @@ class Kinetics2D(object):
 
         :param reactants: [pm.Body]. Reactants - must have total KE > 0
         :param products:[pm.Body]. Products of reaction - must be 1, 2 or 3 products only
-        :param energy_delta: final KE = initial KE - energy_delta
+        :rtype: [pm.Vec2d]
         """
 
         def total_mv(mv):
