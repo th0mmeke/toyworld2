@@ -6,6 +6,8 @@ from rdkit.Chem import AllChem as Chem
 from reactant_selection import ReactantSelection
 from kinetics_2D import Kinetics2D
 
+from molecule import Molecule
+
 
 class SpatialReactantSelection(ReactantSelection):
 
@@ -19,7 +21,7 @@ class SpatialReactantSelection(ReactantSelection):
     REACTANT = 1
     PRODUCT = 2
     WALL = 3
-    BASE_MOLECULE_RADIUS = REACTION_VESSEL_SIZE / 100
+    BASE_MOLECULE_RADIUS = REACTION_VESSEL_SIZE / 500
     bodies = {}  # dictionary body:mol
     space = pm.Space()
 
@@ -66,12 +68,19 @@ class SpatialReactantSelection(ReactantSelection):
 
         while len(SpatialReactantSelection.reactant_list) == 0:  # reactant_list maintained by _begin_handler()
             SpatialReactantSelection.space.step(0.1)  # trigger _begin_handler on collision
+        if len(SpatialReactantSelection.reactant_list) > 10:
+            print(len(SpatialReactantSelection.reactant_list))
 
         # Now weed out any reactions that involve a molecule that no longer exists because of a prior reaction
+        molecules = SpatialReactantSelection.lookup.values()  # {shape: Molecule}
+
         while len(SpatialReactantSelection.reactant_list) > 0:
             r = SpatialReactantSelection.reactant_list.pop(0)  # {Molecule:pm.Body}
-            molecules = SpatialReactantSelection.lookup.values()  # {shape: Molecule}
-            if all([reactant in molecules for reactant in r.keys()]):
+            try:
+                idx = [molecules.index(reactant) for reactant in r.keys()]
+            except ValueError:
+                pass
+            else:
                 self.current_reactions.append(r)
                 return r.keys()
 
@@ -80,8 +89,6 @@ class SpatialReactantSelection(ReactantSelection):
     def react(self, reaction):
 
         # Match reaction to one in current_reactions - shouldn't be a very long list at all, so looping is acceptable
-        s = set([r.get_symbol() for r in reaction.reactants])  # set of symbols of reactants
-
         for i in range(len(self.current_reactions)):  # [{Molecule: pm.Body}], loop by index so can later delete easily
             if set(reaction.reactants) == set(self.current_reactions[i].keys()):
                 r = self.current_reactions[i]
@@ -94,13 +101,9 @@ class SpatialReactantSelection(ReactantSelection):
         midpoint = sum([b.position for b in reactant_bodies])/len(reactant_bodies)  # Vec2d
 
         # Remove reactant bodies+shapes
-        print(reaction.reactants)
         for body in reactant_bodies:
-            print(body.shapes)
             for shape in body.shapes:
-                print(SpatialReactantSelection.lookup[shape])
                 del SpatialReactantSelection.lookup[shape]  # Remove shape:Molecule from the lookup table
-                print(SpatialReactantSelection.lookup[shape])
             self.space.remove(body.shapes)
 
         self.space.remove(reactant_bodies)
@@ -112,6 +115,10 @@ class SpatialReactantSelection(ReactantSelection):
             self.add_molecule(molecule, mass, midpoint, velocity, SpatialReactantSelection.PRODUCT)
 
         del self.current_reactions[i]
+
+    @classmethod
+    def get_population(cls):
+        return SpatialReactantSelection.lookup.values()
 
     @classmethod
     def add_molecule(cls, molecule, mass, location, velocity, collision_type):
