@@ -50,7 +50,7 @@ class TestKinetics2D(unittest.TestCase):
         reactants = [mol0, mol1]
         products = [pm.Body(mass=4, moment=1), pm.Body(mass=6, moment=1), pm.Body(mass=2, moment=1)]
 
-        out_v = self._kinetics.inelastic_collision(reactants, products)
+        out_v = self._kinetics.inelastic_collision(reactants, [p.mass for p in products])
 
         for mol, v in zip(products, out_v):
             mol.velocity = v
@@ -64,7 +64,7 @@ class TestKinetics2D(unittest.TestCase):
         # test that the out molecules do not all have the same velocity... possible to have correct CM and energy if all along CoM, but boring!
         # max angle - min angle > delta
         angles = [i.angle for i in out_v]
-        self.assertGreater(max(angles) - min(angles), math.pi/10)
+        self.assertGreater(max(angles) - min(angles), math.pi/100)
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testInit']

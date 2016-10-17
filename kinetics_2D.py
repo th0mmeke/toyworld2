@@ -41,8 +41,9 @@ class Kinetics2D(object):
         return cm_velocity
 
     @classmethod
-    def inelastic_collision(cls, reactants, products):
-        """Determine velocities of product molecules following a collision of reactant molecules, for between one and three product molecules.
+    def inelastic_collision(cls, reactants, out_mass):
+        """
+        Determine velocities of product molecules following a collision of reactant molecules, for between one and three product molecules.
 
         Model as a collision, followed by an explosion, meaning that the total momentum of the system is conserved - if two particles, each has equal and opposite momentum in CoM frame
         Assume an impulse, or force, splitting the particles apart, acting equally on each particle
@@ -55,7 +56,7 @@ class Kinetics2D(object):
         3. in_KE + in_PE + in_IE = Sum out_KE + out_PE + out_IE or in_KE - delta_KE = out_KE
 
         :param reactants: [pm.Body]. Reactants - must have total KE > 0
-        :param products:[pm.Body]. Products of reaction - must be 1, 2 or 3 products only
+        :param out_mass:[float]. Masses of the products of the reaction - must be 1, 2 or 3 products only
         :rtype: [pm.Vec2d]
         """
 
@@ -66,7 +67,7 @@ class Kinetics2D(object):
                     totals[dim] += mv_[dim]
             return totals
 
-        if len(products) < 1 or len(products) > 3:
+        if len(out_mass) < 1 or len(out_mass) > 3:
             raise ValueError()
 
         in_v = [mol.velocity for mol in reactants]
@@ -76,8 +77,6 @@ class Kinetics2D(object):
 
         # Velocity of centre of mass after collision
         # Momentums add to zero in the CoM frame
-
-        out_mass = [mol.mass for mol in products]
         cm_in_v = cls.get_cm_velocity(reactants)
 
         # Bound energy_of_collision to above zero (rounding errors for small values)
