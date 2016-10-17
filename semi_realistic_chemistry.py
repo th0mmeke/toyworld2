@@ -16,23 +16,23 @@ class SemiRealisticChemistry(IChemistry):
     def __init__(self, **kwargs):
 
         try:
-            self.bond_energies = kwargs['bond_energies']
+            self._bond_energies = kwargs['bond_energies']
         except KeyError:
             raise ValueError('Missing kwarg: bond_energies')
 
         count = {}
-        self.default_bond_energies = {}
-        for bond, energy in self.bond_energies.iteritems():
+        self._default_bond_energies = {}
+        for bond, energy in self._bond_energies.iteritems():
             key = int(bond[1])
             try:
                 count[key] += 1
-                self.default_bond_energies[key] += energy
+                self._default_bond_energies[key] += energy
             except KeyError:
                 count[key] = 1
-                self.default_bond_energies[key] = energy
+                self._default_bond_energies[key] = energy
 
         for i in count.keys():
-            self.default_bond_energies[i] = self.default_bond_energies[i] / count[i]
+            self._default_bond_energies[i] = self._default_bond_energies[i] / count[i]
 
     def enumerate(self, reactants):
 
@@ -60,22 +60,22 @@ class SemiRealisticChemistry(IChemistry):
         :rtype: [Reaction]
         """
 
-        reaction_options = self.get_change_options(reactants)
-        addition_options = self.get_addition_options(reactants)
+        reaction_options = self._get_change_options(reactants)
+        addition_options = self._get_addition_options(reactants)
         if len(addition_options) > 0:
             reaction_options.extend(addition_options)
 
         logging.debug("{} reaction options found".format(len(reaction_options)))
         return reaction_options
 
-    def get_change_options(self, reactants):
+    def _get_change_options(self, reactants):
 
         """
         :param reactants: [Molecule]
         :return:
         """
 
-        reactant = SemiRealisticChemistry.join(reactants)
+        reactant = SemiRealisticChemistry._join(reactants)
 
         options = []
         for bond in reactant.GetBonds():
@@ -95,18 +95,18 @@ class SemiRealisticChemistry(IChemistry):
                                                         from_bond_type=old_bond_order,
                                                         to_bond_type=new_bond_order)
                     options.append(Reaction(reactants=reactants,
-                                            products=SemiRealisticChemistry.split(reactant_copy),
+                                            products=SemiRealisticChemistry._split(reactant_copy),
                                             weight=bond_energy))
         return options
 
-    def get_addition_options(self, reactants):
+    def _get_addition_options(self, reactants):
 
         """
         :param reactants: Molecule
         :return:
         """
 
-        reactant = SemiRealisticChemistry.join(reactants)
+        reactant = SemiRealisticChemistry._join(reactants)
         options = []
 
         bond_potential = map(lambda x: SemiRealisticChemistry._get_bond_potential(x), reactant.GetAtoms())
@@ -147,16 +147,16 @@ class SemiRealisticChemistry(IChemistry):
                                                                     reactant_copy.GetAtomWithIdx(end_atom_idx).GetSymbol(),
                                                                     to_bond_type=bond_order)  # bond creation of order bond_order
                                 options.append(Reaction(reactants=reactants,
-                                                        products=SemiRealisticChemistry.split(reactant_copy),
+                                                        products=SemiRealisticChemistry._split(reactant_copy),
                                                         weight=bond_energy))
         return options
 
     @staticmethod
-    def split(molecule):
+    def _split(molecule):
         return [Molecule(smiles) for smiles in Chem.MolToSmiles(molecule).split(".")]
 
     @staticmethod
-    def join(reactants):
+    def _join(reactants):
 
         if len(reactants) > 1:
             mols = map(lambda z: Chem.MolFromSmiles(z.get_symbol()), reactants)
@@ -186,9 +186,9 @@ class SemiRealisticChemistry(IChemistry):
         else:
             from_bond_type = min(3, from_bond_type)
             try:
-                start_energy = self.bond_energies[atom_1 + str(from_bond_type) + atom_2]
+                start_energy = self._bond_energies[atom_1 + str(from_bond_type) + atom_2]
             except KeyError:
-                start_energy = self.default_bond_energies[from_bond_type]
+                start_energy = self._default_bond_energies[from_bond_type]
 
         # Energy to create desired bond state
         if to_bond_type <= 0:
@@ -196,9 +196,9 @@ class SemiRealisticChemistry(IChemistry):
         else:
             to_bond_type = min(3, to_bond_type)
             try:
-                end_energy = self.bond_energies[atom_1 + str(to_bond_type) + atom_2]
+                end_energy = self._bond_energies[atom_1 + str(to_bond_type) + atom_2]
             except KeyError:
-                end_energy = self.default_bond_energies[to_bond_type]
+                end_energy = self._default_bond_energies[to_bond_type]
 
         return start_energy - end_energy
 
