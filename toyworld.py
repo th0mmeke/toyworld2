@@ -9,6 +9,8 @@ class ToyWorld:
 
         for i in range(generations):
             reactants = self.reactor.get_reactants()
+            if len(reactants) == 0:
+                break
             reactions = self.chemistry.enumerate(reactants)
             if len(reactions) == 0:
                 break

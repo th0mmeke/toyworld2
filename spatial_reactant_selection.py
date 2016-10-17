@@ -26,7 +26,7 @@ class SpatialReactantSelection(ReactantSelection):
     reactant_list = []
     lookup = {}
 
-    def __init__(self, population):
+    def __init__(self, population, **kwargs):
 
         super(SpatialReactantSelection, self).__init__(population)
 
@@ -57,45 +57,61 @@ class SpatialReactantSelection(ReactantSelection):
         for molecule, location in zip(population, locations):
             mol = Chem.MolFromSmiles(molecule.get_symbol())  # purely to calculate molecule mass
             mass = sum([atom.GetMass() for atom in mol.GetAtoms()])
-            velocity = pm.Vec2d(math.sqrt(2.0 * ke / mass), 0)
+            velocity = pm.Vec2d(math.sqrt(2.0 * kwargs['ke'] / mass), 0)
             velocity.angle = random.uniform(-math.pi, math.pi)
 
-            self.add_molecule(molecule, location, velocity, SpatialReactantSelection.REACTANT)
+            self.add_molecule(molecule, mass, location, velocity, SpatialReactantSelection.REACTANT)
 
     def get_reactants(self):
 
         while len(SpatialReactantSelection.reactant_list) == 0:  # reactant_list maintained by _begin_handler()
-            SpatialReactantSelection.space.step(1)  # trigger _begin_handler on collision
+            SpatialReactantSelection.space.step(0.1)  # trigger _begin_handler on collision
 
-        r = SpatialReactantSelection.reactant_list.pop(0)
-        self.current_reactions.append(r)
+        # Now weed out any reactions that involve a molecule that no longer exists because of a prior reaction
+        while len(SpatialReactantSelection.reactant_list) > 0:
+            r = SpatialReactantSelection.reactant_list.pop(0)  # {Molecule:pm.Body}
+            molecules = SpatialReactantSelection.lookup.values()  # {shape: Molecule}
+            if all([reactant in molecules for reactant in r.keys()]):
+                self.current_reactions.append(r)
+                return r.keys()
 
-        return r.keys()
+        return []
 
     def react(self, reaction):
 
-        # Match reaction to one in current_reactions
+        # Match reaction to one in current_reactions - shouldn't be a very long list at all, so looping is acceptable
+        s = set([r.get_symbol() for r in reaction.reactants])  # set of symbols of reactants
 
-        s = set([r.get_symbol() for r in reaction.reactants])
-        for r in self.current_reactions:  # [{Molecule: pm.Body}]
-            if set([m.get_symbol() for m in r.keys()]) == s:
+        for i in range(len(self.current_reactions)):  # [{Molecule: pm.Body}], loop by index so can later delete easily
+            if set(reaction.reactants) == set(self.current_reactions[i].keys()):
+                r = self.current_reactions[i]
+                break
+        else:
+            raise ValueError
 
-                # Find middle point of reactant bodies
-                bodies = r.values()
-                midpoint = sum([b.position for b in bodies])/len(bodies)  # Vec2d
+        # Find middle point of reactant bodies
+        reactant_bodies = r.values()
+        midpoint = sum([b.position for b in reactant_bodies])/len(reactant_bodies)  # Vec2d
 
-                # Remove reactant bodies+shapes
-                for body in bodies:
-                    self.space.remove(body.shapes)
-                self.space.remove(bodies)
+        # Remove reactant bodies+shapes
+        print(reaction.reactants)
+        for body in reactant_bodies:
+            print(body.shapes)
+            for shape in body.shapes:
+                print(SpatialReactantSelection.lookup[shape])
+                del SpatialReactantSelection.lookup[shape]  # Remove shape:Molecule from the lookup table
+                print(SpatialReactantSelection.lookup[shape])
+            self.space.remove(body.shapes)
 
-                # Add in product bodies to middle point of reaction
-                out_v = Kinetics2D.inelastic_collision(r.reactants, r.products)
-                for molecule, velocity in zip(r.products, out_v):
-                    mol = Chem.MolFromSmiles(molecule.get_symbol())  # purely to calculate molecule mass
-                    mass = sum([atom.GetMass() for atom in mol.GetAtoms()])
-                    self.add_molecule(molecule, mass, midpoint, velocity, SpatialReactantSelection.PRODUCT)
+        self.space.remove(reactant_bodies)
 
+        # Add in product bodies to middle point of reaction
+        product_masses = [sum([atom.GetMass() for atom in Chem.MolFromSmiles(molecule.get_symbol()).GetAtoms()]) for molecule in reaction.products]
+        out_v = Kinetics2D.inelastic_collision(reactant_bodies, product_masses)
+        for molecule, velocity, mass in zip(reaction.products, out_v, product_masses):
+            self.add_molecule(molecule, mass, midpoint, velocity, SpatialReactantSelection.PRODUCT)
+
+        del self.current_reactions[i]
 
     @classmethod
     def add_molecule(cls, molecule, mass, location, velocity, collision_type):
@@ -154,5 +170,7 @@ class SpatialReactantSelection(ReactantSelection):
             return False  # one or more reactants were in collision with another molecule previously in this timestep
 
         cls.reactant_list.append(reactants)
+
+        return True
 
 

@@ -1,9 +1,11 @@
 import random
 import json
 from my_json import MyJSON
+import itertools
 
 from toyworld import ToyWorld
 from uniform_reactant_selection import UniformReactantSelection
+from spatial_reactant_selection import SpatialReactantSelection
 from molecule import Molecule
 from state import State
 from semi_realistic_chemistry import SemiRealisticChemistry
@@ -46,8 +48,13 @@ if __name__ == "__main__":
 
     chem = SemiRealisticChemistry(bond_energies=bond_energies)
 
-    population = [Molecule(i) for i in ['C', 'O', 'C']]
-    tw = ToyWorld(reactor=UniformReactantSelection(population=population),
+    defn = {"[H][H]": 100, "O=O": 100, "O": 200, "[O-][N+](=O)[N+]([O-])=O": 100, "N(=O)[O]": 100, "O=C=O": 200}
+    population = []
+    for symbol, quantity in defn.iteritems():
+        for i in range(quantity):
+            population.append(Molecule(symbol))
+
+    tw = ToyWorld(reactor=SpatialReactantSelection(population=population, ke=10),
                   chemistry=SemiRealisticChemistry(bond_energies=bond_energies),
                   product_selection=uniform_selection)
     tw.run(generations=20, state=State(persistence=dummy))

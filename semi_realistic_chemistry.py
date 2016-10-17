@@ -145,7 +145,7 @@ class SemiRealisticChemistry(IChemistry):
                             else:
                                 bond_energy = self._get_bond_energy(reactant_copy.GetAtomWithIdx(begin_atom_idx).GetSymbol(),
                                                                     reactant_copy.GetAtomWithIdx(end_atom_idx).GetSymbol(),
-                                                                    end_bond_type=bond_order)  # bond creation of order bond_order
+                                                                    to_bond_type=bond_order)  # bond creation of order bond_order
                                 options.append(Reaction(reactants=reactants,
                                                         products=SemiRealisticChemistry.split(reactant_copy),
                                                         weight=bond_energy))
