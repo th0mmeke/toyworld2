@@ -63,7 +63,7 @@ class SemiRealisticChemistry(IChemistry):
         reaction_options = self.get_change_options(reactants)
         addition_options = self.get_addition_options(reactants)
         if len(addition_options) > 0:
-            reaction_options.append(addition_options)
+            reaction_options.extend(addition_options)
 
         logging.debug("{} reaction options found".format(len(reaction_options)))
         return reaction_options

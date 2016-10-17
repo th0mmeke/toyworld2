@@ -1,3 +1,6 @@
+from collections import Counter
+
+
 class ToyWorld:
 
     def __init__(self, reactor, chemistry, product_selection):
@@ -7,10 +10,13 @@ class ToyWorld:
 
     def run(self, generations, state):
 
+        print(Counter([str(x) for x in self.reactor.get_population()]))
+
         for i in range(generations):
             reactants = self.reactor.get_reactants()
             if len(reactants) == 0:
                 break
+
             reactions = self.chemistry.enumerate(reactants)
             if len(reactions) == 0:
                 break
@@ -19,5 +25,7 @@ class ToyWorld:
             self.reactor.react(reaction)
 
             state.add(reaction.as_dict())
+
+        print(Counter([str(x) for x in self.reactor.get_population()]))
 
         return state

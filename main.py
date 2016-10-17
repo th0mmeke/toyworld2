@@ -18,8 +18,8 @@ def uniform_selection(population):
 
 
 def dummy(x):
-    print(json.dumps(x, cls=MyJSON))
-    return x
+    #print(json.dumps(x, cls=MyJSON))
+    pass
 
 if __name__ == "__main__":
     bond_energies = {
@@ -57,4 +57,5 @@ if __name__ == "__main__":
     tw = ToyWorld(reactor=SpatialReactantSelection(population=population, ke=10),
                   chemistry=SemiRealisticChemistry(bond_energies=bond_energies),
                   product_selection=uniform_selection)
-    tw.run(generations=20, state=State(persistence=dummy))
+    state = tw.run(generations=200, state=State(persistence=dummy))
+
