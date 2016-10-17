@@ -1,7 +1,7 @@
 import random
-import json
-from my_json import MyJSON
-import itertools
+import os
+import logging
+import argparse
 
 from toyworld import ToyWorld
 from uniform_reactant_selection import UniformReactantSelection
@@ -20,6 +20,36 @@ def uniform_selection(population):
 def dummy(x):
     #print(json.dumps(x, cls=MyJSON))
     pass
+
+
+def initialise_logging(args, basedir):
+    level = getattr(logging, args.log_level.upper())
+    logger = logging.getLogger()
+    logger.setLevel(level)
+
+    if not args.log_filename:
+        args.log_filename = os.path.basename(basedir) + ".log"
+    fh = logging.FileHandler(os.path.join(basedir, args.log_filename))
+    fh.setLevel(level)
+
+    ch = logging.StreamHandler()
+    ch.setLevel(level)
+
+    formatter = logging.Formatter(fmt='%(asctime)s %(levelname)s:%(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+    ch.setFormatter(formatter)
+    fh.setFormatter(formatter)
+
+    logger.addHandler(ch)
+    logger.addHandler(fh)
+
+def get_args():
+
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    parent_parser.add_argument('-l', '--log_level', default='INFO', help="Set the logging level")
+    parent_parser.add_argument('-f', '--log_filename', help="Filename for logging (relative to location of evaluation design file) (optional)")
+    parser = argparse.ArgumentParser(parents=[parent_parser])
+
+    return parser.parse_args()
 
 if __name__ == "__main__":
     bond_energies = {
@@ -45,6 +75,9 @@ if __name__ == "__main__":
         'C3N': 213, 'N3C': 213,
         'C4C': 200  # theoretically possible from valences, but in nature forms a C2C bond instead
     }
+
+    args = get_args()
+    initialise_logging(args, os.getcwd())
 
     chem = SemiRealisticChemistry(bond_energies=bond_energies)
 

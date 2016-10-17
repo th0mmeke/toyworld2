@@ -1,4 +1,5 @@
 from collections import Counter
+import logging
 
 
 class ToyWorld:
@@ -10,7 +11,7 @@ class ToyWorld:
 
     def run(self, generations, state):
 
-        print(Counter([str(x) for x in self.reactor.get_population()]))
+        logging.info("Initial population: {}".format(Counter([str(x) for x in self.reactor.get_population()])))
 
         for i in range(generations):
             reactants = self.reactor.get_reactants()
@@ -26,6 +27,6 @@ class ToyWorld:
 
             state.add(reaction.as_dict())
 
-        print(Counter([str(x) for x in self.reactor.get_population()]))
+        logging.info("Final population: {}".format(Counter([str(x) for x in self.reactor.get_population()])))
 
         return state
