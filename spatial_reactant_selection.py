@@ -14,7 +14,6 @@ class SpatialReactantSelection(IReactantSelection):
     """
     n-dimensional structure of fixed size (ranging [-reaction_vessel_size,reaction_vessel_size] in each dimension).
     Molecules bounce off virtual walls.
-    With KineticMolecules of size 1, ratio of vessel size:molecule size = 10^6:1
     """
 
     REACTION_VESSEL_SIZE = 500  # -500->500
@@ -61,15 +60,19 @@ class SpatialReactantSelection(IReactantSelection):
             velocity = pm.Vec2d(math.sqrt(2.0 * kwargs['ke'] / mass), 0)
             velocity.angle = random.uniform(-math.pi, math.pi)
 
-            self.add_molecule(molecule, mass, location, velocity, SpatialReactantSelection.REACTANT)
+            self._add_molecule(molecule, mass, location, velocity, SpatialReactantSelection.REACTANT)
+
+        self._set_step_size()
 
     def get_reactants(self):
 
+        i = 0
         while len(self.reactant_list) == 0:  # reactant_list maintained by _begin_handler()
-            self.space.step(0.2)  # trigger _begin_handler on collision
-            l = len(self.reactant_list)
-            if l > 10:
-                logging.info("Excessive reactant_list length ({})".format(l))
+            i += 1
+            self.space.step(self.step_size)  # trigger _begin_handler on collision
+            if i > 5 and (len(self.reactant_list) == 0 or len(self.reactant_list) > 10):
+                self._set_step_size()
+                i = 0
 
         # Now weed out any reactions that involve a molecule that no longer exists because of a prior reaction
         molecules = self.bodies.values()  # {shape: Molecule}
@@ -118,16 +121,17 @@ class SpatialReactantSelection(IReactantSelection):
         product_masses = [sum([atom.GetMass() for atom in Chem.MolFromSmiles(molecule.get_symbol()).GetAtoms()]) for molecule in reaction.products]
         out_v = Kinetics2D.inelastic_collision(reactant_bodies, product_masses)
         for molecule, velocity, mass in zip(reaction.products, out_v, product_masses):
-            self.add_molecule(molecule, mass, midpoint, velocity, SpatialReactantSelection.PRODUCT)
+            self._add_molecule(molecule, mass, midpoint, velocity, SpatialReactantSelection.PRODUCT)
 
         del self.current_reactions[i]
 
     def get_population(self):
         return self.bodies.values()
 
-    def add_molecule(self, molecule, mass, location, velocity, collision_type):
+    def _add_molecule(self, molecule, mass, location, velocity, collision_type):
 
         """
+        Add a single Molecule into the reactor.
 
         :param molecule: Molecule
         :param location: pm.Vec2d
@@ -151,13 +155,31 @@ class SpatialReactantSelection(IReactantSelection):
 
         self.bodies[shape] = molecule
 
+    def _set_step_size(self):
+
+        """
+        Set an appropriate time step for the pymunk space updater based on the mean velocity of the bodies.
+        Too small a step size will be slow, while too big a step size might miss collisions.
+        Some missed collisions however are acceptable.
+
+        :return:
+        """
+
+        velocity_distribution = [shape.body.velocity.length for shape in self.bodies]
+        v_mean = sum(velocity_distribution) / len(velocity_distribution)
+
+        self.step_size = 1 / v_mean
+        logging.debug("Step-size={}, v_mean={}".format(self.step_size, v_mean))
+
     def _end_handler(self, arbiter, space, data):
-        '''Called when two molecules separate. Mark them as potential reactants.
+
+        """
+        Called when two molecules separate. Mark them as potential reactants.
         :param arbiter:
         :param space:
         :param data:
         :return:
-        '''
+        """
 
         for shape in arbiter.shapes:
             shape.collision_type = SpatialReactantSelection.REACTANT
