@@ -5,9 +5,9 @@ class Reaction(object):
     Associated with the transformation is a 'weight', whose meaning is specific to the IChemistry which generated the Reaction.
     """
 
-    def __init__(self, reactants, products, weight=1):
+    def __init__(self, reactants, products=None, reactant_value=0, product_value=0):
 
-        if not isinstance(reactants, list) or not isinstance(products, list):
+        if not isinstance(reactants, list) or (products is not None and not isinstance(products, list)):
             raise TypeError
 
         if len(reactants) == 0:
@@ -15,7 +15,8 @@ class Reaction(object):
 
         self.reactants = reactants
         self.products = products
-        self.weight = weight
+        self.reactant_value = reactant_value
+        self.product_value = product_value
 
     def get_reactants(self):
         return self.reactants
@@ -23,8 +24,11 @@ class Reaction(object):
     def get_products(self):
         return self.products
 
-    def get_weight(self):
-        return self.weight
+    def get_reactant_value(self):
+        return self.reactant_value
+
+    def get_product_value(self):
+        return self.product_value
 
     def as_dict(self):
-        return {'reactants': self.reactants, 'products': self.products, 'weight': self.weight}
+        return {'reactants': self.reactants, 'products': self.products, 'reactant_value': self.reactant_value, 'product_value': self.product_value}

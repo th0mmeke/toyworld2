@@ -14,18 +14,13 @@ class ToyWorld:
         logging.info("Initial population: {}".format(Counter([str(x) for x in self.reactor.get_population()])))
 
         for i in range(generations):
-            reactants = self.reactor.get_reactants()
-            if len(reactants) == 0:
-                break
+            partial_reaction = self.reactor.get_reactants()
+            reactions = self.chemistry.enumerate(partial_reaction)
+            if reactions is not None:
+                reaction = self.product_selection(reactions)
+                self.reactor.react(reaction)
 
-            reactions = self.chemistry.enumerate(reactants)
-            if len(reactions) == 0:
-                break
-
-            reaction = self.product_selection(reactions)
-            self.reactor.react(reaction)
-
-            state.add(reaction.as_dict())
+                state.add(reaction.as_dict())
 
         logging.info("Final population: {}".format(Counter([str(x) for x in self.reactor.get_population()])))
 

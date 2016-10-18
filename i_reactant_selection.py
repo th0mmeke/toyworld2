@@ -5,7 +5,7 @@ class IReactantSelection(object):
         """
         Idempotent method to identify the next reactants from the reactor population.
 
-        :return: Reaction, for the reactants only
+        :return: Reaction, for the reactants only, or None if no reactants can be found.
         """
 
         pass
@@ -18,6 +18,7 @@ class IReactantSelection(object):
 
         :param reaction: Reaction
         :return: StateRecord
+
         """
 
         pass

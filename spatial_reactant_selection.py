@@ -1,15 +1,15 @@
 import random
 import math
+import logging
 
 import pymunk as pm
 from rdkit.Chem import AllChem as Chem
-from reactant_selection import ReactantSelection
+from i_reactant_selection import IReactantSelection
 from kinetics_2D import Kinetics2D
+from reaction import Reaction
 
-from molecule import Molecule
 
-
-class SpatialReactantSelection(ReactantSelection):
+class SpatialReactantSelection(IReactantSelection):
 
     """
     n-dimensional structure of fixed size (ranging [-reaction_vessel_size,reaction_vessel_size] in each dimension).
@@ -30,7 +30,9 @@ class SpatialReactantSelection(ReactantSelection):
 
     def __init__(self, population, **kwargs):
 
-        super(SpatialReactantSelection, self).__init__(population)
+        if not isinstance(population, list):
+            raise TypeError
+        self.population = population
 
         self.current_reactions = []
 
@@ -67,9 +69,10 @@ class SpatialReactantSelection(ReactantSelection):
     def get_reactants(self):
 
         while len(SpatialReactantSelection.reactant_list) == 0:  # reactant_list maintained by _begin_handler()
-            SpatialReactantSelection.space.step(0.1)  # trigger _begin_handler on collision
-        if len(SpatialReactantSelection.reactant_list) > 10:
-            print(len(SpatialReactantSelection.reactant_list))
+            SpatialReactantSelection.space.step(0.2)  # trigger _begin_handler on collision
+            l = len(SpatialReactantSelection.reactant_list)
+            if l > 10:
+                logging.info("Excessive reactant_list length ({})".format(l))
 
         # Now weed out any reactions that involve a molecule that no longer exists because of a prior reaction
         molecules = SpatialReactantSelection.lookup.values()  # {shape: Molecule}
@@ -77,14 +80,20 @@ class SpatialReactantSelection(ReactantSelection):
         while len(SpatialReactantSelection.reactant_list) > 0:
             r = SpatialReactantSelection.reactant_list.pop(0)  # {Molecule:pm.Body}
             try:
-                idx = [molecules.index(reactant) for reactant in r.keys()]
+                [molecules.index(reactant) for reactant in r.keys()]
             except ValueError:
                 pass
             else:
                 self.current_reactions.append(r)
-                return r.keys()
 
-        return []
+                # Energy available for the reaction = KE of molecules - KE of centre of mass
+
+                bodies = r.values()
+                initial_ke = sum([body.kinetic_energy for body in bodies])
+                reaction_energy = initial_ke - Kinetics2D.get_cm_energy(bodies)
+                return Reaction(reactants=r.keys(), reactant_value=reaction_energy)
+
+        return None
 
     def react(self, reaction):
 

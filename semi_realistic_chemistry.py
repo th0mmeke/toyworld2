@@ -34,48 +34,41 @@ class SemiRealisticChemistry(IChemistry):
         for i in count.keys():
             self._default_bond_energies[i] = self._default_bond_energies[i] / count[i]
 
-    def enumerate(self, reactants):
+    def enumerate(self, partial_reaction):
 
         """
-        Discover all possible options for reactions between the separate components of this Molecule, based on the
-        Chemistry provided. The options are based on possible bond changes:
+        Discover all possible options for reactions between the separate components of this Molecule.
+        The options are based on possible bond changes:
 
         1. Breaking of existing bonds
         2. Switch one bond type for another
         3. Addition of bonds
 
-        In each of these cases we update the formal charges to reflect the changes, and test the resulting product for sanity
-
-        If any Hs have been added earlier this will preserve them.
-
-        Note: this is surprisingly difficult in RDKit. RDKit's transformation method - EditableMol - doesn't play well in subclasses as it GetMol() method
-        returns an object of class Mol rather than the original type. So using EditableMol results in a different type from the original.
-        This means that we either 1) avoid using EditableMol, 2) restore the type, or 3) base everything on Mol rather than subclasses
-        3) is impractical - KineticMolecule and Molecule are natural extensions of Mol
-        1) is impossible - we need to break bonds, which requires EditableMol (SetBondType() can't remove a bond as Chem.BondType doesn't have a 'nothing' option)
-        2) is difficult. We need transformed copies of our original reactants (which are subclasses of Mol), but Mol cannot be copied (no copy method, doesn't
-        play with copy.copy or copy.deepcopy as doesn't support Pickle)
-
-        :param reactants: [Molecule]
+        :param partial_reaction: Reaction containing reactants and reactant_value
         :rtype: [Reaction]
         """
 
-        reaction_options = self._get_change_options(reactants)
-        addition_options = self._get_addition_options(reactants)
+        if partial_reaction is None:
+            logging.debug("No reactants to enumerate")
+            return None
+
+        reaction_options = self._get_change_options(partial_reaction)
+        addition_options = self._get_addition_options(partial_reaction)
         if len(addition_options) > 0:
             reaction_options.extend(addition_options)
 
         logging.debug("{} reaction options found".format(len(reaction_options)))
+
         return reaction_options
 
-    def _get_change_options(self, reactants):
+    def _get_change_options(self, partial_reaction):
 
         """
-        :param reactants: [Molecule]
-        :return:
+        :param partial_reaction: Reaction
+        :return: [Reaction]
         """
 
-        reactant = SemiRealisticChemistry._join(reactants)
+        reactant = SemiRealisticChemistry._join(partial_reaction.get_reactants())
 
         options = []
         for bond in reactant.GetBonds():
@@ -94,19 +87,20 @@ class SemiRealisticChemistry(IChemistry):
                                                         reactant_copy.GetAtomWithIdx(end_atom_idx).GetSymbol(),
                                                         from_bond_type=old_bond_order,
                                                         to_bond_type=new_bond_order)
-                    options.append(Reaction(reactants=reactants,
+                    options.append(Reaction(reactants=partial_reaction.get_reactants(),
+                                            reactant_value=partial_reaction.reactant_value,
                                             products=SemiRealisticChemistry._split(reactant_copy),
-                                            weight=bond_energy))
+                                            product_value=bond_energy))
         return options
 
-    def _get_addition_options(self, reactants):
+    def _get_addition_options(self, partial_reaction):
 
         """
-        :param reactants: Molecule
-        :return:
+        :param partial_reaction: Reaction
+        :return: [Reaction]
         """
 
-        reactant = SemiRealisticChemistry._join(reactants)
+        reactant = SemiRealisticChemistry._join(partial_reaction.get_reactants())
         options = []
 
         bond_potential = map(lambda x: SemiRealisticChemistry._get_bond_potential(x), reactant.GetAtoms())
@@ -146,9 +140,10 @@ class SemiRealisticChemistry(IChemistry):
                                 bond_energy = self._get_bond_energy(reactant_copy.GetAtomWithIdx(begin_atom_idx).GetSymbol(),
                                                                     reactant_copy.GetAtomWithIdx(end_atom_idx).GetSymbol(),
                                                                     to_bond_type=bond_order)  # bond creation of order bond_order
-                                options.append(Reaction(reactants=reactants,
+                                options.append(Reaction(reactants=partial_reaction.get_reactants(),
+                                                        reactant_value=partial_reaction.reactant_value,
                                                         products=SemiRealisticChemistry._split(reactant_copy),
-                                                        weight=bond_energy))
+                                                        product_value=bond_energy))
         return options
 
     @staticmethod
