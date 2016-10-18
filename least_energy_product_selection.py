@@ -35,7 +35,7 @@ def weight(reaction):
         return max(0, reaction.reactant_value - reaction.product_value)
 
 
-def least_energy_product_selection(reactions):
+def product_selection(reactions):
     if len(reactions) == 0:
         return []
 

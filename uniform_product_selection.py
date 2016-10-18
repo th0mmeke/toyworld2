@@ -1,7 +1,7 @@
 import random
 
 
-def uniform_product_selection(reactions):
+def product_selection(reactions):
     if len(reactions) == 0:
         return []
 
