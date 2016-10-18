@@ -3,7 +3,7 @@ import os
 import logging
 import argparse
 
-from toyworld import ToyWorld
+from toyworld2 import ToyWorld
 from uniform_reactant_selection import UniformReactantSelection
 from spatial_reactant_selection import SpatialReactantSelection
 from molecule import Molecule
@@ -11,10 +11,9 @@ from state import State
 from semi_realistic_chemistry import SemiRealisticChemistry
 
 
-def uniform_selection(population):
-    if len(population) > 0:
-        return random.sample(population, 1)[0]
-    return []
+
+
+
 
 
 def dummy(x):
