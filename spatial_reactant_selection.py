@@ -22,37 +22,34 @@ class SpatialReactantSelection(IReactantSelection):
     PRODUCT = 2
     WALL = 3
     BASE_MOLECULE_RADIUS = REACTION_VESSEL_SIZE / 500
-    bodies = {}  # dictionary body:mol
-    space = pm.Space()
-
-    reactant_list = []
-    lookup = {}
 
     def __init__(self, population, **kwargs):
 
         if not isinstance(population, list):
             raise TypeError
-        self.population = population
 
+        self.bodies = {}  # dictionary body:mol
         self.current_reactions = []
+        self.reactant_list = []
 
-        SpatialReactantSelection.space.gravity = pm.Vec2d(0, 0)
+        self.space = pm.Space()
+        self.space.gravity = pm.Vec2d(0, 0)
 
         wall_thickness = 100  # nice and thick so that fast moving molecules don't tunnel straight through
         wall_end_point = SpatialReactantSelection.REACTION_VESSEL_SIZE + wall_thickness
-        self._walls = [pm.Segment(SpatialReactantSelection.space.static_body, (-wall_end_point, -wall_end_point), (-wall_end_point, wall_end_point), wall_thickness),
-                       pm.Segment(SpatialReactantSelection.space.static_body, (-wall_end_point, wall_end_point), (wall_end_point, wall_end_point), wall_thickness),
-                       pm.Segment(SpatialReactantSelection.space.static_body, (wall_end_point, wall_end_point), (wall_end_point, -wall_end_point), wall_thickness),
-                       pm.Segment(SpatialReactantSelection.space.static_body, (-wall_end_point, -wall_end_point), (wall_end_point, -wall_end_point), wall_thickness)
+        self._walls = [pm.Segment(self.space.static_body, (-wall_end_point, -wall_end_point), (-wall_end_point, wall_end_point), wall_thickness),
+                       pm.Segment(self.space.static_body, (-wall_end_point, wall_end_point), (wall_end_point, wall_end_point), wall_thickness),
+                       pm.Segment(self.space.static_body, (wall_end_point, wall_end_point), (wall_end_point, -wall_end_point), wall_thickness),
+                       pm.Segment(self.space.static_body, (-wall_end_point, -wall_end_point), (wall_end_point, -wall_end_point), wall_thickness)
                        ]
         for wall in self._walls:  # can't set these in the Segment constructor
             wall.collision_type = SpatialReactantSelection.WALL
             wall.elasticity = 0.9999
             wall.friction = 0
 
-        h = SpatialReactantSelection.space.add_collision_handler(SpatialReactantSelection.REACTANT, SpatialReactantSelection.REACTANT)
-        h.begin = SpatialReactantSelection._begin_handler
-        h.separate = SpatialReactantSelection._end_handler
+        h = self.space.add_collision_handler(SpatialReactantSelection.REACTANT, SpatialReactantSelection.REACTANT)
+        h.begin = self._begin_handler
+        h.separate = self._end_handler
 
         locations = [[random.uniform(-SpatialReactantSelection.REACTION_VESSEL_SIZE, SpatialReactantSelection.REACTION_VESSEL_SIZE) for i in range(2)] for mol in population]
 
@@ -68,17 +65,17 @@ class SpatialReactantSelection(IReactantSelection):
 
     def get_reactants(self):
 
-        while len(SpatialReactantSelection.reactant_list) == 0:  # reactant_list maintained by _begin_handler()
-            SpatialReactantSelection.space.step(0.2)  # trigger _begin_handler on collision
-            l = len(SpatialReactantSelection.reactant_list)
+        while len(self.reactant_list) == 0:  # reactant_list maintained by _begin_handler()
+            self.space.step(0.2)  # trigger _begin_handler on collision
+            l = len(self.reactant_list)
             if l > 10:
                 logging.info("Excessive reactant_list length ({})".format(l))
 
         # Now weed out any reactions that involve a molecule that no longer exists because of a prior reaction
-        molecules = SpatialReactantSelection.lookup.values()  # {shape: Molecule}
+        molecules = self.bodies.values()  # {shape: Molecule}
 
-        while len(SpatialReactantSelection.reactant_list) > 0:
-            r = SpatialReactantSelection.reactant_list.pop(0)  # {Molecule:pm.Body}
+        while len(self.reactant_list) > 0:
+            r = self.reactant_list.pop(0)  # {Molecule:pm.Body}
             try:
                 [molecules.index(reactant) for reactant in r.keys()]
             except ValueError:
@@ -112,7 +109,7 @@ class SpatialReactantSelection(IReactantSelection):
         # Remove reactant bodies+shapes
         for body in reactant_bodies:
             for shape in body.shapes:
-                del SpatialReactantSelection.lookup[shape]  # Remove shape:Molecule from the lookup table
+                del self.bodies[shape]  # Remove shape:Molecule from the lookup table
             self.space.remove(body.shapes)
 
         self.space.remove(reactant_bodies)
@@ -125,12 +122,10 @@ class SpatialReactantSelection(IReactantSelection):
 
         del self.current_reactions[i]
 
-    @classmethod
-    def get_population(cls):
-        return SpatialReactantSelection.lookup.values()
+    def get_population(self):
+        return self.bodies.values()
 
-    @classmethod
-    def add_molecule(cls, molecule, mass, location, velocity, collision_type):
+    def add_molecule(self, molecule, mass, location, velocity, collision_type):
 
         """
 
@@ -141,23 +136,22 @@ class SpatialReactantSelection(IReactantSelection):
         :return:
         """
 
-        inertia = pm.moment_for_circle(mass, 0, cls.BASE_MOLECULE_RADIUS, (0, 0))
+        inertia = pm.moment_for_circle(mass, 0, SpatialReactantSelection.BASE_MOLECULE_RADIUS, (0, 0))
         body = pm.Body(mass, inertia)
         body.position = location
         body.velocity = velocity
 
-        shape = pm.Circle(body, cls.BASE_MOLECULE_RADIUS, (0, 0))
+        shape = pm.Circle(body, SpatialReactantSelection.BASE_MOLECULE_RADIUS, (0, 0))
         shape.elasticity = 0.999  # required for standard collision handler to do a 'perfect' bounce
         shape.friction = 0.0
         shape.collision_type = collision_type
 
-        SpatialReactantSelection.space.add(shape)
-        SpatialReactantSelection.space.add(body)
+        self.space.add(shape)
+        self.space.add(body)
 
-        SpatialReactantSelection.lookup[shape] = molecule
+        self.bodies[shape] = molecule
 
-    @classmethod
-    def _end_handler(cls, arbiter, space, data):
+    def _end_handler(self, arbiter, space, data):
         '''Called when two molecules separate. Mark them as potential reactants.
         :param arbiter:
         :param space:
@@ -166,14 +160,13 @@ class SpatialReactantSelection(IReactantSelection):
         '''
 
         for shape in arbiter.shapes:
-            shape.collision_type = cls.REACTANT
+            shape.collision_type = SpatialReactantSelection.REACTANT
         return False
 
-    @classmethod
-    def _begin_handler(cls, arbiter, space, data):
+    def _begin_handler(self, arbiter, space, data):
 
         """
-        Add {Molecule: pm.Body} for all reactants to cls.reactant_list
+        Add {Molecule: pm.Body} for all reactants to reactant_list
         :param arbiter:
         :param space:
         :param data:
@@ -181,11 +174,11 @@ class SpatialReactantSelection(IReactantSelection):
         """
 
         try:
-            reactants = {SpatialReactantSelection.lookup[shape]: shape.body for shape in arbiter.shapes}
+            reactants = {self.bodies[shape]: shape.body for shape in arbiter.shapes}
         except KeyError:
-            return False  # one or more reactants were in collision with another molecule previously in this timestep
+            return False  # one or more reactants were in collision with another molecule previously in this time-step
 
-        cls.reactant_list.append(reactants)
+        self.reactant_list.append(reactants)
 
         return True
 
