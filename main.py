@@ -7,6 +7,7 @@ from toyworld2 import ToyWorld
 from uniform_reactant_selection import UniformReactantSelection
 from spatial_reactant_selection import SpatialReactantSelection
 import uniform_product_selection
+import least_energy_product_selection
 from molecule import Molecule
 from state import State
 from semi_realistic_chemistry import SemiRealisticChemistry
@@ -84,6 +85,6 @@ if __name__ == "__main__":
 
     tw = ToyWorld(reactor=SpatialReactantSelection(population=population, ke=10),
                   chemistry=SemiRealisticChemistry(bond_energies=bond_energies),
-                  product_selection=uniform_product_selection.product_selection)
+                  product_selection=least_energy_product_selection.product_selection)
     state = tw.run(generations=200, state=State(persistence=dummy))
 

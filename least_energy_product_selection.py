@@ -36,7 +36,7 @@ def weight(reaction):
 
 
 def product_selection(reactions):
-    if len(reactions) == 0:
-        return []
+    if len(reactions) == 0 or reactions is None:
+        return None
 
     return choice(elements=reactions, weights=[weight(reaction) for reaction in reactions])

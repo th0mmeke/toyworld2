@@ -16,10 +16,10 @@ class ToyWorld:
         for i in range(generations):
             partial_reaction = self.reactor.get_reactants()
             reactions = self.chemistry.enumerate(partial_reaction)
-            if reactions is not None:
-                reaction = self.product_selection(reactions)
-                self.reactor.react(reaction)
+            reaction = self.product_selection(reactions)
 
+            if reaction is not None:
+                self.reactor.react(reaction)
                 state.add(reaction.as_dict())
 
         logging.info("Final population: {}".format(Counter([str(x) for x in self.reactor.get_population()])))
