@@ -1,13 +1,7 @@
-"""
-Created on 27/04/2013
-
-@author: thom
-"""
 import random
 import unittest
 import math
 
-import numpy as np
 import pymunk as pm
 
 from kinetics_2D import Kinetics2D
