@@ -2,7 +2,7 @@ import random
 
 
 def product_selection(reactions):
-    if len(reactions) == 0 or reactions is None:
+    if reactions is None or len(reactions) == 0:
         return None
 
     return random.sample(reactions, 1)[0]

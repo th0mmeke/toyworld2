@@ -18,3 +18,6 @@ class TestLeastEnergyProductSelection(unittest.TestCase):
         actual = [least_energy_product_selection.choice([1, 0], weights=[2, 4]) for i in range(n)]
         self.assertAlmostEqual(actual.count(0), n*4/6, delta=700)
         self.assertAlmostEqual(actual.count(1), n*2/6, delta=400)
+
+    def testProductSelection(self):
+        self.assertIsNone(least_energy_product_selection.product_selection(None))
