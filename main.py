@@ -83,12 +83,7 @@ if __name__ == "__main__":
         for i in range(quantity):
             population.append(Molecule(symbol))
 
-    tw = ToyWorld(reactor=SpatialReactantSelection(population=population, ke=10),
-                  chemistry=SemiRealisticChemistry(bond_energies=bond_energies),
-                  product_selection=least_energy_product_selection.product_selection)
-    state = tw.run(generations=200, state=State(persistence=dummy))
-
-    tw = ToyWorld(reactor=SpatialReactantSelection(population=population, ke=10),
+    tw = ToyWorld(reactor=SpatialReactantSelection(population=population, ke=100),
                   chemistry=SemiRealisticChemistry(bond_energies=bond_energies),
                   product_selection=least_energy_product_selection.product_selection)
     state = tw.run(generations=200, state=State(persistence=dummy))
