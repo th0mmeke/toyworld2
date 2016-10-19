@@ -26,6 +26,13 @@ class SpatialReactantSelection(IReactantSelection):
 
     def __init__(self, population, **kwargs):
 
+        """
+        Population consists of Molecules with mass property.
+
+        :param population: [Molecule with mass]
+        :param kwargs: Standard python kwargs dict; expect a 'ke' property with the value of the initial KE for the reactor
+        """
+
         if not isinstance(population, list):
             raise TypeError
 
@@ -52,27 +59,18 @@ class SpatialReactantSelection(IReactantSelection):
         h.begin = self._begin_handler
         h.separate = self._end_handler
 
-        # h1 = self.space.add_collision_handler(SpatialReactantSelection.REACTANT, SpatialReactantSelection.WALL)
-        # h1.begin = self._wall_handler
-        # h2 = self.space.add_collision_handler(SpatialReactantSelection.PRODUCT, SpatialReactantSelection.WALL)
-        # h2.begin = self._wall_handler
-
         locations = [pm.Vec2d([random.uniform(-SpatialReactantSelection.REACTION_VESSEL_SIZE, SpatialReactantSelection.REACTION_VESSEL_SIZE) for i in range(2)]) for mol in population]
 
         # Add them into the main space using the new locations
 
         for molecule, location in zip(population, locations):
-            mol = Chem.MolFromSmiles(molecule.get_symbol())  # purely to calculate molecule mass
-            mol = Chem.AddHs(mol)
-            mass = sum([atom.GetMass() for atom in mol.GetAtoms()])
-            velocity = pm.Vec2d(math.sqrt(2.0 * kwargs['ke'] / mass), 0)
+            velocity = pm.Vec2d(math.sqrt(2.0 * kwargs['ke'] / molecule.mass), 0)
             velocity.angle = random.uniform(-math.pi, math.pi)
-            canonical_molecule = Molecule(Chem.MolToSmiles(mol))
 
-            self._add_molecule(canonical_molecule, mass, location=location, velocity=velocity, collision_type=SpatialReactantSelection.REACTANT)
+            self._add_molecule(molecule, location=location, velocity=velocity, collision_type=SpatialReactantSelection.REACTANT)
 
         logging.info("Initial population: {}".format(Counter([str(x) for x in self.get_population()])))
-        self._set_step_size()
+        self.step_size = self._calculate_step_size()
 
     def get_reactants(self):
 
@@ -81,7 +79,7 @@ class SpatialReactantSelection(IReactantSelection):
             i += 1
             self.space.step(self.step_size)  # trigger _begin_handler on collision
             if i > 10 and (len(self.reactant_list) == 0 or len(self.reactant_list) > 10):
-                self._set_step_size()
+                self.step_size = self._calculate_step_size()
                 i = 0
 
         # Now weed out any reactions that involve a molecule that no longer exists because of a prior reaction
@@ -131,19 +129,20 @@ class SpatialReactantSelection(IReactantSelection):
         product_masses = [sum([atom.GetMass() for atom in Chem.AddHs(Chem.MolFromSmiles(molecule.get_symbol())).GetAtoms()]) for molecule in reaction.products]
         out_v = Kinetics2D.inelastic_collision(reactant_bodies, product_masses)
         for molecule, velocity, mass in zip(reaction.products, out_v, product_masses):
-            self._add_molecule(molecule, mass, location=midpoint, velocity=velocity, collision_type=SpatialReactantSelection.PRODUCT)
+            molecule.mass = mass
+            self._add_molecule(molecule, location=midpoint, velocity=velocity, collision_type=SpatialReactantSelection.PRODUCT)
 
         del self.current_reactions[i]
 
     def get_population(self):
         return self.bodies.values()
 
-    def _add_molecule(self, molecule, mass, location, velocity, collision_type):
+    def _add_molecule(self, molecule, location, velocity, collision_type):
 
         """
         Add a single Molecule into the reactor.
 
-        :param molecule: Molecule
+        :param molecule: Molecule with mass property
         :param location: pm.Vec2d
         :param velocity: pm.Vec2d
         :param collision_type: Int
@@ -153,8 +152,8 @@ class SpatialReactantSelection(IReactantSelection):
         assert abs(location.x) <= self.REACTION_VESSEL_SIZE and abs(location.y) <= self.REACTION_VESSEL_SIZE
         # If fail assertion, then molecules are either skipping over walls, or the walls aren't reflecting them, or the walls are in the wrong place
 
-        inertia = pm.moment_for_circle(mass, 0, SpatialReactantSelection.BASE_MOLECULE_RADIUS, (0, 0))
-        body = pm.Body(mass, inertia)
+        inertia = pm.moment_for_circle(molecule.mass, 0, SpatialReactantSelection.BASE_MOLECULE_RADIUS, (0, 0))
+        body = pm.Body(molecule.mass, inertia)
         body.position = location
         body.velocity = velocity
 
@@ -168,22 +167,18 @@ class SpatialReactantSelection(IReactantSelection):
 
         self.bodies[shape] = molecule
 
-    def _set_step_size(self):
+    def _calculate_step_size(self):
 
         """
-        Set an appropriate time step for the pymunk space updater based on the mean velocity of the bodies.
+        Calculate an appropriate time step for the pymunk space updater based on the mean velocity of the bodies.
         Too small a step size will be slow, while too big a step size might miss collisions.
         Some missed collisions however are acceptable.
 
-        :return:
+        :return: float
         """
 
         velocity_distribution = [shape.body.velocity.length for shape in self.bodies]
-        v_mean = sum(velocity_distribution) / len(velocity_distribution)
-
-        self.step_size = 1 / v_mean
-        # logging.info("Outscope = {}".format(len([1 for shape in self.bodies if abs(shape.body.position.x) > 500 or abs(shape.body.position.y > 500)])))
-        # logging.info("Step-size={}, v_mean={}, population size={}".format(self.step_size, v_mean, len(self.get_population())))
+        return 1.0 * len(velocity_distribution) / sum(velocity_distribution)
 
     def _end_handler(self, arbiter, space, data):
 
@@ -218,7 +213,4 @@ class SpatialReactantSelection(IReactantSelection):
 
         return True
 
-    def _wall_handler(self, arbiter, space, data):
-        print([shape.body.position for shape in arbiter.shapes])
-        return True
 
