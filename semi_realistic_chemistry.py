@@ -2,6 +2,7 @@ from rdkit.Chem import AllChem as Chem
 import copy
 import logging
 import networkx as nx
+import re
 
 from i_chemistry import IChemistry
 from reaction import Reaction
@@ -23,7 +24,7 @@ class SemiRealisticChemistry(IChemistry):
         count = {}
         self._default_bond_energies = {}
         for bond, energy in self._bond_energies.iteritems():
-            key = int(bond[1])
+            key = re.match(r"(\w+)(\d)(\w+)", bond).groups()[1]
             try:
                 count[key] += 1
                 self._default_bond_energies[key] += energy

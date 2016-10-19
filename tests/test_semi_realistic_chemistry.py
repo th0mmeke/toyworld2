@@ -4,39 +4,14 @@ from rdkit.Chem import AllChem as Chem
 from semi_realistic_chemistry import SemiRealisticChemistry
 from molecule import Molecule
 from reaction import Reaction
+import bond_energies
 
 
 class TestSemiRealisticChemistry(unittest.TestCase):
 
-    def setUp(self):
-        
-        self.bond_energies = {
-            'H1H': 104.2,
-            'C1C': 83,
-            'N1N': 38.4,
-            'O1O': 35,
-            'H1C': 99, 'C1H': 99,
-            'H1N': 93, 'N1H': 93,
-            'H1O': 111, 'O1H': 111,
-            'C1N': 73, 'N1C': 73,
-            'C1O': 85.5, 'O1C': 85.5,
-            'N1O': 55, 'O1N': 55,
-            'C2O': 185, 'O2C': 185,  # rough average of range
-            'C2C': 146,
-            'N2N': 149,
-            'O2O': 119,
-            'C2N': 147, 'N2C': 147,
-            'N2O': 143, 'O2N': 143,
-            'C3O': 258, 'O3C': 258,
-            'C3C': 200,
-            'N3N': 226,
-            'C3N': 213, 'N3C': 213,
-            'C4C': 200  # theoretically possible from valences, but in nature forms a C2C bond instead
-        }
-
     def test_get_bond_energy(self):
         # energy is energy REQUIRED => - means releases energy
-        chem = SemiRealisticChemistry(bond_energies=self.bond_energies)
+        chem = SemiRealisticChemistry(bond_energies=bond_energies.bond_energies)
         self.assertEqual(-38.4, chem._get_bond_energy('N', 'N', to_bond_type=1))  # create single bond
         self.assertEqual(-38.4, chem._get_bond_energy('N', 'N', from_bond_type=0, to_bond_type=1))  # create single bond
         self.assertEqual(38.4, chem._get_bond_energy('N', 'N', from_bond_type=1, to_bond_type=0))  # destroy single bond
@@ -45,7 +20,7 @@ class TestSemiRealisticChemistry(unittest.TestCase):
         self.assertEqual(38.4, chem._get_bond_energy('N', 'N', from_bond_type=1))  # delete single bond
 
     def test_change_options(self):
-        chem = SemiRealisticChemistry(bond_energies=self.bond_energies)
+        chem = SemiRealisticChemistry(bond_energies=bond_energies.bond_energies)
         l = chem._get_change_options(Reaction(reactants=[Molecule('C')]))
         self.assertIsInstance(l, list)
         self.assertEqual(4, len(l))
@@ -66,7 +41,7 @@ class TestSemiRealisticChemistry(unittest.TestCase):
         self.assertEqual('[CH2-2]', r[1].get_symbol())
 
     def test_get_bond_potential(self):
-        chem = SemiRealisticChemistry(bond_energies=self.bond_energies)
+        chem = SemiRealisticChemistry(bond_energies=bond_energies.bond_energies)
 
         mol = Chem.AddHs(Chem.MolFromSmiles('[CH2-2].[CH2-2]'))
         self.assertEqual(4, chem._get_bond_potential(mol.GetAtoms()[0]))
