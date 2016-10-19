@@ -11,8 +11,6 @@ class ToyWorld:
 
     def run(self, generations, state):
 
-        logging.info("Initial population: {}".format(Counter([str(x) for x in self.reactor.get_population()])))
-
         for i in range(generations):
             partial_reaction = self.reactor.get_reactants()
             reactions = self.chemistry.enumerate(partial_reaction)

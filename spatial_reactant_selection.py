@@ -1,12 +1,14 @@
 import random
 import math
 import logging
+from collections import Counter
 
 import pymunk as pm
 from rdkit.Chem import AllChem as Chem
 from i_reactant_selection import IReactantSelection
 from kinetics_2D import Kinetics2D
 from reaction import Reaction
+from molecule import Molecule
 
 
 class SpatialReactantSelection(IReactantSelection):
@@ -20,7 +22,7 @@ class SpatialReactantSelection(IReactantSelection):
     REACTANT = 1
     PRODUCT = 2
     WALL = 3
-    BASE_MOLECULE_RADIUS = REACTION_VESSEL_SIZE / 500
+    BASE_MOLECULE_RADIUS = REACTION_VESSEL_SIZE / 50
 
     def __init__(self, population, **kwargs):
 
@@ -34,34 +36,42 @@ class SpatialReactantSelection(IReactantSelection):
         self.space = pm.Space()
         self.space.gravity = pm.Vec2d(0, 0)
 
-        wall_thickness = 100  # nice and thick so that fast moving molecules don't tunnel straight through
+        wall_thickness = 10000  # nice and thick so that fast moving molecules don't tunnel straight through
         wall_end_point = SpatialReactantSelection.REACTION_VESSEL_SIZE + wall_thickness
         self._walls = [pm.Segment(self.space.static_body, (-wall_end_point, -wall_end_point), (-wall_end_point, wall_end_point), wall_thickness),
                        pm.Segment(self.space.static_body, (-wall_end_point, wall_end_point), (wall_end_point, wall_end_point), wall_thickness),
                        pm.Segment(self.space.static_body, (wall_end_point, wall_end_point), (wall_end_point, -wall_end_point), wall_thickness),
-                       pm.Segment(self.space.static_body, (-wall_end_point, -wall_end_point), (wall_end_point, -wall_end_point), wall_thickness)
-                       ]
+                       pm.Segment(self.space.static_body, (-wall_end_point, -wall_end_point), (wall_end_point, -wall_end_point), wall_thickness)]
         for wall in self._walls:  # can't set these in the Segment constructor
             wall.collision_type = SpatialReactantSelection.WALL
-            wall.elasticity = 0.9999
+            wall.elasticity = 0.999  # using 1.0 is not recommended by pymunk
             wall.friction = 0
+            self.space.add(wall)
 
         h = self.space.add_collision_handler(SpatialReactantSelection.REACTANT, SpatialReactantSelection.REACTANT)
         h.begin = self._begin_handler
         h.separate = self._end_handler
 
-        locations = [[random.uniform(-SpatialReactantSelection.REACTION_VESSEL_SIZE, SpatialReactantSelection.REACTION_VESSEL_SIZE) for i in range(2)] for mol in population]
+        # h1 = self.space.add_collision_handler(SpatialReactantSelection.REACTANT, SpatialReactantSelection.WALL)
+        # h1.begin = self._wall_handler
+        # h2 = self.space.add_collision_handler(SpatialReactantSelection.PRODUCT, SpatialReactantSelection.WALL)
+        # h2.begin = self._wall_handler
+
+        locations = [pm.Vec2d([random.uniform(-SpatialReactantSelection.REACTION_VESSEL_SIZE, SpatialReactantSelection.REACTION_VESSEL_SIZE) for i in range(2)]) for mol in population]
 
         # Add them into the main space using the new locations
 
         for molecule, location in zip(population, locations):
             mol = Chem.MolFromSmiles(molecule.get_symbol())  # purely to calculate molecule mass
+            mol = Chem.AddHs(mol)
             mass = sum([atom.GetMass() for atom in mol.GetAtoms()])
             velocity = pm.Vec2d(math.sqrt(2.0 * kwargs['ke'] / mass), 0)
             velocity.angle = random.uniform(-math.pi, math.pi)
+            canonical_molecule = Molecule(Chem.MolToSmiles(mol))
 
-            self._add_molecule(molecule, mass, location, velocity, SpatialReactantSelection.REACTANT)
+            self._add_molecule(canonical_molecule, mass, location=location, velocity=velocity, collision_type=SpatialReactantSelection.REACTANT)
 
+        logging.info("Initial population: {}".format(Counter([str(x) for x in self.get_population()])))
         self._set_step_size()
 
     def get_reactants(self):
@@ -70,7 +80,7 @@ class SpatialReactantSelection(IReactantSelection):
         while len(self.reactant_list) == 0:  # reactant_list maintained by _begin_handler()
             i += 1
             self.space.step(self.step_size)  # trigger _begin_handler on collision
-            if i > 5 and (len(self.reactant_list) == 0 or len(self.reactant_list) > 10):
+            if i > 10 and (len(self.reactant_list) == 0 or len(self.reactant_list) > 10):
                 self._set_step_size()
                 i = 0
 
@@ -107,7 +117,7 @@ class SpatialReactantSelection(IReactantSelection):
 
         # Find middle point of reactant bodies
         reactant_bodies = r.values()
-        midpoint = sum([b.position for b in reactant_bodies])/len(reactant_bodies)  # Vec2d
+        midpoint = sum([b.position for b in reactant_bodies]) / len(reactant_bodies)  # Vec2d
 
         # Remove reactant bodies+shapes
         for body in reactant_bodies:
@@ -118,10 +128,10 @@ class SpatialReactantSelection(IReactantSelection):
         self.space.remove(reactant_bodies)
 
         # Add in product bodies to middle point of reaction
-        product_masses = [sum([atom.GetMass() for atom in Chem.MolFromSmiles(molecule.get_symbol()).GetAtoms()]) for molecule in reaction.products]
+        product_masses = [sum([atom.GetMass() for atom in Chem.AddHs(Chem.MolFromSmiles(molecule.get_symbol())).GetAtoms()]) for molecule in reaction.products]
         out_v = Kinetics2D.inelastic_collision(reactant_bodies, product_masses)
         for molecule, velocity, mass in zip(reaction.products, out_v, product_masses):
-            self._add_molecule(molecule, mass, midpoint, velocity, SpatialReactantSelection.PRODUCT)
+            self._add_molecule(molecule, mass, location=midpoint, velocity=velocity, collision_type=SpatialReactantSelection.PRODUCT)
 
         del self.current_reactions[i]
 
@@ -139,6 +149,9 @@ class SpatialReactantSelection(IReactantSelection):
         :param collision_type: Int
         :return:
         """
+
+        assert abs(location.x) <= self.REACTION_VESSEL_SIZE and abs(location.y) <= self.REACTION_VESSEL_SIZE
+        # If fail assertion, then molecules are either skipping over walls, or the walls aren't reflecting them, or the walls are in the wrong place
 
         inertia = pm.moment_for_circle(mass, 0, SpatialReactantSelection.BASE_MOLECULE_RADIUS, (0, 0))
         body = pm.Body(mass, inertia)
@@ -169,7 +182,8 @@ class SpatialReactantSelection(IReactantSelection):
         v_mean = sum(velocity_distribution) / len(velocity_distribution)
 
         self.step_size = 1 / v_mean
-        logging.debug("Step-size={}, v_mean={}".format(self.step_size, v_mean))
+        # logging.info("Outscope = {}".format(len([1 for shape in self.bodies if abs(shape.body.position.x) > 500 or abs(shape.body.position.y > 500)])))
+        # logging.info("Step-size={}, v_mean={}, population size={}".format(self.step_size, v_mean, len(self.get_population())))
 
     def _end_handler(self, arbiter, space, data):
 
@@ -204,4 +218,7 @@ class SpatialReactantSelection(IReactantSelection):
 
         return True
 
+    def _wall_handler(self, arbiter, space, data):
+        print([shape.body.position for shape in arbiter.shapes])
+        return True
 
