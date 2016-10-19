@@ -14,7 +14,8 @@ class TestUniformReactantSelection(unittest.TestCase):
         self.assertIsInstance(r, UniformReactantSelection)
 
     def test_get_reactants(self):
-        self.assertEqual(UniformReactantSelection(population=['A']).get_reactants(), ['A'])
+        self.assertIsInstance(UniformReactantSelection(population=['A']).get_reactants(), Reaction)
+        self.assertEqual(UniformReactantSelection(population=['A']).get_reactants().get_reactants(), ['A'])
 
     def test_react(self):
         """
@@ -36,7 +37,7 @@ class TestUniformReactantSelection(unittest.TestCase):
 
         r = UniformReactantSelection(population=['A'])
         sr = r.react(Reaction(reactants=['A'], products=['B', 'C']))
-        self.assertItemsEqual(r.get_reactants(), ['B', 'C'])
+        self.assertItemsEqual(r.get_reactants().get_reactants(), ['B', 'C'])
         self.assertIsInstance(sr, dict)
 
     def test_react_errors(self):

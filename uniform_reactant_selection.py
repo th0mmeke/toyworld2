@@ -1,10 +1,11 @@
 import random
 from i_reactant_selection import IReactantSelection
+from reaction import Reaction
 
 
 class UniformReactantSelection(IReactantSelection):
 
-    def __init__(self, population):
+    def __init__(self, population, **kwargs):
 
         if not isinstance(population, list):
             raise TypeError
@@ -17,7 +18,7 @@ class UniformReactantSelection(IReactantSelection):
         else:
             reactants = self.population
         assert type(reactants) == list
-        return reactants
+        return Reaction(reactants=reactants)
 
     def react(self, reaction):
 
@@ -26,6 +27,9 @@ class UniformReactantSelection(IReactantSelection):
         self.population.extend(reaction.get_products())
 
         return reaction.as_dict()
+
+    def get_population(self):
+        return self.population
 
     def __str__(self):
         return ",".join([str(x) for x in self.population])

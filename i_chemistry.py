@@ -1,5 +1,10 @@
-class IChemistry(object):
+from abc import ABCMeta, abstractmethod
 
+
+class IChemistry(object):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def enumerate(self, partial_reaction):
 
         """

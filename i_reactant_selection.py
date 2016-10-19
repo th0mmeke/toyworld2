@@ -1,5 +1,10 @@
-class IReactantSelection(object):
+from abc import ABCMeta, abstractmethod
 
+
+class IReactantSelection(object):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def get_reactants(self):
 
         """
@@ -10,6 +15,7 @@ class IReactantSelection(object):
 
         pass
 
+    @abstractmethod
     def react(self, reaction):
 
         """
@@ -19,6 +25,16 @@ class IReactantSelection(object):
         :param reaction: Reaction
         :return: StateRecord
 
+        """
+
+        pass
+
+    @abstractmethod
+    def get_population(self):
+
+        """
+        Return a list of Molecules in the population.
+        :return: [Molecule]
         """
 
         pass
