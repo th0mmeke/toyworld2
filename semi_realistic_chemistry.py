@@ -79,19 +79,21 @@ class SemiRealisticChemistry(IChemistry):
             old_bond_order = int(bond.GetBondType())
 
             for new_bond_order in range(0, old_bond_order):  # all bond options between none (break bond) and one-less-than-current
-                reactant_copy = copy.deepcopy(reactant)  # operate on copy of self, so options are not cumulative
+
                 try:
-                    SemiRealisticChemistry._change_bond(reactant_copy, begin_atom_idx, end_atom_idx, new_bond_order)
+                    product = SemiRealisticChemistry._change_bond(copy.deepcopy(reactant), begin_atom_idx, end_atom_idx, new_bond_order)
+                    assert product.GetNumAtoms() == reactant.GetNumAtoms()
+
                 except ValueError:
                     pass  # just ignore if this option isn't possible
                 else:  # no exception, so managed to execute _change_bond()...
-                    bond_energy = self._get_bond_energy(reactant_copy.GetAtomWithIdx(begin_atom_idx).GetSymbol(),
-                                                        reactant_copy.GetAtomWithIdx(end_atom_idx).GetSymbol(),
+                    bond_energy = self._get_bond_energy(product.GetAtomWithIdx(begin_atom_idx).GetSymbol(),
+                                                        product.GetAtomWithIdx(end_atom_idx).GetSymbol(),
                                                         from_bond_type=old_bond_order,
                                                         to_bond_type=new_bond_order)
                     options.append(Reaction(reactants=partial_reaction.get_reactants(),
                                             reactant_value=partial_reaction.reactant_value,
-                                            products=SemiRealisticChemistry._split(reactant_copy),
+                                            products=SemiRealisticChemistry._split(product),
                                             product_value=bond_energy))
         return options
 
@@ -134,18 +136,20 @@ class SemiRealisticChemistry(IChemistry):
                     if max_bond_order > 0:
 
                         for bond_order in range(1, max_bond_order + 1):  # all bond options up to and including max_bond_order
-                            reactant_copy = copy.deepcopy(reactant)  # operate on fresh copy so options don't accumulate
+
                             try:
-                                self._change_bond(reactant_copy, begin_atom_idx, end_atom_idx, bond_order)
+                                product = self._change_bond(copy.deepcopy(reactant), begin_atom_idx, end_atom_idx, bond_order)
+                                assert product.GetNumAtoms() == reactant.GetNumAtoms()
+
                             except ValueError:
                                 pass  # just ignore invalid options
                             else:
-                                bond_energy = self._get_bond_energy(reactant_copy.GetAtomWithIdx(begin_atom_idx).GetSymbol(),
-                                                                    reactant_copy.GetAtomWithIdx(end_atom_idx).GetSymbol(),
+                                bond_energy = self._get_bond_energy(product.GetAtomWithIdx(begin_atom_idx).GetSymbol(),
+                                                                    product.GetAtomWithIdx(end_atom_idx).GetSymbol(),
                                                                     to_bond_type=bond_order)  # bond creation of order bond_order
                                 options.append(Reaction(reactants=partial_reaction.get_reactants(),
                                                         reactant_value=partial_reaction.reactant_value,
-                                                        products=SemiRealisticChemistry._split(reactant_copy),
+                                                        products=SemiRealisticChemistry._split(product),
                                                         product_value=bond_energy))
         return options
 
@@ -243,21 +247,27 @@ class SemiRealisticChemistry(IChemistry):
         """
         Change type of bond in place.
         Raise ValueError if cannot be changed.
+
+        :return: RDKit.mol
         """
 
         if new_bond_order > 3:
             raise ValueError  # to meet RDKit restriction from organic reactions that maximum likely bond is triple-bond
 
         bond = mol.GetBondBetweenAtoms(begin_atom_idx, end_atom_idx)
+
         e_mol = Chem.EditableMol(mol)
         if bond is not None:  # remove any existing bond
             e_mol.RemoveBond(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
         if new_bond_order != 0:  # add in any new bond
             e_mol.AddBond(begin_atom_idx, end_atom_idx, Chem.BondType.values[new_bond_order])
 
+        new_mol = e_mol.GetMol()
+        Chem.SanitizeMol(new_mol)
+
         # Adjust formal charges if using bond based on charge_order...goal is to make fc of both zero
-        begin_atom = mol.GetAtomWithIdx(begin_atom_idx)
-        end_atom = mol.GetAtomWithIdx(end_atom_idx)
+        begin_atom = new_mol.GetAtomWithIdx(begin_atom_idx)
+        end_atom = new_mol.GetAtomWithIdx(end_atom_idx)
         begin_atom_fc = begin_atom.GetFormalCharge()
         end_atom_fc = end_atom.GetFormalCharge()
 
@@ -265,3 +275,5 @@ class SemiRealisticChemistry(IChemistry):
             adjustment = min(abs(begin_atom_fc), abs(end_atom_fc), new_bond_order)
             begin_atom.SetFormalCharge(begin_atom_fc - adjustment * cmp(begin_atom_fc, 0))
             end_atom.SetFormalCharge(end_atom_fc - adjustment * cmp(end_atom_fc, 0))
+
+        return new_mol
