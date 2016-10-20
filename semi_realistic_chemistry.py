@@ -110,7 +110,8 @@ class SemiRealisticChemistry(IChemistry):
         g = nx.Graph()
         for bond in reactant.GetBonds():
             g.add_edge(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
-            components = list(nx.connected_components(g))
+
+        components = list(nx.connected_components(g))
         # Add single atoms as independent components
         for idx in range(reactant.GetNumAtoms()):
             if len(reactant.GetAtomWithIdx(idx).GetBonds()) == 0:
