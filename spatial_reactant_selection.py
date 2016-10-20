@@ -36,9 +36,14 @@ class SpatialReactantSelection(IReactantSelection):
         if not isinstance(population, list):
             raise TypeError
 
-        self.bodies = {}  # dictionary body:mol
-        self.current_reactions = []
+        self.shape2mol = {}  # dictionary shape:mol
+        self.mol2body = {}  # dictionary mol:body
         self.reactant_list = []
+
+        try:
+            ke = kwargs['ke']
+        except KeyError:
+            ke = 100
 
         self.space = pm.Space()
         self.space.gravity = pm.Vec2d(0, 0)
@@ -64,7 +69,7 @@ class SpatialReactantSelection(IReactantSelection):
         # Add them into the main space using the new locations
 
         for molecule, location in zip(population, locations):
-            velocity = pm.Vec2d(math.sqrt(2.0 * kwargs['ke'] / molecule.mass), 0)
+            velocity = pm.Vec2d(math.sqrt(2.0 * ke / molecule.mass), 0)
             velocity.angle = random.uniform(-math.pi, math.pi)
 
             self._add_molecule(molecule, location=location, velocity=velocity, collision_type=SpatialReactantSelection.REACTANT)
@@ -73,6 +78,9 @@ class SpatialReactantSelection(IReactantSelection):
         self.step_size = self._calculate_step_size()
 
     def get_reactants(self):
+
+        if len(self.get_population()) < 2:
+            return None
 
         i = 0
         while len(self.reactant_list) == 0:  # reactant_list maintained by _begin_handler()
@@ -83,7 +91,7 @@ class SpatialReactantSelection(IReactantSelection):
                 i = 0
 
         # Now weed out any reactions that involve a molecule that no longer exists because of a prior reaction
-        molecules = self.bodies.values()  # {shape: Molecule}
+        molecules = self.shape2mol.values()  # {shape: Molecule}
 
         while len(self.reactant_list) > 0:
             r = self.reactant_list.pop(0)  # {Molecule:pm.Body}
@@ -92,10 +100,7 @@ class SpatialReactantSelection(IReactantSelection):
             except ValueError:
                 pass
             else:
-                self.current_reactions.append(r)
-
                 # Energy available for the reaction = KE of molecules - KE of centre of mass
-
                 bodies = r.values()
                 initial_ke = sum([body.kinetic_energy for body in bodies])
                 reaction_energy = initial_ke - Kinetics2D.get_cm_energy(bodies)
@@ -105,25 +110,23 @@ class SpatialReactantSelection(IReactantSelection):
 
     def react(self, reaction):
 
-        # Match reaction to one in current_reactions - shouldn't be a very long list at all, so looping is acceptable
-        for i in range(len(self.current_reactions)):  # [{Molecule: pm.Body}], loop by index so can later delete easily
-            if set(reaction.reactants) == set(self.current_reactions[i].keys()):
-                r = self.current_reactions[i]
-                break
-        else:
+        try:
+            reactant_bodies = [self.mol2body[reactant] for reactant in reaction.get_reactants()]
+        except KeyError:
             raise ValueError
 
         # Find middle point of reactant bodies
-        reactant_bodies = r.values()
         midpoint = sum([b.position for b in reactant_bodies]) / len(reactant_bodies)  # Vec2d
 
         # Remove reactant bodies+shapes
         for body in reactant_bodies:
             for shape in body.shapes:
-                del self.bodies[shape]  # Remove shape:Molecule from the lookup table
+                del self.shape2mol[shape]  # Remove shape:Molecule from the lookup table
             self.space.remove(body.shapes)
 
         self.space.remove(reactant_bodies)
+        for reactant in reaction.get_reactants():
+            del self.mol2body[reactant]
 
         # Add in product bodies to middle point of reaction
         product_masses = [molecule.mass for molecule in reaction.products]
@@ -132,10 +135,10 @@ class SpatialReactantSelection(IReactantSelection):
         for molecule, velocity in zip(reaction.products, out_v):
             self._add_molecule(molecule, location=midpoint, velocity=velocity, collision_type=SpatialReactantSelection.PRODUCT)
 
-        del self.current_reactions[i]
+        return reaction.as_dict()
 
     def get_population(self):
-        return self.bodies.values()
+        return self.shape2mol.values()
 
     def _add_molecule(self, molecule, location, velocity, collision_type):
 
@@ -165,7 +168,8 @@ class SpatialReactantSelection(IReactantSelection):
         self.space.add(shape)
         self.space.add(body)
 
-        self.bodies[shape] = molecule
+        self.shape2mol[shape] = molecule
+        self.mol2body[molecule] = body
 
     def _calculate_step_size(self):
 
@@ -177,7 +181,7 @@ class SpatialReactantSelection(IReactantSelection):
         :return: float
         """
 
-        velocity_distribution = [shape.body.velocity.length for shape in self.bodies]
+        velocity_distribution = [shape.body.velocity.length for shape in self.shape2mol]
         return 1.0 * len(velocity_distribution) / sum(velocity_distribution)
 
     def _end_handler(self, arbiter, space, data):
@@ -205,7 +209,7 @@ class SpatialReactantSelection(IReactantSelection):
         """
 
         try:
-            reactants = {self.bodies[shape]: shape.body for shape in arbiter.shapes}
+            reactants = {self.shape2mol[shape]: shape.body for shape in arbiter.shapes}
         except KeyError:
             return False  # one or more reactants were in collision with another molecule previously in this time-step
 
