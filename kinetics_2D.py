@@ -75,6 +75,8 @@ class Kinetics2D(object):
         in_mv = [[m * v_ for v_ in v] for m, v in zip(in_mass, in_v)]
         in_ke = sum([mol.kinetic_energy for mol in reactants])
 
+        assert Ulps.almost_equal(sum(in_mass), sum(out_mass))
+
         # Velocity of centre of mass after collision
         # Momentums add to zero in the CoM frame
         cm_in_v = cls.get_cm_velocity(reactants)

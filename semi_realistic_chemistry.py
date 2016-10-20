@@ -7,6 +7,7 @@ import re
 from i_chemistry import IChemistry
 from reaction import Reaction
 from chem_molecule import ChemMolecule
+from ulps import Ulps
 
 
 class SemiRealisticChemistry(IChemistry):
@@ -83,6 +84,7 @@ class SemiRealisticChemistry(IChemistry):
                 try:
                     product = SemiRealisticChemistry._change_bond(copy.deepcopy(reactant), begin_atom_idx, end_atom_idx, new_bond_order)
                     assert product.GetNumAtoms() == reactant.GetNumAtoms()
+                    assert Ulps.almost_equal(sum([atom.GetMass() for atom in reactant.GetAtoms()]), sum([atom.GetMass() for atom in product.GetAtoms()]))
 
                 except ValueError:
                     pass  # just ignore if this option isn't possible
@@ -140,6 +142,7 @@ class SemiRealisticChemistry(IChemistry):
                             try:
                                 product = self._change_bond(copy.deepcopy(reactant), begin_atom_idx, end_atom_idx, bond_order)
                                 assert product.GetNumAtoms() == reactant.GetNumAtoms()
+                                assert Ulps.almost_equal(sum([atom.GetMass() for atom in reactant.GetAtoms()]), sum([atom.GetMass() for atom in product.GetAtoms()]))
 
                             except ValueError:
                                 pass  # just ignore invalid options
@@ -180,6 +183,8 @@ class SemiRealisticChemistry(IChemistry):
             reactant = Chem.MolFromSmiles(reactants[0].get_symbol())
 
         reactant = Chem.AddHs(reactant)
+
+        assert Ulps.almost_equal(sum([atom.GetMass() for atom in reactant.GetAtoms()]), sum([r.mass for r in reactants]))
 
         return reactant
 
