@@ -24,3 +24,6 @@ class TestMolecule(unittest.TestCase):
 
     def test_add_Hs(self):
         self.assertEqual(ChemMolecule(symbol="O").get_symbol(), "[H]O[H]")
+        with self.assertRaises(ValueError):
+            ChemMolecule(symbol="H")
+        self.assertEqual(ChemMolecule(symbol="[H]").get_symbol(), "[H]")

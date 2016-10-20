@@ -77,6 +77,10 @@ class TestSemiRealisticChemistry(unittest.TestCase):
         # self.assertEqual(1, len(chem.enumerate(Reaction(reactants=[ChemMolecule('[H].[O]')]))))  # oxygen ion and proton...pretty rare in nature
 
     def test_split(self):
+        """
+        _split assumes that in parameter has explicit Hs.
+        """
+
         r = SemiRealisticChemistry._split(Chem.AddHs(Chem.MolFromSmiles('O')))
         r = SemiRealisticChemistry._split(Chem.AddHs(Chem.MolFromSmiles('[CH2-2].[CH2-2]')))
         self.assertEqual(2, len(r))
@@ -85,7 +89,14 @@ class TestSemiRealisticChemistry(unittest.TestCase):
         self.assertGreater(r[0].mass, 0)
         self.assertGreater(r[1].mass, 0)
 
-        r = SemiRealisticChemistry._split(Chem.MolFromSmiles('O=[N+]([O-])[N+](=O)[O-].[H]O[H]'))
+        m = Chem.AddHs(Chem.MolFromSmiles('O=[N+]([O-])[N+](=O)[O-].[H]O[H]'))
+        r = SemiRealisticChemistry._split(m)
+        self.assertEqual(2, len(r))
+        symbols = [x.get_symbol() for x in r]
+        self.assertIn('O=[N+]([O-])[N+](=O)[O-]', symbols)
+        self.assertIn('[H]O[H]', symbols)
+        self.assertGreater(r[0].mass, 0)
+        self.assertGreater(r[1].mass, 0)
 
     def test_get_bond_potential(self):
         chem = SemiRealisticChemistry(bond_energies=bond_energies.bond_energies)

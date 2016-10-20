@@ -26,9 +26,10 @@ class ChemMolecule(Molecule):
         if mol is None:
             raise ValueError
 
-        mol = Chem.AddHs(mol)
+        mol = Chem.AddHs(mol)   # MolFromSmiles doesn't add Hs even if SMILES contains explicit Hs
+
         self.mass = sum([atom.GetMass() for atom in mol.GetAtoms()])
-        self.symbol = Chem.MolToSmiles(mol)
+        self.symbol = Chem.MolToSmiles(mol)  # will include Hs
 
     def get_symbol(self):
         return self.symbol

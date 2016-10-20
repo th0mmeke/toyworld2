@@ -83,8 +83,6 @@ class SemiRealisticChemistry(IChemistry):
 
                 try:
                     product = SemiRealisticChemistry._change_bond(copy.deepcopy(reactant), begin_atom_idx, end_atom_idx, new_bond_order)
-                    assert product.GetNumAtoms() == reactant.GetNumAtoms()
-                    assert Ulps.almost_equal(sum([atom.GetMass() for atom in reactant.GetAtoms()]), sum([atom.GetMass() for atom in product.GetAtoms()]))
 
                 except ValueError:
                     pass  # just ignore if this option isn't possible
@@ -141,8 +139,6 @@ class SemiRealisticChemistry(IChemistry):
 
                             try:
                                 product = self._change_bond(copy.deepcopy(reactant), begin_atom_idx, end_atom_idx, bond_order)
-                                assert product.GetNumAtoms() == reactant.GetNumAtoms()
-                                assert Ulps.almost_equal(sum([atom.GetMass() for atom in reactant.GetAtoms()]), sum([atom.GetMass() for atom in product.GetAtoms()]))
 
                             except ValueError:
                                 pass  # just ignore invalid options
@@ -162,15 +158,19 @@ class SemiRealisticChemistry(IChemistry):
         Split a molecule at the '.' symbols in the SMILES representation.
 
         :param molecule: RDKit.Mol with explicit Hs
-        :return:
+        :return: ChemMolecule
         """
 
-        molecule = Chem.AddHs(molecule)  # !!!!! Why is this needed? All molecules should have explicit H when called.
-        x = Chem.MolToSmiles(molecule)
-        mols = [ChemMolecule(smiles) for smiles in x.split(".")]
-        if not Ulps.almost_equal(sum([atom.GetMass() for atom in molecule.GetAtoms()]), sum([r.mass for r in mols])):
-            print(x, [y.GetSymbol() for y in molecule.GetAtoms()], molecule.GetNumAtoms(onlyExplicit=True), molecule.GetNumHeavyAtoms(), len(molecule.GetAtoms()), [str(m) for m in mols])
-            assert False
+        initial_mass = sum([atom.GetMass() for atom in molecule.GetAtoms()])
+        mols = Chem.GetMolFrags(molecule, asMols=True)
+        smiles = [Chem.MolToSmiles(m) for m in mols]
+        print(smiles, Chem.MolToSmiles(molecule))
+        final_mass = sum([sum([atom.GetMass() for atom in molecule.GetAtoms()]) for molecule in mols])
+        assert Ulps.almost_equal(initial_mass, final_mass)
+
+        mols = [ChemMolecule(Chem.MolToSmiles(x)) for x in mols]
+        assert Ulps.almost_equal(initial_mass, sum([m.mass for m in mols]))
+
         return mols
 
     @staticmethod
@@ -278,6 +278,10 @@ class SemiRealisticChemistry(IChemistry):
         new_mol = e_mol.GetMol()
         Chem.SanitizeMol(new_mol)
 
+        # Conversion from EditableMol to Mol with GetMol() can add in extra Hs...for conservation of mass reject these:
+        if new_mol.GetNumAtoms(onlyExplicit=False) != mol.GetNumAtoms(onlyExplicit=False):
+            raise ValueError
+
         # Adjust formal charges if using bond based on charge_order...goal is to make fc of both zero
         begin_atom = new_mol.GetAtomWithIdx(begin_atom_idx)
         end_atom = new_mol.GetAtomWithIdx(end_atom_idx)
@@ -288,5 +292,5 @@ class SemiRealisticChemistry(IChemistry):
             adjustment = min(abs(begin_atom_fc), abs(end_atom_fc), new_bond_order)
             begin_atom.SetFormalCharge(begin_atom_fc - adjustment * cmp(begin_atom_fc, 0))
             end_atom.SetFormalCharge(end_atom_fc - adjustment * cmp(end_atom_fc, 0))
-
+        t = Chem.MolToSmiles(new_mol)
         return new_mol
