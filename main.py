@@ -3,12 +3,13 @@ import os
 import logging
 import argparse
 
-from toyworld2 import ToyWorld
+from toyworld2 import ToyWorld2
 from uniform_reactant_selection import UniformReactantSelection
 from spatial_reactant_selection import SpatialReactantSelection
 import uniform_product_selection
 import least_energy_product_selection
 from molecule import Molecule
+from chem_molecule import ChemMolecule
 from state import State
 from semi_realistic_chemistry import SemiRealisticChemistry
 import bond_energies
@@ -39,19 +40,15 @@ def initialise_logging(args, basedir):
     logger.addHandler(ch)
     logger.addHandler(fh)
 
-def get_args():
+
+if __name__ == "__main__":
 
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument('-l', '--log_level', default='INFO', help="Set the logging level")
     parent_parser.add_argument('-f', '--log_filename', help="Filename for logging (relative to location of evaluation design file) (optional)")
     parser = argparse.ArgumentParser(parents=[parent_parser])
 
-    return parser.parse_args()
-
-if __name__ == "__main__":
-
-
-    args = get_args()
+    args = parser.parse_args()
     initialise_logging(args, os.getcwd())
 
     chem = SemiRealisticChemistry(bond_energies=bond_energies.bond_energies)
@@ -60,9 +57,13 @@ if __name__ == "__main__":
     population = []
     for symbol, quantity in defn.iteritems():
         for i in range(quantity):
-            population.append(Molecule(symbol))
+            population.append(ChemMolecule(symbol))
 
-    tw = ToyWorld(reactor=SpatialReactantSelection(population=population, ke=100),
-                  chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies),
-                  product_selection=least_energy_product_selection.product_selection)
-    state = tw.run(generations=200, state=State(persistence=dummy))
+    tw = ToyWorld2(reactor=SpatialReactantSelection(population=population, ke=100),
+                   chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies),
+                   product_selection=uniform_product_selection.product_selection)
+    state = tw.run(generations=5, state=State(persistence=dummy))
+
+    #tw = ToyWorld(reactor=SpatialReactantSelection(population=population, ke=100),
+    #                chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies),
+    #                product_selection=least_energy_product_selection.product_selection)

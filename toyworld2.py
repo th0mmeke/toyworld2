@@ -2,7 +2,7 @@ from collections import Counter
 import logging
 
 
-class ToyWorld:
+class ToyWorld2:
 
     def __init__(self, reactor, chemistry, product_selection):
         self.product_selection = product_selection

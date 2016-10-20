@@ -1,7 +1,7 @@
 import unittest
 from collections import Counter
 
-from toyworld2 import ToyWorld
+from toyworld2 import ToyWorld2
 from chem_molecule import ChemMolecule
 from uniform_reactant_selection import UniformReactantSelection
 import uniform_product_selection
@@ -34,9 +34,9 @@ class TestToyWorld(unittest.TestCase):
                 population.append(ChemMolecule(symbol))
 
         initial_population = Counter([str(x) for x in population])
-        tw = ToyWorld(reactor=UniformReactantSelection(population=population, ke=100),
-                      chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies),
-                      product_selection=uniform_product_selection.product_selection)
+        tw = ToyWorld2(reactor=UniformReactantSelection(population=population, ke=100),
+                       chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies),
+                       product_selection=uniform_product_selection.product_selection)
         tw.run(generations=5, state=State(persistence=lambda x: x))
 
         self.assertNotEqual(initial_population, Counter([str(x) for x in tw.reactor.get_population()]))
