@@ -34,11 +34,14 @@ class TestSemiRealisticChemistry(unittest.TestCase):
 
     def test_split(self):
         r = SemiRealisticChemistry._split(Chem.MolFromSmiles('O'))
-        self.assertEqual('O', r[0].get_symbol())
+        self.assertEqual('[H]O[H]', r[0].get_symbol())
+        self.assertGreater(r[0].mass, 0)
         r = SemiRealisticChemistry._split(Chem.MolFromSmiles('[CH2-2].[CH2-2]'))
         self.assertEqual(2, len(r))
-        self.assertEqual('[CH2-2]', r[0].get_symbol())
-        self.assertEqual('[CH2-2]', r[1].get_symbol())
+        self.assertEqual('[H][C-2][H]', r[0].get_symbol())
+        self.assertEqual('[H][C-2][H]', r[1].get_symbol())
+        self.assertGreater(r[0].mass, 0)
+        self.assertGreater(r[1].mass, 0)
 
     def test_get_bond_potential(self):
         chem = SemiRealisticChemistry(bond_energies=bond_energies.bond_energies)

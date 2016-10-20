@@ -6,12 +6,13 @@ import re
 
 from i_chemistry import IChemistry
 from reaction import Reaction
-from molecule import Molecule
+from chem_molecule import ChemMolecule
 
 
 class SemiRealisticChemistry(IChemistry):
     """
-    A simple Chemistry based on RDKit.
+    A simple Chemistry based on RDKit. All molecules must be ChemMolecules to take advantage of bond manipulation
+    methods in RDKit.
     """
 
     def __init__(self, **kwargs):
@@ -38,14 +39,14 @@ class SemiRealisticChemistry(IChemistry):
     def enumerate(self, partial_reaction):
 
         """
-        Discover all possible options for reactions between the separate components of this Molecule.
+        Discover all possible options for reactions between the separate components of this ChemMolecule.
         The options are based on possible bond changes:
 
         1. Breaking of existing bonds
         2. Switch one bond type for another
         3. Addition of bonds
 
-        :param partial_reaction: Reaction containing reactants and reactant_value
+        :param partial_reaction: Reaction containing ChemMolecule reactants and reactant_value
         :rtype: [Reaction]
         """
 
@@ -149,10 +150,23 @@ class SemiRealisticChemistry(IChemistry):
 
     @staticmethod
     def _split(molecule):
-        return [Molecule(smiles) for smiles in Chem.MolToSmiles(molecule).split(".")]
+        """
+        Split a molecule at the '.' symbols in the SMILES representation.
+
+        :param molecule: RDKit.Mol
+        :return:
+        """
+        return [ChemMolecule(smiles) for smiles in Chem.MolToSmiles(molecule).split(".")]
 
     @staticmethod
     def _join(reactants):
+        """
+        Combine reactants to form a single RDKit Mol (with Hs added). Assumes that get_symbol() for each
+        reactant returns a string containing the SMILES representation for that Molecule.
+
+        :param reactants: Molecule
+        :return: RDKit.Mol
+        """
 
         if len(reactants) > 1:
             mols = map(lambda z: Chem.MolFromSmiles(z.get_symbol()), reactants)

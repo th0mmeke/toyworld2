@@ -27,9 +27,9 @@ class SpatialReactantSelection(IReactantSelection):
     def __init__(self, population, **kwargs):
 
         """
-        Population consists of Molecules with mass property.
+        Population consists of ChemMolecules with mass property.
 
-        :param population: [Molecule with mass]
+        :param population: [ChemMolecule]
         :param kwargs: Standard python kwargs dict; expect a 'ke' property with the value of the initial KE for the reactor
         """
 
@@ -126,10 +126,10 @@ class SpatialReactantSelection(IReactantSelection):
         self.space.remove(reactant_bodies)
 
         # Add in product bodies to middle point of reaction
-        product_masses = [sum([atom.GetMass() for atom in Chem.AddHs(Chem.MolFromSmiles(molecule.get_symbol())).GetAtoms()]) for molecule in reaction.products]
+        product_masses = [molecule.mass for molecule in reaction.products]
         out_v = Kinetics2D.inelastic_collision(reactant_bodies, product_masses)
-        for molecule, velocity, mass in zip(reaction.products, out_v, product_masses):
-            molecule.mass = mass
+
+        for molecule, velocity in zip(reaction.products, out_v):
             self._add_molecule(molecule, location=midpoint, velocity=velocity, collision_type=SpatialReactantSelection.PRODUCT)
 
         del self.current_reactions[i]
@@ -142,7 +142,7 @@ class SpatialReactantSelection(IReactantSelection):
         """
         Add a single Molecule into the reactor.
 
-        :param molecule: Molecule with mass property
+        :param molecule: ChemMolecule
         :param location: pm.Vec2d
         :param velocity: pm.Vec2d
         :param collision_type: Int
