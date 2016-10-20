@@ -9,6 +9,7 @@ from semi_realistic_chemistry import SemiRealisticChemistry
 from state import State
 import bond_energies
 
+
 class TestToyWorld(unittest.TestCase):
 
     def test_basic_scenario(self):
