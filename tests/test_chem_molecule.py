@@ -3,10 +3,11 @@ import unittest
 from chem_molecule import ChemMolecule
 from rdkit.rdBase import DisableLog, EnableLog
 
+
 class TestMolecule(unittest.TestCase):
 
     def setUp(self):
-        DisableLog('rdApp.error')
+        DisableLog('rdApp.error')  # Doesn't seem to disable SMILES Parse Error though...
 
     def tearDown(self):
         EnableLog('rdApp.error')
