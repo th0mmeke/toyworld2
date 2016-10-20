@@ -20,6 +20,4 @@ class ToyWorld2:
                 self.reactor.react(reaction)
                 state.add(reaction.as_dict())
 
-        logging.info("Final population: {}".format(Counter([str(x) for x in self.reactor.get_population()])))
-
         return state
