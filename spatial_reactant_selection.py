@@ -1,14 +1,10 @@
 import random
 import math
-import logging
-from collections import Counter
 
 import pymunk as pm
-from rdkit.Chem import AllChem as Chem
 from i_reactant_selection import IReactantSelection
 from kinetics_2D import Kinetics2D
 from reaction import Reaction
-from molecule import Molecule
 
 
 class SpatialReactantSelection(IReactantSelection):
@@ -74,7 +70,6 @@ class SpatialReactantSelection(IReactantSelection):
 
             self._add_molecule(molecule, location=location, velocity=velocity, collision_type=SpatialReactantSelection.REACTANT)
 
-        logging.info("Initial population: {}".format(Counter([str(x) for x in self.get_population()])))
         self.step_size = self._calculate_step_size()
 
     def get_reactants(self):

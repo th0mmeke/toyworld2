@@ -1,4 +1,4 @@
-import random
+from collections import Counter
 import os
 import logging
 import argparse
@@ -59,11 +59,11 @@ if __name__ == "__main__":
         for i in range(quantity):
             population.append(ChemMolecule(symbol))
 
-    tw = ToyWorld2(reactor=SpatialReactantSelection(population=population, ke=100),
+    reactor = SpatialReactantSelection(population=population, ke=100)
+    tw = ToyWorld2(reactor=reactor,
                    chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies),
                    product_selection=uniform_product_selection.product_selection)
-    state = tw.run(generations=5, state=State(persistence=dummy))
 
-    #tw = ToyWorld(reactor=SpatialReactantSelection(population=population, ke=100),
-    #                chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies),
-    #                product_selection=least_energy_product_selection.product_selection)
+    logging.info("Initial population: {}".format(Counter([str(x) for x in reactor.get_population()])))
+    state = tw.run(generations=5, state=State(persistence=dummy))
+    logging.info("Final population: {}".format(Counter([str(x) for x in reactor.get_population()])))
