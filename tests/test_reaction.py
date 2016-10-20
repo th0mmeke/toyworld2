@@ -1,7 +1,7 @@
 import unittest
-import json
 
 from reaction import Reaction
+from molecule import Molecule
 
 
 class TestReaction(unittest.TestCase):
@@ -39,9 +39,10 @@ class TestReaction(unittest.TestCase):
         self.assertEqual(Reaction(reactants=[1], products=[1], product_value=11).get_product_value(), 11)
 
     def test_as_dict(self):
-        products = [1, 2]
-        reactants = [3]
+        reactants = [Molecule('3')]
+        products = [Molecule('1'), Molecule('2')]
+
         r = Reaction(reactants=reactants, products=products)
         actual = r.as_dict()
-        self.assertEquals(actual['reactants'], [3])
-        self.assertEquals(actual['products'], [1, 2])
+        self.assertEquals(actual['reactants'], [Molecule('3').get_symbol()])
+        self.assertEquals(actual['products'], [Molecule('1').get_symbol(), Molecule('2').get_symbol()])

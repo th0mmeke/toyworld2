@@ -2,6 +2,7 @@ import unittest
 
 from reaction import Reaction
 from uniform_reactant_selection import UniformReactantSelection
+from molecule import Molecule
 
 
 class TestUniformReactantSelection(unittest.TestCase):
@@ -27,18 +28,18 @@ class TestUniformReactantSelection(unittest.TestCase):
         | []        | []        | []        | []        |
         | ['A']     | ['A']     | ['B','C'] | ['B,'C']  |
 
-        Rather than checking private variables we look for the implications of the change through existing methods.
         """
 
-        r = UniformReactantSelection(population=[1])
-        sr = r.react(Reaction(reactants=[1], products=[]))
+        m = Molecule('M')
+        r = UniformReactantSelection(population=[m])
+        sr = r.react(Reaction(reactants=[m], products=[]))
         self.assertItemsEqual(r.population, [])
-        self.assertIsInstance(sr, dict)
 
-        r = UniformReactantSelection(population=['A'])
-        sr = r.react(Reaction(reactants=['A'], products=['B', 'C']))
-        self.assertItemsEqual(r.get_reactants().get_reactants(), ['B', 'C'])
-        self.assertIsInstance(sr, dict)
+        x = Molecule('X')
+        y = Molecule('Y')
+        r = UniformReactantSelection(population=[m])
+        sr = r.react(Reaction(reactants=[m], products=[x, y]))
+        self.assertItemsEqual(r.population, [x, y])
 
     def test_react_errors(self):
         """
