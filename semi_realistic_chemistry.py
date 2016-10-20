@@ -161,32 +161,40 @@ class SemiRealisticChemistry(IChemistry):
         """
         Split a molecule at the '.' symbols in the SMILES representation.
 
-        :param molecule: RDKit.Mol
+        :param molecule: RDKit.Mol with explicit Hs
         :return:
         """
-        return [ChemMolecule(smiles) for smiles in Chem.MolToSmiles(molecule).split(".")]
+
+        molecule = Chem.AddHs(molecule)  # !!!!! Why is this needed? All molecules should have explicit H when called.
+        x = Chem.MolToSmiles(molecule)
+        mols = [ChemMolecule(smiles) for smiles in x.split(".")]
+        if not Ulps.almost_equal(sum([atom.GetMass() for atom in molecule.GetAtoms()]), sum([r.mass for r in mols])):
+            print(x, [y.GetSymbol() for y in molecule.GetAtoms()], molecule.GetNumAtoms(onlyExplicit=True), molecule.GetNumHeavyAtoms(), len(molecule.GetAtoms()), [str(m) for m in mols])
+            assert False
+        return mols
 
     @staticmethod
-    def _join(reactants):
+    def _join(molecules):
         """
-        Combine reactants to form a single RDKit Mol (with Hs added). Assumes that get_symbol() for each
+        Combine reactants to form a single RDKit Mol. Assumes that get_symbol() for each
         reactant returns a string containing the SMILES representation for that Molecule.
 
-        :param reactants: Molecule
+        :param molecules: Molecule
         :return: RDKit.Mol
         """
 
-        if len(reactants) > 1:
-            mols = map(lambda z: Chem.MolFromSmiles(z.get_symbol()), reactants)
-            reactant = reduce(lambda x, y: Chem.CombineMols(x, y), mols)
-        elif len(reactants) == 1:
-            reactant = Chem.MolFromSmiles(reactants[0].get_symbol())
+        if len(molecules) > 1:
+            mols = map(lambda z: Chem.AddHs(Chem.MolFromSmiles(z.get_symbol())), molecules)
+            mol = reduce(lambda x, y: Chem.CombineMols(x, y), mols)
+        elif len(molecules) == 1:
+            mol = Chem.AddHs(Chem.MolFromSmiles(molecules[0].get_symbol()))
+            mols = [mol]
 
-        reactant = Chem.AddHs(reactant)
+        t = Chem.MolToSmiles(mol)
+        assert sum([m.GetNumAtoms() for m in mols]) == mol.GetNumAtoms()
+        assert Ulps.almost_equal(sum([atom.GetMass() for atom in mol.GetAtoms()]), sum([r.mass for r in molecules]))
 
-        assert Ulps.almost_equal(sum([atom.GetMass() for atom in reactant.GetAtoms()]), sum([r.mass for r in reactants]))
-
-        return reactant
+        return mol
 
     def _get_bond_energy(self, atom_1, atom_2, to_bond_type=0, from_bond_type=0):
         """
