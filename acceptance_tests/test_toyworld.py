@@ -28,7 +28,7 @@ class TestToyWorld(unittest.TestCase):
 
         chem = SemiRealisticChemistry(bond_energies=bond_energies.bond_energies)
 
-        defn = {'O': 1, 'C': 1}
+        defn = {'O': 1, 'C': 1, 'N': 5}
         population = []
         for symbol, quantity in defn.iteritems():
             for i in range(quantity):

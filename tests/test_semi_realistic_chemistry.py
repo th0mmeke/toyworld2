@@ -54,7 +54,7 @@ class TestSemiRealisticChemistry(unittest.TestCase):
 
         r = Reaction(reactants=[ChemMolecule('[H+].[OH-]')])
         options = chem.enumerate(r)
-        self.assertEqual(1, len(options))  # Should also include the break bond between O and H- though...
+        self.assertEqual(2, len(options))
 
     def test_enumerate(self):
         chem = SemiRealisticChemistry(bond_energies=bond_energies.bond_energies)
@@ -70,8 +70,6 @@ class TestSemiRealisticChemistry(unittest.TestCase):
         self.assertEqual(2, len(chem.enumerate(Reaction(reactants=[ChemMolecule('[O].[O]')]))))  # oxygen ions...pretty rare in nature - single and double bonds
         self.assertEqual(1, len(chem.enumerate(Reaction(reactants=[ChemMolecule('[H].[O]')]))))  # oxygen ion and proton...pretty rare in nature
 
-    @unittest.skip("RemoveBond to [H} converts to [HH], adding another H...")
-    def failing_tests(self):
         options = chem.enumerate(Reaction(reactants=[ChemMolecule('O')]))
         self.assertEqual(2, len(options))  # two options, both breaks of H bonds
 
@@ -80,6 +78,11 @@ class TestSemiRealisticChemistry(unittest.TestCase):
 
         self.assertEqual(6, len(chem.enumerate(Reaction(reactants=[ChemMolecule('C=C')]))))  # five complete breaks, and one drop from double to single
 
+    def test_change_options(self):
+        chem = SemiRealisticChemistry(bond_energies=bond_energies.bond_energies)
+        mol = Chem.AddHs(Chem.MolFromSmiles('[H]O[H]'))
+        new_mol = chem._change_bond(mol, 0, 1, 0)
+        self.assertEqual(Chem.MolToSmiles(new_mol), '[H+].[H][O-]')
 
     def test_split(self):
         """

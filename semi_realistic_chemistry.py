@@ -268,29 +268,38 @@ class SemiRealisticChemistry(IChemistry):
 
         bond = mol.GetBondBetweenAtoms(begin_atom_idx, end_atom_idx)
         new_mol = Chem.RWMol(mol)
-        if bond is not None:  # remove any existing bond
-            new_mol.RemoveBond(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
-        t = Chem.MolToSmiles(new_mol)
-        if new_bond_order != 0:  # add in any new bond
-            new_mol.AddBond(begin_atom_idx, end_atom_idx, Chem.BondType.values[new_bond_order])
-        t = Chem.MolToSmiles(new_mol)
-        new_mol = new_mol.GetMol()
 
-        # Adjust formal charges when bonding ions...goal is to make fc of both zero
         begin_atom = new_mol.GetAtomWithIdx(begin_atom_idx)
         end_atom = new_mol.GetAtomWithIdx(end_atom_idx)
         begin_atom_fc = begin_atom.GetFormalCharge()
         end_atom_fc = end_atom.GetFormalCharge()
 
-        if cmp(begin_atom_fc, 0) != cmp(end_atom_fc, 0):  # must be opposite sign for this to work
-            adjustment = min(abs(begin_atom_fc), abs(end_atom_fc), new_bond_order)
-            begin_atom.SetFormalCharge(begin_atom_fc - adjustment * cmp(begin_atom_fc, 0))
-            end_atom.SetFormalCharge(end_atom_fc - adjustment * cmp(end_atom_fc, 0))
+        if bond is not None:  # remove any existing bond
+            if begin_atom.GetAtomicNum() == 1 and end_atom.GetAtomicNum() != 1:
+                begin_atom.SetFormalCharge(1)
+                end_atom.SetFormalCharge(-1)
+            elif end_atom.GetAtomicNum() == 1 and begin_atom.GetAtomicNum() != 1:
+                begin_atom.SetFormalCharge(-1)
+                end_atom.SetFormalCharge(1)
+            new_mol.RemoveBond(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
 
-        Chem.SanitizeMol(new_mol)  # Throw ValueError if an invalid molecule that can't be corrected
+        if new_bond_order != 0:  # add in any new bond
+            new_mol.AddBond(begin_atom_idx, end_atom_idx, Chem.BondType.values[new_bond_order])
+            # Adjust formal charges when bonding ions...goal is to make fc of both zero
+
+            if cmp(begin_atom_fc, 0) != cmp(end_atom_fc, 0):  # must be opposite sign for this to work
+                adjustment = min(abs(begin_atom_fc), abs(end_atom_fc), new_bond_order)
+                begin_atom.SetFormalCharge(begin_atom_fc - adjustment * cmp(begin_atom_fc, 0))
+                end_atom.SetFormalCharge(end_atom_fc - adjustment * cmp(end_atom_fc, 0))
+
+        new_mol = new_mol.GetMol()
+
+
+
+        Chem.SanitizeMol(new_mol)  # Raises ValueError if an invalid molecule can't be corrected
 
         # Removing a bond between H and another atom can add in extra Hs...for conservation of mass reject these:
         if new_mol.GetNumAtoms(onlyExplicit=False) != mol.GetNumAtoms(onlyExplicit=False):
-            raise ValueError
+            raise ValueError(Chem.MolToSmiles(new_mol))
 
         return new_mol
