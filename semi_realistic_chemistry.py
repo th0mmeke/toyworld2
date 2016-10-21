@@ -26,7 +26,7 @@ class SemiRealisticChemistry(IChemistry):
         count = {}
         self._default_bond_energies = {}
         for bond, energy in self._bond_energies.iteritems():
-            key = re.match(r"(\w+)(\d)(\w+)", bond).groups()[1]
+            key = int(re.match(r"(\w+)(\d)(\w+)", bond).groups()[1])
             try:
                 count[key] += 1
                 self._default_bond_energies[key] += energy
