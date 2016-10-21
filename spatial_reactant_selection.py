@@ -6,6 +6,7 @@ from i_reactant_selection import IReactantSelection
 from kinetics_2D import Kinetics2D
 from reaction import Reaction
 
+from collections import Counter
 
 class SpatialReactantSelection(IReactantSelection):
 
@@ -18,7 +19,7 @@ class SpatialReactantSelection(IReactantSelection):
     REACTANT = 1
     PRODUCT = 2
     WALL = 3
-    BASE_MOLECULE_RADIUS = REACTION_VESSEL_SIZE / 50
+    BASE_MOLECULE_RADIUS = REACTION_VESSEL_SIZE / 500
 
     def __init__(self, population, **kwargs):
 
@@ -58,6 +59,7 @@ class SpatialReactantSelection(IReactantSelection):
 
         h = self.space.add_collision_handler(SpatialReactantSelection.REACTANT, SpatialReactantSelection.REACTANT)
         h.begin = self._begin_handler
+        h = self.space.add_collision_handler(SpatialReactantSelection.PRODUCT, SpatialReactantSelection.PRODUCT)
         h.separate = self._end_handler
 
         locations = [pm.Vec2d([random.uniform(-SpatialReactantSelection.REACTION_VESSEL_SIZE, SpatialReactantSelection.REACTION_VESSEL_SIZE) for i in range(2)]) for mol in population]
@@ -82,7 +84,7 @@ class SpatialReactantSelection(IReactantSelection):
             i += 1
             self.space.step(self.step_size)  # trigger _begin_handler on collision
             if i > 10 and (len(self.reactant_list) == 0 or len(self.reactant_list) > 10):
-                self.step_size = self._calculate_step_size()
+                #self.step_size = self._calculate_step_size()
                 i = 0
 
         # Now weed out any reactions that involve a molecule that no longer exists because of a prior reaction
@@ -105,10 +107,19 @@ class SpatialReactantSelection(IReactantSelection):
 
     def react(self, reaction):
 
+        """
+        :param reaction: Reaction
+        """
+
         try:
             reactant_bodies = [self.mol2body[reactant] for reactant in reaction.get_reactants()]
         except KeyError:
             raise ValueError
+
+        #print(Counter([x.collision_type for x in self.shape2mol.keys()]))
+        initial_bodies = len(self.space.bodies)
+        initial_shapes = len(self.space.shapes)
+        assert initial_bodies == initial_shapes - 4
 
         # Find middle point of reactant bodies
         midpoint = sum([b.position for b in reactant_bodies]) / len(reactant_bodies)  # Vec2d
@@ -123,6 +134,9 @@ class SpatialReactantSelection(IReactantSelection):
         for reactant in reaction.get_reactants():
             del self.mol2body[reactant]
 
+        assert initial_bodies - len(reactant_bodies) == len(self.space.bodies)
+        assert initial_shapes - len(reactant_bodies) == len(self.space.shapes)
+
         # Add in product bodies to middle point of reaction
         product_masses = [molecule.mass for molecule in reaction.products]
         out_v = Kinetics2D.inelastic_collision(reactant_bodies, product_masses)
@@ -130,6 +144,8 @@ class SpatialReactantSelection(IReactantSelection):
         for molecule, velocity in zip(reaction.products, out_v):
             self._add_molecule(molecule, location=midpoint, velocity=velocity, collision_type=SpatialReactantSelection.PRODUCT)
 
+        assert initial_bodies - len(reactant_bodies) + len(reaction.products) == len(self.space.bodies)
+        assert initial_shapes - len(reactant_bodies) + len(reaction.products) == len(self.space.shapes)
         return reaction.as_dict()
 
     def get_population(self):

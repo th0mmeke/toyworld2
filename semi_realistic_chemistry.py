@@ -294,8 +294,6 @@ class SemiRealisticChemistry(IChemistry):
 
         new_mol = new_mol.GetMol()
 
-
-
         Chem.SanitizeMol(new_mol)  # Raises ValueError if an invalid molecule can't be corrected
 
         # Removing a bond between H and another atom can add in extra Hs...for conservation of mass reject these:

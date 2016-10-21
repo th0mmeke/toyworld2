@@ -3,6 +3,8 @@ import os
 import logging
 import argparse
 
+from rdkit.rdBase import DisableLog, EnableLog
+
 from toyworld2 import ToyWorld2
 from uniform_reactant_selection import UniformReactantSelection
 from spatial_reactant_selection import SpatialReactantSelection
@@ -59,11 +61,13 @@ if __name__ == "__main__":
         for i in range(quantity):
             population.append(ChemMolecule(symbol))
 
+    DisableLog('rdApp.error')  # disable rdKit error messages, in particular "Explicit valence..."
     reactor = SpatialReactantSelection(population=population, ke=100)
     tw = ToyWorld2(reactor=reactor,
                    chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies),
                    product_selection=uniform_product_selection.product_selection)
 
     logging.info("Initial population: {}".format(Counter([str(x) for x in reactor.get_population()])))
-    state = tw.run(generations=5, state=State(persistence=dummy))
+    state = tw.run(generations=2000, state=State(persistence=dummy))
     logging.info("Final population: {}".format(Counter([str(x) for x in reactor.get_population()])))
+    EnableLog('rdApp.error')
