@@ -115,7 +115,7 @@ class SemiRealisticChemistry(IChemistry):
 
         components = list(nx.connected_components(g))
         # Add single atoms as independent components
-        for idx in range(reactant.GetNumAtoms()):
+        for idx in range(reactant.GetNumAtoms(onlyExplicit=False)):
             if len(reactant.GetAtomWithIdx(idx).GetBonds()) == 0:
                 components.append([idx])
 
@@ -163,8 +163,7 @@ class SemiRealisticChemistry(IChemistry):
 
         initial_mass = sum([atom.GetMass() for atom in molecule.GetAtoms()])
         mols = Chem.GetMolFrags(molecule, asMols=True)
-        smiles = [Chem.MolToSmiles(m) for m in mols]
-        print(smiles, Chem.MolToSmiles(molecule))
+
         final_mass = sum([sum([atom.GetMass() for atom in molecule.GetAtoms()]) for molecule in mols])
         assert Ulps.almost_equal(initial_mass, final_mass)
 
@@ -191,7 +190,7 @@ class SemiRealisticChemistry(IChemistry):
             mols = [mol]
 
         t = Chem.MolToSmiles(mol)
-        assert sum([m.GetNumAtoms() for m in mols]) == mol.GetNumAtoms()
+        assert sum([m.GetNumAtoms(onlyExplicit=False) for m in mols]) == mol.GetNumAtoms(onlyExplicit=False)
         assert Ulps.almost_equal(sum([atom.GetMass() for atom in mol.GetAtoms()]), sum([r.mass for r in molecules]))
 
         return mol
@@ -268,21 +267,16 @@ class SemiRealisticChemistry(IChemistry):
             raise ValueError  # to meet RDKit restriction from organic reactions that maximum likely bond is triple-bond
 
         bond = mol.GetBondBetweenAtoms(begin_atom_idx, end_atom_idx)
-
-        e_mol = Chem.EditableMol(mol)
+        new_mol = Chem.RWMol(mol)
         if bond is not None:  # remove any existing bond
-            e_mol.RemoveBond(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
+            new_mol.RemoveBond(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
+        t = Chem.MolToSmiles(new_mol)
         if new_bond_order != 0:  # add in any new bond
-            e_mol.AddBond(begin_atom_idx, end_atom_idx, Chem.BondType.values[new_bond_order])
+            new_mol.AddBond(begin_atom_idx, end_atom_idx, Chem.BondType.values[new_bond_order])
+        t = Chem.MolToSmiles(new_mol)
+        new_mol = new_mol.GetMol()
 
-        new_mol = e_mol.GetMol()
-        Chem.SanitizeMol(new_mol)
-
-        # Conversion from EditableMol to Mol with GetMol() can add in extra Hs...for conservation of mass reject these:
-        if new_mol.GetNumAtoms(onlyExplicit=False) != mol.GetNumAtoms(onlyExplicit=False):
-            raise ValueError
-
-        # Adjust formal charges if using bond based on charge_order...goal is to make fc of both zero
+        # Adjust formal charges when bonding ions...goal is to make fc of both zero
         begin_atom = new_mol.GetAtomWithIdx(begin_atom_idx)
         end_atom = new_mol.GetAtomWithIdx(end_atom_idx)
         begin_atom_fc = begin_atom.GetFormalCharge()
@@ -292,5 +286,11 @@ class SemiRealisticChemistry(IChemistry):
             adjustment = min(abs(begin_atom_fc), abs(end_atom_fc), new_bond_order)
             begin_atom.SetFormalCharge(begin_atom_fc - adjustment * cmp(begin_atom_fc, 0))
             end_atom.SetFormalCharge(end_atom_fc - adjustment * cmp(end_atom_fc, 0))
-        t = Chem.MolToSmiles(new_mol)
+
+        Chem.SanitizeMol(new_mol)  # Throw ValueError if an invalid molecule that can't be corrected
+
+        # Removing a bond between H and another atom can add in extra Hs...for conservation of mass reject these:
+        if new_mol.GetNumAtoms(onlyExplicit=False) != mol.GetNumAtoms(onlyExplicit=False):
+            raise ValueError
+
         return new_mol
