@@ -79,11 +79,9 @@ class SemiRealisticChemistry(IChemistry):
             end_atom_idx = bond.GetEndAtomIdx()
             old_bond_order = int(bond.GetBondType())
 
-            for new_bond_order in range(0, old_bond_order):  # all bond options between none (break bond) and one-less-than-current
-
+            for new_bond_order in range(0, 3):  # all bond options between none (break bond) and one-less-than-current
                 try:
                     product = SemiRealisticChemistry._change_bond(copy.deepcopy(reactant), begin_atom_idx, end_atom_idx, new_bond_order)
-
                 except ValueError:
                     pass  # just ignore if this option isn't possible
                 else:  # no exception, so managed to execute _change_bond()...
@@ -107,8 +105,6 @@ class SemiRealisticChemistry(IChemistry):
         reactant = SemiRealisticChemistry._join(partial_reaction.get_reactants())
         options = []
 
-        bond_potential = map(lambda x: SemiRealisticChemistry._get_bond_potential(x), reactant.GetAtoms())
-
         g = nx.Graph()
         for bond in reactant.GetBonds():
             g.add_edge(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
@@ -120,36 +116,26 @@ class SemiRealisticChemistry(IChemistry):
                 components.append([idx])
 
         # Check for possible bonds between all atoms with the potential for one or more additional bonds...
-        for begin_atom_idx in range(len(bond_potential)):
+        for begin_atom in reactant.GetAtoms():
 
-            component = [i for i in components if begin_atom_idx in i][0]  # all idx in the same component as begin_atom_idx
+            component = [i for i in components if begin_atom.GetIdx() in i][0]  # all idx in the same component as begin_atom_idx
 
-            for end_atom_idx in range(begin_atom_idx + 1, len(bond_potential)):
-
+            for end_atom_idx in range(begin_atom.GetIdx() + 1, reactant.GetNumAtoms(onlyExplicit=False)):
                 if end_atom_idx not in component:  # begin_atom and end_atom must join different components
+                    for bond_order in range(1, 4):  # all bond options up to and including max_bond_order
+                        try:
+                            product = self._change_bond(copy.deepcopy(reactant), begin_atom.GetIdx(), end_atom_idx, bond_order)
 
-                    # Add options for bonds of various order between begin_atom and end_atom...
-                    max_bond_order = min(bond_potential[begin_atom_idx], bond_potential[end_atom_idx])
-                    # to meet RDKit restriction from organic self that maximum likely bond is triple-bond
-                    max_bond_order = min(max_bond_order, 3)
-
-                    if max_bond_order > 0:
-
-                        for bond_order in range(1, max_bond_order + 1):  # all bond options up to and including max_bond_order
-
-                            try:
-                                product = self._change_bond(copy.deepcopy(reactant), begin_atom_idx, end_atom_idx, bond_order)
-
-                            except ValueError:
-                                pass  # just ignore invalid options
-                            else:
-                                bond_energy = self._get_bond_energy(product.GetAtomWithIdx(begin_atom_idx).GetSymbol(),
-                                                                    product.GetAtomWithIdx(end_atom_idx).GetSymbol(),
-                                                                    to_bond_type=bond_order)  # bond creation of order bond_order
-                                options.append(Reaction(reactants=partial_reaction.get_reactants(),
-                                                        reactant_value=partial_reaction.reactant_value,
-                                                        products=SemiRealisticChemistry._split(product),
-                                                        product_value=bond_energy))
+                        except ValueError:
+                            pass  # just ignore invalid options
+                        else:
+                            bond_energy = self._get_bond_energy(begin_atom.GetSymbol(),
+                                                                product.GetAtomWithIdx(end_atom_idx).GetSymbol(),
+                                                                to_bond_type=bond_order)  # bond creation of order bond_order
+                            options.append(Reaction(reactants=partial_reaction.get_reactants(),
+                                                    reactant_value=partial_reaction.reactant_value,
+                                                    products=SemiRealisticChemistry._split(product),
+                                                    product_value=bond_energy))
         return options
 
     @staticmethod
@@ -228,30 +214,6 @@ class SemiRealisticChemistry(IChemistry):
                 end_energy = self._default_bond_energies[to_bond_type]
 
         return start_energy - end_energy
-
-    @staticmethod
-    def _get_bond_potential(atom):
-        """Requires Explicit Hs!
-
-        Simple method based on standard Lewis dot-structures e.g., http://library.thinkquest.org/C006669/data/Chem/bonding/lewis.html
-
-        Bond calculation:
-        FC = V - N - B (where single bond = 1, double = 2, etc) to make N = 8
-        """
-
-        if atom.GetAtomicNum() == 1:
-            if len(atom.GetBonds()) == 0:  # if not already bound...
-                return 1
-            else:
-                return 0
-        else:
-            bonded_electrons = 0
-            for bond in atom.GetBonds():
-                bonded_electrons += bond.GetBondType()  # relies on Chem.BondType mapping to int...
-
-            valence_electrons = Chem.GetPeriodicTable().GetNOuterElecs(atom.GetAtomicNum())
-
-            return 8 - (valence_electrons + bonded_electrons + atom.GetFormalCharge())
 
     @staticmethod
     def _change_bond(mol, begin_atom_idx, end_atom_idx, new_bond_order):

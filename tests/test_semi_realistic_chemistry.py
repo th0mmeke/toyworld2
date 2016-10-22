@@ -54,13 +54,13 @@ class TestSemiRealisticChemistry(unittest.TestCase):
 
         r = Reaction(reactants=[ChemMolecule('[H+].[OH-]')])
         options = chem.enumerate(r)
-        self.assertEqual(2, len(options))
+        self.assertEqual(3, len(options))
 
     def test_enumerate(self):
         chem = SemiRealisticChemistry(bond_energies=bond_energies.bond_energies)
 
         options = chem.enumerate(Reaction(reactants=[ChemMolecule('O=C=O')]))
-        self.assertEqual(4, len(options))  # four options: break and drop to single bond from O=C bonds
+        self.assertEqual(6, len(options))  # four options: break and drop to single bond from O=C bonds
 
         options = chem.enumerate(Reaction(reactants=[ChemMolecule('[C]'), ChemMolecule('[C]')]))
         self.assertEqual(3, len(options))  # 3 types of bond formation - single, double, triple
@@ -74,9 +74,9 @@ class TestSemiRealisticChemistry(unittest.TestCase):
         self.assertEqual(2, len(options))  # two options, both breaks of H bonds
 
         options = chem.enumerate(Reaction(reactants=[ChemMolecule('[OH-]')]))
-        self.assertEqual(1, len(options))  # break H bond
+        self.assertEqual(2, len(options))
 
-        self.assertEqual(6, len(chem.enumerate(Reaction(reactants=[ChemMolecule('C=C')]))))  # five complete breaks, and one drop from double to single
+        self.assertEqual(7, len(chem.enumerate(Reaction(reactants=[ChemMolecule('C=C')]))))  # five complete breaks, and one drop from double to single
 
     def test_change_options(self):
         chem = SemiRealisticChemistry(bond_energies=bond_energies.bond_energies)
@@ -105,42 +105,6 @@ class TestSemiRealisticChemistry(unittest.TestCase):
         self.assertIn('[H]O[H]', symbols)
         self.assertGreater(r[0].mass, 0)
         self.assertGreater(r[1].mass, 0)
-
-    def test_get_bond_potential(self):
-        chem = SemiRealisticChemistry(bond_energies=bond_energies.bond_energies)
-
-        mol = Chem.AddHs(Chem.MolFromSmiles('[CH2-2].[CH2-2]'))
-        self.assertEqual(4, chem._get_bond_potential(mol.GetAtoms()[0]))
-
-        mol = Chem.AddHs(Chem.MolFromSmiles('O'))  # H2O
-        self.assertEqual(3, mol.GetNumAtoms())
-        self.assertEqual(8, mol.GetAtoms()[0].GetAtomicNum())
-        self.assertEqual(0, chem._get_bond_potential(mol.GetAtoms()[0]))
-
-        mol = Chem.AddHs(Chem.MolFromSmiles('O'))  # H2O, implicit Hs
-        self.assertEqual(3, mol.GetNumAtoms())  # implicit no longer...
-        self.assertEqual(8, mol.GetAtoms()[0].GetAtomicNum())
-        self.assertEqual(0, chem._get_bond_potential(mol.GetAtoms()[0]))
-
-        mol = Chem.AddHs(Chem.MolFromSmiles('[H]'))
-        self.assertEqual(1, mol.GetAtoms()[0].GetAtomicNum())
-        self.assertEqual(1, chem._get_bond_potential(mol.GetAtoms()[0]))
-
-        mol = Chem.AddHs(Chem.MolFromSmiles('O=C=O'))  # CO2 - bond potentials of zero all round (full octets)
-        for atom in mol.GetAtoms():
-            self.assertEqual(0, chem._get_bond_potential(atom))
-
-        mol = Chem.AddHs(Chem.MolFromSmiles('[OH-]'))  # = [H][O-] Hydroxl anion
-        self.assertEqual(8, mol.GetAtoms()[0].GetAtomicNum())
-        self.assertEqual(1, mol.GetAtoms()[1].GetAtomicNum())
-        self.assertEqual(2, chem._get_bond_potential(mol.GetAtoms()[0]))
-        self.assertEqual(0, chem._get_bond_potential(mol.GetAtoms()[1]))
-
-        mol = Chem.AddHs(Chem.MolFromSmiles('[H].[OH-]'))
-        self.assertEqual(1, mol.GetAtoms()[0].GetAtomicNum())  # the H in [OH-]
-        self.assertEqual(1, chem._get_bond_potential(mol.GetAtoms()[0]))
-        self.assertEqual(1, mol.GetAtoms()[2].GetAtomicNum())  # the H in [OH-]
-        self.assertEqual(0, chem._get_bond_potential(mol.GetAtoms()[2]))
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testInit']

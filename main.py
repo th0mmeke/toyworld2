@@ -46,7 +46,7 @@ def initialise_logging(args, basedir):
 if __name__ == "__main__":
 
     parent_parser = argparse.ArgumentParser(add_help=False)
-    parent_parser.add_argument('-l', '--log_level', default='INFO', help="Set the logging level")
+    parent_parser.add_argument('-l', '--log_level', default='INFO', help="Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL")
     parent_parser.add_argument('-f', '--log_filename', help="Filename for logging (relative to location of evaluation design file) (optional)")
     parser = argparse.ArgumentParser(parents=[parent_parser])
 
@@ -61,13 +61,13 @@ if __name__ == "__main__":
         for i in range(quantity):
             population.append(ChemMolecule(symbol))
 
-    DisableLog('rdApp.error')  # disable rdKit error messages, in particular "Explicit valence..."
+    #DisableLog('rdApp.error')  # disable rdKit error messages, in particular "Explicit valence..."
     reactor = SpatialReactantSelection(population=population, ke=100)
     tw = ToyWorld2(reactor=reactor,
                    chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies),
                    product_selection=uniform_product_selection.product_selection)
 
     logging.info("Initial population: {}".format(Counter([str(x) for x in reactor.get_population()])))
-    state = tw.run(generations=2000, state=State(persistence=dummy))
+    state = tw.run(generations=200000, state=State(persistence=dummy))
     logging.info("Final population: {}".format(Counter([str(x) for x in reactor.get_population()])))
     EnableLog('rdApp.error')
