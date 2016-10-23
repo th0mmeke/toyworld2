@@ -3,23 +3,13 @@ import os
 import logging
 import argparse
 
-from rdkit.rdBase import DisableLog, EnableLog
-
 from toyworld2 import ToyWorld2
-from uniform_reactant_selection import UniformReactantSelection
 from spatial_reactant_selection import SpatialReactantSelection
 import uniform_product_selection
-import least_energy_product_selection
-from molecule import Molecule
 from chem_molecule import ChemMolecule
 from state import State
 from semi_realistic_chemistry import SemiRealisticChemistry
 import bond_energies
-
-
-def dummy(x):
-    #print(json.dumps(x, cls=MyJSON))
-    pass
 
 
 def initialise_logging(args, basedir):
@@ -61,13 +51,11 @@ if __name__ == "__main__":
         for i in range(quantity):
             population.append(ChemMolecule(symbol))
 
-    #DisableLog('rdApp.error')  # disable rdKit error messages, in particular "Explicit valence..."
     reactor = SpatialReactantSelection(population=population, ke=100)
     tw = ToyWorld2(reactor=reactor,
                    chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies),
                    product_selection=uniform_product_selection.product_selection)
 
     logging.info("Initial population: {}".format(Counter([str(x) for x in reactor.get_population()])))
-    state = tw.run(generations=200000, state=State(persistence=dummy))
+    state = tw.run(generations=20, state=State(filename="toyworld2.json"))
     logging.info("Final population: {}".format(Counter([str(x) for x in reactor.get_population()])))
-    EnableLog('rdApp.error')
