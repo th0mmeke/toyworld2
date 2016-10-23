@@ -175,7 +175,6 @@ class SemiRealisticChemistry(IChemistry):
             mol = Chem.AddHs(Chem.MolFromSmiles(molecules[0].get_symbol()))
             mols = [mol]
 
-        t = Chem.MolToSmiles(mol)
         assert sum([m.GetNumAtoms(onlyExplicit=False) for m in mols]) == mol.GetNumAtoms(onlyExplicit=False)
         assert Ulps.almost_equal(sum([atom.GetMass() for atom in mol.GetAtoms()]), sum([r.mass for r in molecules]))
 
