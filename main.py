@@ -57,5 +57,5 @@ if __name__ == "__main__":
                    product_selection=uniform_product_selection.product_selection)
 
     logging.info("Initial population: {}".format(Counter([str(x) for x in reactor.get_population()])))
-    state = tw.run(generations=5000, state=State(filename="toyworld2.json"))
+    state = tw.run(generations=500, state=State(filename="data/toyworld2.json"))
     logging.info("Final population: {}".format(Counter([str(x) for x in reactor.get_population()])))
