@@ -4,10 +4,12 @@ import random
 def choice(elements, weights):
 
     """
+    Choose one item from a list of weighted alternatives.
+
     Return None if weights == 0
 
-    :param elements:
-    :param weights:
+    :param elements: []
+    :param weights: [Float] of same length as elements; total does not have to add to 1.0
     :return:
     """
 
@@ -28,8 +30,8 @@ def choice(elements, weights):
     return None
 
 
-def product_selection(reactions):
+def weighted_selection(reactions, weight_function):
     if reactions is None or len(reactions) == 0:
         return None
 
-    return choice(elements=reactions, weights=[reaction.product_value for reaction in reactions])
+    return choice(elements=reactions, weights=map(weight_function, reactions))

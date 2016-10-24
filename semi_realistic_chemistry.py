@@ -60,12 +60,6 @@ class SemiRealisticChemistry(IChemistry):
         if len(addition_options) > 0:
             reaction_options.extend(addition_options)
 
-        for reaction in reaction_options:
-            if reaction.product_value < 0:
-                reaction.product_value = -reaction.product_value
-            else:
-                reaction.product_value = max(0, reaction.reactant_value - reaction.product_value)
-
         logging.debug("{} reaction options found".format(len(reaction_options)))
 
         return reaction_options

@@ -5,10 +5,10 @@ import argparse
 
 from toyworld2 import ToyWorld2
 from length_biased_reactant_selection import LengthBiasedReactantSelection
-import weighted_product_selection
 from chem_molecule import ChemMolecule
+from semi_realistic_chemistry import SemiRealisticChemistry
 from state import State
-from replicant_chemistry import ReplicantChemistry
+import weighting_functions
 import bond_energies
 
 
@@ -51,9 +51,9 @@ if __name__ == "__main__":
 
     reactor = LengthBiasedReactantSelection(population=population, ke=100)
     tw = ToyWorld2(reactor=reactor,
-                   chemistry=ReplicantChemistry(bond_energies=bond_energies.bond_energies),
-                   product_selection=weighted_product_selection.product_selection)
+                   chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies),
+                   product_selection=weighting_functions.replicant_weighting)
 
     logging.info("Initial population: {}".format(Counter([str(x) for x in reactor.get_population()])))
-    state = tw.run(generations=500, state=State(filename="data/toyworld2.json"))
+    state = tw.run(generations=50, state=State(filename="data/toyworld2.json"))
     logging.info("Final population: {}".format(Counter([str(x) for x in reactor.get_population()])))
