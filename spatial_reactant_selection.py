@@ -138,14 +138,14 @@ class SpatialReactantSelection(IReactantSelection):
         assert initial_shapes - len(reactant_bodies) == len(self.space.shapes)
 
         # Add in product bodies to middle point of reaction
-        product_masses = [molecule.mass for molecule in reaction.products]
+        product_masses = [molecule.mass for molecule in reaction.get_products()]
         out_v = Kinetics2D.inelastic_collision(reactant_bodies, product_masses)
 
-        for molecule, velocity in zip(reaction.products, out_v):
+        for molecule, velocity in zip(reaction.get_products(), out_v):
             self._add_molecule(molecule, location=midpoint, velocity=velocity, collision_type=SpatialReactantSelection.PRODUCT)
 
-        assert initial_bodies - len(reactant_bodies) + len(reaction.products) == len(self.space.bodies)
-        assert initial_shapes - len(reactant_bodies) + len(reaction.products) == len(self.space.shapes)
+        assert initial_bodies - len(reactant_bodies) + len(reaction.get_products()) == len(self.space.bodies)
+        assert initial_shapes - len(reactant_bodies) + len(reaction.get_products()) == len(self.space.shapes)
         return reaction.as_dict()
 
     def get_population(self):

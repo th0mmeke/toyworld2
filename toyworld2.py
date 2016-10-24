@@ -18,7 +18,10 @@ class ToyWorld2:
 
             if reaction is not None:
                 self.reactor.react(reaction)
-                logging.info("Reaction between " + str([r.get_symbol() for r in reaction.reactants]) + " giving " + str([p.get_symbol() for p in reaction.products]))
+                logging.info("Reaction between " +
+                             str([r.get_symbol() for r in reaction.get_reactants()]) +
+                             " giving " +
+                             str([p.get_symbol() for p in reaction.get_products()]))
                 state.add(reaction.as_dict())
 
         return state
