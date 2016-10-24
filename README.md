@@ -19,6 +19,8 @@
 
 ### Using Docker
 
+The `th0mmeke/toyworld2` image is built automatically on Docker Hub.
+
 ```
 docker run -v <local directory>:/toyworld2/data th0mmeke/toyworld2
 ```
