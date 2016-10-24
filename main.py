@@ -4,11 +4,11 @@ import logging
 import argparse
 
 from toyworld2 import ToyWorld2
-from spatial_reactant_selection import SpatialReactantSelection
-import uniform_product_selection
+from length_biased_reactant_selection import LengthBiasedReactantSelection
+import weighted_product_selection
 from chem_molecule import ChemMolecule
 from state import State
-from semi_realistic_chemistry import SemiRealisticChemistry
+from replicant_chemistry import ReplicantChemistry
 import bond_energies
 
 
@@ -43,18 +43,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
     initialise_logging(args, os.getcwd())
 
-    chem = SemiRealisticChemistry(bond_energies=bond_energies.bond_energies)
-
-    defn = {"[H][H]": 100, "FO": 100, "O": 200, "[O-][N+](=O)[N+]([O-])=O": 100, "N(=O)[O]": 100, "O=C=O": 200}
+    defn = {"[H][H]": 10, "FO": 10, "O": 20, "[O-][N+](=O)[N+]([O-])=O": 10, "N(=O)[O]": 10, "O=C=O": 20}
     population = []
     for symbol, quantity in defn.iteritems():
         for i in range(quantity):
             population.append(ChemMolecule(symbol))
 
-    reactor = SpatialReactantSelection(population=population, ke=100)
+    reactor = LengthBiasedReactantSelection(population=population, ke=100)
     tw = ToyWorld2(reactor=reactor,
-                   chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies),
-                   product_selection=uniform_product_selection.product_selection)
+                   chemistry=ReplicantChemistry(bond_energies=bond_energies.bond_energies),
+                   product_selection=weighted_product_selection.product_selection)
 
     logging.info("Initial population: {}".format(Counter([str(x) for x in reactor.get_population()])))
     state = tw.run(generations=500, state=State(filename="data/toyworld2.json"))
