@@ -1,4 +1,5 @@
 import random
+import logging
 from i_reactant_selection import IReactantSelection
 from reaction import Reaction
 
@@ -10,7 +11,6 @@ class LengthBiasedReactantSelection(IReactantSelection):
         if not isinstance(population, list):
             raise TypeError
         self.population = sorted(population, key=lambda x: len(x.get_symbol()), reverse=True)
-        print([len(x.get_symbol()) for x in self.population])
 
     def get_reactants(self):
 

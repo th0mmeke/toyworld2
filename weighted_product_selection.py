@@ -28,15 +28,8 @@ def choice(elements, weights):
     return None
 
 
-def weight(reaction):
-    if reaction.product_value < 0:
-        return -reaction.product_value
-    else:
-        return max(0, reaction.reactant_value - reaction.product_value)
-
-
 def product_selection(reactions):
     if reactions is None or len(reactions) == 0:
         return None
 
-    return choice(elements=reactions, weights=[weight(reaction) for reaction in reactions])
+    return choice(elements=reactions, weights=[reaction.product_value for reaction in reactions])
