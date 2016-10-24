@@ -1,5 +1,5 @@
 import itertools
-import distance
+import Levenshtein
 
 
 def uniform_weighting(reaction):
@@ -40,7 +40,7 @@ def replicant_weighting(reaction):
             # Now find the best combination of products - 2 products with the smallest combined distance from this reactant
             for combination in itertools.combinations(reaction.get_products(), 2):
                 weight = len(reactant.get_symbol())  # start with length of A
-                weight -= sum([distance.levenshtein(reactant.get_symbol(), product.get_symbol()) for product in combination])
+                weight -= sum([Levenshtein.distance(reactant.get_symbol(), product.get_symbol()) for product in combination])
                 if weight > best_weight:
                     best_weight = weight
 
