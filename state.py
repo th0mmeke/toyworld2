@@ -18,7 +18,6 @@ class State(object):
 
     def add(self, state_entry):
         s = json.dumps(state_entry, cls=MyJSON)
-        logging.info(s)
         self.f.write((',\n' if self.i != 0 else '') + '{}'.format(s))
         self.i += 1
 

@@ -11,17 +11,24 @@ class ToyWorld2:
 
     def run(self, generations, state):
 
-        for i in range(generations):
+        generation = 1
+        non_reaction = 0
+        while generation <= generations:
             partial_reaction = self.reactor.get_reactants()
             reactions = self.chemistry.enumerate(partial_reaction)
             reaction = weighted_selection(reactions, self.product_selection)
 
-            if reaction is not None:
+            if reaction is None:
+                non_reaction += 1
+                if non_reaction > 200:
+                    logging.info("Stopping, lack of reactions")
+                    exit()
+            else:
                 self.reactor.react(reaction)
-                logging.info("Reaction between " +
-                             str([r.get_symbol() for r in reaction.get_reactants()]) +
-                             " giving " +
-                             str([p.get_symbol() for p in reaction.get_products()]))
+                logging.info("{}: reaction between {} giving {}".format(generation, str([r.get_symbol() for r in reaction.reactants]),
+                                                                        str([p.get_symbol() for p in reaction.products])))
                 state.add(reaction.as_dict())
+                generation += 1
+                non_reaction = 0
 
         return state
