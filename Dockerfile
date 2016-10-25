@@ -9,5 +9,6 @@ RUN pip install pymunk networkx python-levenshtein
 RUN git clone --depth=1 https://github.com/th0mmeke/toyworld2.git
 
 WORKDIR /toyworld2/
+RUN mkdir data
 
 CMD ["python","main.py"]

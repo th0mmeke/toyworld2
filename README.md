@@ -19,7 +19,7 @@
 
 ### Using Docker
 
-The `th0mmeke/toyworld2` image is built automatically on Docker Hub.
+The `th0mmeke/toyworld2` image is built automatically on Docker Hub. Running the following will result in the the output file <local directory>/toyworld2.json.
 
 ```
 docker run -v <local directory>:/toyworld2/data th0mmeke/toyworld2
