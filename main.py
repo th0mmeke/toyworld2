@@ -38,6 +38,7 @@ if __name__ == "__main__":
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument('-l', '--log_level', default='INFO', help="Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL")
     parent_parser.add_argument('-f', '--log_filename', help="Filename for logging (relative to location of evaluation design file) (optional)")
+    parent_parser.add_argument('-g', '--generations', type=int, help="Number of generations", default=50)
     parser = argparse.ArgumentParser(parents=[parent_parser])
 
     args = parser.parse_args()
@@ -54,6 +55,7 @@ if __name__ == "__main__":
                    chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies),
                    product_selection=weighting_functions.replicant_weighting)
 
+    logging.info("Generations: {}".format(args.generations))
     logging.info("Initial population: {}".format(Counter([str(x) for x in reactor.get_population()])))
-    state = tw.run(generations=50, state=State(filename="data/toyworld2.json"))
+    state = tw.run(generations=args.generations, state=State(filename="data/toyworld2.json"))
     logging.info("Final population: {}".format(Counter([str(x) for x in reactor.get_population()])))
