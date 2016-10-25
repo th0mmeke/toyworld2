@@ -14,8 +14,10 @@ class LengthBiasedReactantSelection(IReactantSelection):
 
     def get_reactants(self):
 
-        if len(self.population) > 1:
+        if len(self.population) >= 8:
             reactants = random.sample(self.population[:len(self.population)/4], 2)
+        elif len(self.population) > 1:
+            reactants = random.sample(self.population, 2)
         else:
             reactants = self.population
         assert type(reactants) == list
