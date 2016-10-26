@@ -1,0 +1,22 @@
+FROM ubuntu
+MAINTAINER thomas.young@canterbury.ac.nz
+
+RUN apt-get update
+RUN apt-get -y install build-essential python-numpy cmake python-dev sqlite3
+RUN apt-get -y install libsqlite3-dev libboost-dev libboost-system-dev libboost-thread-dev libboost-serialization-dev libboost-python-dev libboost-regex-dev
+RUN apt-get -y install wget
+RUN apt-get clean
+
+RUN mkdir /build
+RUN cd /build
+RUN wget https://github.com/rdkit/rdkit/archive/Release_2016_03_5.tar.gz
+RUN export RDBASE=/build
+RUN export PYTHONPATH=$PYTHONPATH:/build
+RUN tar -xvzf Release_2016_03_5.tar.gz
+RUN cd rdkit-Release_2016_03_5
+RUN mkdir build
+RUN cd build
+RUN cmake ..
+RUN
+
+
