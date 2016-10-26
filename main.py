@@ -57,5 +57,8 @@ if __name__ == "__main__":
 
     logging.info("Generations: {}".format(args.generations))
     logging.info("Initial population: {}".format(Counter([str(x) for x in reactor.get_population()])))
-    state = tw.run(generations=args.generations, state=State(filename="data/toyworld2.json"))
+    state = State(filename="data/toyworld2.json", initial_population=reactor.get_population())
+    state = tw.run(generations=args.generations, state=state)
+    state.close(final_population=reactor.get_population())
     logging.info("Final population: {}".format(Counter([str(x) for x in reactor.get_population()])))
+
