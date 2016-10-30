@@ -29,7 +29,7 @@ def replicant_weighting(reaction):
     :return: float
     """
 
-    best_weight = 1 # default is a low but selectable weight
+    best_weight = 1  # default is a low but selectable weight
 
     # Only consider reactions with 3 products
     # This also greatly reduces unproductive null "reactions" where the products == reactants
@@ -40,7 +40,8 @@ def replicant_weighting(reaction):
 
             # Find best combination of products - 2 products with the smallest combined distance from this reactant
             for combination in itertools.combinations(reaction.get_products(), 2):
-                weight = 2*len(reactant.get_symbol())  # start with length of A
+                weight = 2*len(reactant.get_symbol())  # Start with length of A
+                # Subtract the number of differences between each product and this reactant (A-candidate)
                 weight -= sum([Levenshtein.distance(reactant.get_symbol(), product.get_symbol()) for product in combination])
                 if weight > best_weight:
                     best_weight = weight

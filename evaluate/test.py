@@ -7,7 +7,7 @@ import unittest
 #     state.add(Reaction([Molecule('A'), Molecule('B')], products=[Molecule('C'), Molecule('D')], reactant_value=i, product_value=i).as_dict())
 # del state
 
-with open('../data/toyworld2.json') as f:
+with open('/tmp/toyworld2/toyworld2.json') as f:
     reactions = json.load(f)
     print(reactions['initial_population'])
 
