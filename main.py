@@ -44,7 +44,30 @@ if __name__ == "__main__":
     args = parser.parse_args()
     initialise_logging(args, os.getcwd())
 
-    defn = {"[H][H]": 10, "FO": 10, "O": 20, "[O-][N+](=O)[N+]([O-])=O": 10, "N(=O)[O]": 10, "O=C=O": 20}
+    #defn = {"[H][H]": 10, "FO": 10, "O": 20, "[O-][N+](=O)[N+]([O-])=O": 10, "N(=O)[O]": 10, "O=C=O": 20}
+    proteinogenic_amino_acids = ["O=C(O)[C@@H](N)C",  # ALA
+                   "NC(CCCNC(N)=N)C(O)=O",  # ARG
+                   "O=C(N)C[C@H](N)C(=O)O",  # ASN
+                   "O=C(O)CC(N)C(=O)O",  # ASP
+                   "C([C@@H](C(=O)O)N)S",  # CYS
+                   "C(CC(=O)O)C(C(=O)O)N",  # GLU
+                   "O=C(N)CCC(N)C(=O)O",  # GLN
+                   "C(C(=O)O)N",  # GLY
+                   "O=C([C@H](CC1=CNC=N1)N)O",  # HIS
+                   "CC[C@H](C)[C@@H](C(=O)O)N",  # ILE
+                   "CC(C)C[C@@H](C(=O)O)N",  # LEU
+                   "C(CCN)CC(C(=O)O)N",  # LYS
+                   "CSCCC(C(=O)O)N",  # MET
+                   "C1=CC=C(C=C1)CC(C(=O)O)N",  # PHE
+                   "OC(=O)C1CCCN1",  # PRO
+                   "C([C@@H](C(=O)O)N)O",  # SER
+                   "C[C@H]([C@@H](C(=O)O)N)O",  # THR
+                   "c1ccc2c(c1)c(c[nH]2)C[C@@H](C(=O)O)N",  # TRP
+                   "N[C@@H](Cc1ccc(O)cc1)C(O)=O",  # TYR
+                   "CC(C)[C@@H](C(=O)O)N",  # VAL
+                   ]
+    defn = {x: 40 for x in proteinogenic_amino_acids}
+
     population = []
     for symbol, quantity in defn.iteritems():
         for i in range(quantity):

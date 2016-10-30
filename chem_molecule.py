@@ -24,7 +24,7 @@ class ChemMolecule(Molecule):
 
         mol = Chem.MolFromSmiles(symbol)
         if mol is None:
-            raise ValueError
+            raise ValueError("SMILES:{} is either not legal or not sensible".format(symbol))
 
         mol = Chem.AddHs(mol)   # MolFromSmiles doesn't add Hs even if SMILES contains explicit Hs
 
