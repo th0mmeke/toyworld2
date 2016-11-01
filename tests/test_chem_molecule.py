@@ -27,3 +27,9 @@ class TestMolecule(unittest.TestCase):
         with self.assertRaises(ValueError):
             ChemMolecule(symbol="H")
         self.assertEqual(ChemMolecule(symbol="[H]").get_symbol(), "[H]")
+
+    def test_sanity(self):
+        with self.assertRaises(ValueError):
+            ChemMolecule(symbol="[H]OC(=O)[c-]1[n-][c-]([H])[c-][c-]1[H]")
+        with self.assertRaises(ValueError):
+            ChemMolecule(symbol="O.[H]OC(=O)[c-]1[n-][c-]([H])[c-][c-]1[H]")

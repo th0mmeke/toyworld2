@@ -85,6 +85,7 @@ class SemiRealisticChemistry(IChemistry):
                 except ValueError:
                     pass  # just ignore if this option isn't possible
                 else:  # no exception, so managed to execute _change_bond()...
+                    Chem.SanitizeMol(product)
                     bond_energy = self._get_bond_energy(product.GetAtomWithIdx(begin_atom_idx).GetSymbol(),
                                                         product.GetAtomWithIdx(end_atom_idx).GetSymbol(),
                                                         from_bond_type=old_bond_order,
@@ -143,6 +144,8 @@ class SemiRealisticChemistry(IChemistry):
         """
         Split a molecule at the '.' symbols in the SMILES representation.
 
+        Raise ValueError if no valid split of molecule.
+
         :param molecule: RDKit.Mol with explicit Hs
         :return: ChemMolecule
         """
@@ -153,7 +156,7 @@ class SemiRealisticChemistry(IChemistry):
         final_mass = sum([sum([atom.GetMass() for atom in molecule.GetAtoms()]) for molecule in mols])
         assert Ulps.almost_equal(initial_mass, final_mass)
 
-        mols = [ChemMolecule(Chem.MolToSmiles(x)) for x in mols]
+        mols = [ChemMolecule(Chem.MolToSmiles(x)) for x in mols]  # can raise ValueError here even if molecule has passed validity check in _change_bond()
         assert Ulps.almost_equal(initial_mass, sum([m.mass for m in mols]))
 
         return mols
@@ -260,5 +263,7 @@ class SemiRealisticChemistry(IChemistry):
         # Removing a bond between H and another atom can add in extra Hs...for conservation of mass reject these:
         if new_mol.GetNumAtoms(onlyExplicit=False) != mol.GetNumAtoms(onlyExplicit=False):
             raise ValueError(Chem.MolToSmiles(new_mol))
+        if Chem.MolFromSmiles(Chem.MolToSmiles(new_mol)) is None:
+            raise ValueError
 
         return new_mol
