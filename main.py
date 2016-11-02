@@ -66,7 +66,16 @@ if __name__ == "__main__":
                    "N[C@@H](Cc1ccc(O)cc1)C(O)=O",  # TYR
                    "CC(C)[C@@H](C(=O)O)N",  # VAL
                    ]
-    defn = {x: 40 for x in proteinogenic_amino_acids}
+    #defn = {x: 40 for x in proteinogenic_amino_acids}
+
+    # adenine, guanine, cytosine, uracil
+    adenine = "Nc1ncnc2[nH]cnc12"  # https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:16708
+    cytosine = "Nc1cc[nH]c(=O)n1" # https://www.ebi.ac.uk/chebi/searchId.do?chebiId=16040
+    guanine = "Nc1nc2[nH]cnc2c(=O)[nH]1"  # https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:16235
+    uracil = "O=c1cc[nH]c(=O)[nH]1"  # https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:17568
+
+    rna_bases = [adenine, cytosine, guanine, uracil]
+    defn = {x: 100 for x in rna_bases}
 
     population = []
     for symbol, quantity in defn.iteritems():
