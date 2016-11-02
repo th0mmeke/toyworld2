@@ -39,12 +39,24 @@ class Evaluate(object):
 
 e = Evaluate()
 
-delta_c = e.population[:, np.array(map(lambda x: len(x) > 10, e.unique_species), dtype=bool)]
+# Droop2012 Delta_C activity increment - the count of a component at a time-step
+delta_c = e.population
 
-presence = np.apply_along_axis(lambda x: x > 0, 0, delta_c)
-delta_p = np.apply_along_axis(sum, 0, presence)
-print(delta_p)
-max = np.apply_along_axis(max, 0, longer_elements)
-print(max)
+# Bedau1998 Delta (Delta_P in Droop) activity increment - presence of a component at a time step
+delta_p = np.apply_along_axis(lambda x: x > 0, 0, e.population)
+
+evolutionary_activity_p = np.cumsum(delta_p, axis=0, dtype=float)
+evolutionary_activity_c = np.cumsum(delta_c, axis=0, dtype=float)
+
+# Bedau1998 diversity
+diversity = np.apply_along_axis(sum, 1, delta_p)  # diversity for each t
+
+# divide sum of each row by the equivalent row of diversity
+# Result is A_cum by time
+mean_cumulative_evolutionary_activity_c = np.apply_along_axis(sum, 1, evolutionary_activity_c) / diversity
+mean_cumulative_evolutionary_activity_p = np.apply_along_axis(sum, 1, evolutionary_activity_p) / diversity
+
+
+#delta_c = e.population[:, np.array(map(lambda x: len(x) > 10, e.unique_species), dtype=bool)]
 
 
