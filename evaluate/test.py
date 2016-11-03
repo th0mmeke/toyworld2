@@ -36,15 +36,49 @@ class Evaluate(object):
 
         assert list(self.final) == list(self.population[len(reactions['reactions']), :])
 
+    def write_as_csv(self, filename):
+        np.savetxt("species-" + filename,
+                   self.unique_species,
+                   delimiter=',',
+                   fmt='%s'
+                   )
+        np.savetxt("population-" + filename,
+                   self.population,
+                   delimiter=',',
+                   fmt='%.3f',
+                   comments='',
+                   )
 
 e = Evaluate()
+#e.write_as_csv("test.csv")
 
-delta_c = e.population[:, np.array(map(lambda x: len(x) > 10, e.unique_species), dtype=bool)]
+# Droop2012 Delta_C activity increment - the count of a component at a time-step
+delta_c = e.population
 
-presence = np.apply_along_axis(lambda x: x > 0, 0, delta_c)
-delta_p = np.apply_along_axis(sum, 0, presence)
-print(delta_p)
-max = np.apply_along_axis(max, 0, longer_elements)
-print(max)
+# Bedau1998 Delta (Delta_P in Droop) activity increment - presence of a component at a time step
+delta_p = np.apply_along_axis(lambda x: x > 0, 0, e.population)
+
+evolutionary_activity_p = np.cumsum(delta_p, axis=0, dtype=float)
+evolutionary_activity_c = np.cumsum(delta_c, axis=0, dtype=float)
+
+# Bedau1998 diversity
+diversity = np.apply_along_axis(sum, 1, delta_p)  # diversity for each t
+
+# divide sum of each row by the equivalent row of diversity
+# Result is A_cum by time
+mean_cumulative_evolutionary_activity_c = np.apply_along_axis(sum, 1, evolutionary_activity_c) / diversity
+mean_cumulative_evolutionary_activity_p = np.apply_along_axis(sum, 1, evolutionary_activity_p) / diversity
 
 
+#delta_c = e.population[:, np.array(map(lambda x: len(x) > 10, e.unique_species), dtype=bool)]
+
+# R code!
+# a = read.csv('population-x.csv', header=FALSE)
+# delta_c = a
+# delta_p = data.frame(apply(a, 2, function(c) ifelse(c==0,0,1)))
+# evolutionary_activity_p = cumsum(delta_p)
+# evolutionary_activity_c = cumsum(delta_c)
+#
+# diversity = apply(delta_p, 1, sum)
+# mean_cumulative_evolutionary_activity_p = apply(evolutionary_activity_p, 1, sum) / diversity
+# mean_cumulative_evolutionary_activity_c = apply(evolutionary_activity_c, 1, sum) / diversity
