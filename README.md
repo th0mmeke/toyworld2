@@ -12,6 +12,8 @@
   - `pip install python-levenshtein`
   - If import fails, check permissions on installed package directory (on Linux, `/usr/local/lib/python2.7/dist-packages/Levenshtein`)
 
+The simplest installation of the pre-requisites is through Anaconda.
+
 ## Usage
 ### Local
 
