@@ -55,4 +55,4 @@ if __name__ == "__main__":
     population, unique_species = load_json(args.input)
     
     np.savetxt(csv_species_filename, unique_species, delimiter=',', fmt='%s')
-    np.savetxt(csv_population_filename, population, delimiter=',', fmt='%.3f', comments='')
+    np.savetxt(csv_population_filename, population, delimiter=',', fmt='%.3f', comments="", header=",".join(unique_species))
