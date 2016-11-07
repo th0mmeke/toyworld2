@@ -11,14 +11,14 @@ class TestEvaluatorCycles(unittest.TestCase):
                 {'reactants': ['a'], 'products': ['b']},
                 {'reactants': ['b'], 'products': ['a']}
                 ]
-        self.assertEqual(2, len(EvaluatorCycles(reactions=reactions).cycle_stoichiometry))
+        self.assertEqual(2, len(EvaluatorCycles(reactions=reactions).get_cycle_stoichiometry()))
 
         reactions = [
                 {'reactants': ['a'], 'products': ['b', 'b']},
                 {'reactants': ['b'], 'products': ['c']},
                 {'reactants': ['c'], 'products': ['a']},
                 ]
-        self.assertEqual(3, len(EvaluatorCycles(reactions=reactions).cycle_stoichiometry))
+        self.assertEqual(3, len(EvaluatorCycles(reactions=reactions).get_cycle_stoichiometry()))
 
         reactions = [
             {'reactants': ['a'], 'products': ['b', 'b']},
@@ -27,7 +27,7 @@ class TestEvaluatorCycles(unittest.TestCase):
             {'reactants': ['a'], 'products': ['e']},
             {'reactants': ['e'], 'products': ['a', 'a']},
         ]
-        self.assertEqual(5, len(EvaluatorCycles(reactions=reactions).cycle_stoichiometry))
+        self.assertEqual(5, len(EvaluatorCycles(reactions=reactions).get_cycle_stoichiometry()))
 
     def testMultiple(self):
         # aba -> ccf -> cf -> ad has stoichiometry of 2, other two reaction cycles have stoichiometry of 1.
@@ -37,4 +37,4 @@ class TestEvaluatorCycles(unittest.TestCase):
             {'reactants': ['c', 'f'], 'products': ['a', 'd']}
         ]
 
-        self.assertEqual(6, len(EvaluatorCycles(reactions=reactions).cycle_stoichiometry))
+        self.assertEqual(6, len(EvaluatorCycles(reactions=reactions).get_cycle_stoichiometry(max_depth=10)))
