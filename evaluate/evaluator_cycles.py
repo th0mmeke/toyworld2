@@ -23,12 +23,14 @@ class EvaluatorCycles(object):
             canonical_products = '>' + EvaluatorCycles.make_canonical(reaction['products'])
             self.reactants.update(reaction['reactants'])
 
-            self.g.add_edge(canonical_reactants, canonical_products)
+            if not self.g.has_edge(canonical_reactants, canonical_products):
+                self.g.add_edge(canonical_reactants, canonical_products)
 
             for reactant in reaction['reactants']:
                 # Only add if not already present
                 if not self.g.has_edge(reactant, canonical_reactants):
                     self.g.add_edge(reactant, canonical_reactants)
+
             for product, count in collections.Counter(reaction['products']).iteritems():
                 add_edge = True
                 if self.g.has_edge(canonical_products, product):
@@ -56,6 +58,7 @@ class EvaluatorCycles(object):
 
     def get_reactant_stoichiometry(self, acs_seed, minimum_stoichiometry=1, max_depth=5):
 
+        # print("Seed: {}".format(acs_seed))
         reactant_stoichiometry = []
 
         cycles = list(nx.all_simple_paths(self.g, acs_seed, acs_seed, cutoff=max_depth))

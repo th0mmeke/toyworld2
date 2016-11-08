@@ -37,4 +37,5 @@ class TestEvaluatorCycles(unittest.TestCase):
             {'reactants': ['c', 'f'], 'products': ['a', 'd']}
         ]
 
-        self.assertEqual(6, len(EvaluatorCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)))
+        e = EvaluatorCycles(reactions=reactions)
+        self.assertEqual(6, len(e.get_population_stoichiometry(max_depth=10)))
