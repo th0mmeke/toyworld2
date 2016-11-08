@@ -9,4 +9,4 @@ class MyJSON(JSONEncoder):
 
         if isinstance(o, (Atom, Molecule)):
             return str(o)
-        JSONEncoder.default(self,o)
+        JSONEncoder.default(self, o)
