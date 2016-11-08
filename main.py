@@ -88,9 +88,13 @@ if __name__ == "__main__":
                    product_selection=weighting_functions.replicant_weighting)
 
     logging.info("Generations: {}".format(args.generations))
-    logging.info("Initial population: {}".format(Counter([str(x) for x in reactor.get_population()])))
-    state = State(filename="data/toyworld2.json", initial_population=reactor.get_population())
+    initial_population = dict(Counter([str(x) for x in reactor.get_population()]))
+    logging.info("Initial population: {}".format(initial_population))
+
+    state = State(filename="data/toyworld2.json", initial_population=initial_population)
     state = tw.run(generations=args.generations, state=state)
-    state.close(final_population=reactor.get_population())
-    logging.info("Final population: {}".format(Counter([str(x) for x in reactor.get_population()])))
+
+    final_population = dict(Counter([str(x) for x in reactor.get_population()]))
+    state.close(final_population=final_population)
+    logging.info("Final population: {}".format(final_population))
 

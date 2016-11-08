@@ -17,8 +17,8 @@ def load_json(filename):
     _population = np.zeros((len(reactions['reactions']) + 1, number_of_unique_elements), dtype=np.dtype(int))
 
     _unique_species = list(elements)
-    for x in reactions['initial_population']:
-        _population[0, _unique_species.index(x)] += 1
+    for species, count in reactions['initial_population'].iteritems():
+        _population[0, _unique_species.index(species)] = count
 
     i = 1
     for reaction in reactions['reactions']:
@@ -30,8 +30,8 @@ def load_json(filename):
         i += 1
 
     final = np.zeros(number_of_unique_elements, dtype=np.dtype(int))
-    for x in reactions['final_population']:
-        final[_unique_species.index(x)] += 1
+    for species, count in reactions['final_population'].iteritems():
+        final[_unique_species.index(species)] = count
 
     assert list(final) == list(_population[len(reactions['reactions']), :])
     
@@ -54,5 +54,4 @@ if __name__ == "__main__":
 
     population, unique_species = load_json(args.input)
     
-    np.savetxt(csv_species_filename, unique_species, delimiter=',', fmt='%s')
-    np.savetxt(csv_population_filename, population, delimiter=',', fmt='%.3f', comments="", header=",".join(unique_species))
+    np.savetxt(csv_population_filename, population, delimiter=',', fmt='%.0f', comments='', header=','.join(unique_species))
