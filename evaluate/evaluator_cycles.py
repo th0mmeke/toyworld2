@@ -58,7 +58,7 @@ class EvaluatorCycles(object):
 
     def get_reactant_stoichiometry(self, acs_seed, minimum_stoichiometry=1, max_depth=5):
 
-        # print("Seed: {}".format(acs_seed))
+        print("Seed: {}".format(acs_seed))
         reactant_stoichiometry = []
 
         cycles = list(nx.all_simple_paths(self.g, acs_seed, acs_seed, cutoff=max_depth))
@@ -74,7 +74,7 @@ class EvaluatorCycles(object):
 
             if stoichiometry >= minimum_stoichiometry:
                 reactant_stoichiometry.append({'cycle': cycle, 'stoichiometry': stoichiometry})
-                # print({'cycle': cycle, 'stoichiometry': stoichiometry})
+                print({'cycle': cycle, 'stoichiometry': stoichiometry})
 
         return reactant_stoichiometry
 
