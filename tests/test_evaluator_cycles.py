@@ -51,3 +51,56 @@ class TestEvaluatorCycles(unittest.TestCase):
         for cycle in cycles:
             self.assertEqual(2, cycle['stoichiometry'])
 
+    def test_get_reactants(self):
+        reactions = [
+            {'reactants': ['a'], 'products': ['b', 'b']},
+            {'reactants': ['b'], 'products': ['c']},
+            {'reactants': ['c'], 'products': ['a']},
+            {'reactants': ['a'], 'products': ['e']},
+            {'reactants': ['e'], 'products': ['a', 'a']},
+        ]
+        e = EvaluatorCycles(reactions=reactions)
+        cycles = e.get_population_stoichiometry(max_depth=10)
+        self.assertEqual(set(['a', 'c', 'e']), e.get_reactant_set(cycles[1]['cycle']))
+
+        reactions = [
+            {'reactants': ['a', 'b', 'a'], 'products': ['c', 'd']},
+            {'reactants': ['b', 'a', 'a'], 'products': ['c', 'c', 'f']},
+            {'reactants': ['c', 'f'], 'products': ['a', 'd']}
+        ]
+
+        e = EvaluatorCycles(reactions=reactions)
+        cycles = e.get_population_stoichiometry(max_depth=10)
+        self.assertEqual(set(['a', 'c', 'f', 'b']), e.get_reactant_set(cycles[1]['cycle']))
+
+    def test_get_products(self):
+        reactions = [
+            {'reactants': ['a'], 'products': ['b', 'b']},
+            {'reactants': ['b'], 'products': ['c']},
+            {'reactants': ['c'], 'products': ['a']},
+            {'reactants': ['a'], 'products': ['e']},
+            {'reactants': ['e'], 'products': ['a', 'a']},
+        ]
+        e = EvaluatorCycles(reactions=reactions)
+        cycles = e.get_population_stoichiometry(max_depth=10)
+        self.assertEqual(set(['a', 'b', 'e']), e.get_product_set(cycles[1]['cycle']))
+
+        reactions = [
+            {'reactants': ['a', 'b', 'a'], 'products': ['c', 'd']},
+            {'reactants': ['b', 'a', 'a'], 'products': ['c', 'c', 'f']},
+            {'reactants': ['c', 'f'], 'products': ['a', 'd']}
+        ]
+
+        e = EvaluatorCycles(reactions=reactions)
+        cycles = e.get_population_stoichiometry(max_depth=10)
+        self.assertEqual(set(['a', 'c', 'f', 'd']), e.get_product_set(cycles[1]['cycle']))
+
+    def test_get_food_set(self):
+        reactions = [
+            {'reactants': ['a', 'b', 'a'], 'products': ['c', 'd']},
+            {'reactants': ['b', 'a', 'a'], 'products': ['c', 'c', 'f']},
+            {'reactants': ['c', 'f'], 'products': ['a', 'd']}
+        ]
+        e = EvaluatorCycles(reactions=reactions)
+        cycles = e.get_population_stoichiometry(max_depth=10)
+        self.assertEqual(set(['b']), e.get_food_set(cycles[1]['cycle']))
