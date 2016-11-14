@@ -10,7 +10,7 @@ def load_json(filename):
 
     elements = set(reactions['initial_population'])  # COPY initial items
     for reaction in reactions['reactions']:
-        elements.update(reaction['products'])
+        elements.update(reaction['products'].values())
     number_of_unique_elements = len(elements)
 
     # Population is an array (number_of_generations + 1) x number_of_unique_elements_observed_in_the_population
@@ -23,9 +23,9 @@ def load_json(filename):
     i = 1
     for reaction in reactions['reactions']:
         _population[i, :] = _population[i - 1, :]
-        for x in reaction['reactants']:
+        for x in reaction['reactants'].values():
             _population[i, _unique_species.index(x)] -= 1
-        for y in reaction['products']:
+        for y in reaction['products'].values():
             _population[i, _unique_species.index(y)] += 1
         i += 1
 

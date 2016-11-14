@@ -31,8 +31,8 @@ class Reaction(object):
         return self.product_value
 
     def as_dict(self):
-        return {'reactants': [x.get_symbol() for x in self.reactants],
-                'products': [x.get_symbol() for x in self.products],
+        return {'reactants': {id(x): x.get_symbol() for x in self.reactants},
+                'products': {id(x): x.get_symbol() for x in self.products},
                 'reactant_value': self.reactant_value,
                 'product_value': self.product_value}
 

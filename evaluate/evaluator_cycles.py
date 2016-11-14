@@ -20,19 +20,19 @@ class EvaluatorCycles(object):
         for reaction in reactions:
 
             # Distinct treatment of reactant and product sets to avoid edges being added from reactants back to molecules
-            canonical_reactants = EvaluatorCycles.make_canonical(reaction['reactants']) + '>'
-            canonical_products = '>' + EvaluatorCycles.make_canonical(reaction['products'])
-            self.reactants.update(reaction['reactants'])
+            canonical_reactants = EvaluatorCycles.make_canonical(reaction['reactants'].values()) + '>'
+            canonical_products = '>' + EvaluatorCycles.make_canonical(reaction['products'].values())
+            self.reactants.update(reaction['reactants'].values())
 
             if not self.g.has_edge(canonical_reactants, canonical_products):
                 self.g.add_edge(canonical_reactants, canonical_products)
 
-            for reactant in reaction['reactants']:
+            for reactant in reaction['reactants'].values():
                 # Only add if not already present
                 if not self.g.has_edge(reactant, canonical_reactants):
                     self.g.add_edge(reactant, canonical_reactants)
 
-            for product, count in collections.Counter(reaction['products']).iteritems():
+            for product, count in collections.Counter(reaction['products'].values()).iteritems():
                 add_edge = True
                 if self.g.has_edge(canonical_products, product):
                     existing_stoichiometries = set([edge['stoichiometry'] for edge in self.g.edge[canonical_products][product].itervalues()])
@@ -59,7 +59,7 @@ class EvaluatorCycles(object):
 
     def get_reactant_stoichiometry(self, acs_seed, minimum_stoichiometry=1, max_depth=5):
 
-        # print("Seed: {}".format(acs_seed))
+        print("Seed: {}".format(acs_seed))
         reactant_stoichiometry = []
 
         cycles = list(nx.all_simple_paths(self.g, acs_seed, acs_seed, cutoff=max_depth))
@@ -75,7 +75,7 @@ class EvaluatorCycles(object):
 
             if stoichiometry >= minimum_stoichiometry:
                 reactant_stoichiometry.append({'cycle': cycle, 'stoichiometry': stoichiometry})
-                # print({'cycle': cycle, 'stoichiometry': stoichiometry})
+                print({'cycle': cycle, 'stoichiometry': stoichiometry})
 
         return reactant_stoichiometry
 
