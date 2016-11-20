@@ -1,6 +1,7 @@
 import random
 from i_reactant_selection import IReactantSelection
 from reaction import Reaction
+import pymunk as pm
 
 
 class LocalReactantSelection(IReactantSelection):
@@ -11,7 +12,7 @@ class LocalReactantSelection(IReactantSelection):
     """
 
     REACTION_VESSEL_SIZE = 500  # -500->500
-    FOOD_SET = (REACTION_VESSEL_SIZE+1, REACTION_VESSEL_SIZE+1)
+    FOOD_SET = pm.Vec2d(REACTION_VESSEL_SIZE+1, REACTION_VESSEL_SIZE+1)
     BASE_MOLECULE_RADIUS = REACTION_VESSEL_SIZE / 500
 
     def __init__(self, population):
@@ -42,19 +43,16 @@ class LocalReactantSelection(IReactantSelection):
         :param reaction: Reaction
         """
 
+        locations = []
         for x in reaction.get_reactants():
             if x not in self.population:
                 raise ValueError
             if self.population[x] != LocalReactantSelection.FOOD_SET:
-                self.population.remove(x)
-
-        locations = []
-        for x in reaction.get_reactants():
-            if self.population[x] != LocalReactantSelection.FOOD_SET:
-                locations.add(self.population[x])
+                locations.append(self.population[x])
+                del self.population[x]
 
         if len(locations) == 0:
-            location = (random.uniform(-LocalReactantSelection.REACTION_VESSEL_SIZE, LocalReactantSelection.REACTION_VESSEL_SIZE) for i in range(2))
+            location = pm.Vec2d([random.uniform(-LocalReactantSelection.REACTION_VESSEL_SIZE, LocalReactantSelection.REACTION_VESSEL_SIZE) for i in range(2)])
         else:
             location = sum(locations)/len(locations)
         for x in reaction.get_products():
