@@ -44,5 +44,5 @@ class TestReaction(unittest.TestCase):
 
         r = Reaction(reactants=reactants, products=products)
         actual = r.as_dict()
-        self.assertEquals(actual['reactants'], [Molecule('3').get_symbol()])
-        self.assertEquals(actual['products'], [Molecule('1').get_symbol(), Molecule('2').get_symbol()])
+        self.assertEquals(actual['reactants'].values(), [Molecule('3').get_symbol()])
+        self.assertEquals(actual['products'].values(), [Molecule('1').get_symbol(), Molecule('2').get_symbol()])
