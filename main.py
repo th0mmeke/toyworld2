@@ -5,6 +5,7 @@ import argparse
 
 from toyworld2 import ToyWorld2
 from length_biased_reactant_selection import LengthBiasedReactantSelection
+from local_reactant_selection import LocalReactantSelection
 from chem_molecule import ChemMolecule
 from semi_realistic_chemistry import SemiRealisticChemistry
 from state import State
@@ -82,10 +83,10 @@ if __name__ == "__main__":
         for i in range(quantity):
             population.append(ChemMolecule(symbol))
 
-    reactor = LengthBiasedReactantSelection(population=population, ke=100)
+    reactor = LocalReactantSelection(population=population)
     tw = ToyWorld2(reactor=reactor,
                    chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies),
-                   product_selection=weighting_functions.replicant_weighting)
+                   product_selection=weighting_functions.uniform_weighting)
 
     logging.info("Generations: {}".format(args.generations))
     initial_population = dict(Counter([str(x) for x in reactor.get_population()]))

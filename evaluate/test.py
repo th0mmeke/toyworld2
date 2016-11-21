@@ -4,14 +4,14 @@ import Levenshtein
 import itertools
 import networkx as nx
 
-filename = '../data/toyworld2-500000.json'
+filename = '../data/toyworld2.json'
 
 with open(filename) as f:
     reactions = json.load(f)
 e = EvaluatorCycles(reactions=reactions['reactions'])
 
 all_cycles = [x['cycle'] for x in e.get_population_stoichiometry(max_depth=10, minimum_length=10, minimum_stoichiometry=3)]
-with open('all_cycles-500000.json', mode='w') as f:
+with open('all_cycles.json', mode='w') as f:
     json.dump(all_cycles, f)
 
 # with open('all_cycles.json', mode='r') as f:

@@ -21,6 +21,14 @@ class TestEvaluatorActualCycles(unittest.TestCase):
         self.assertEqual(1, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry()))
 
         reactions = [
+                {'reactants': {'1': 'a'}, 'products': {'2': 'b', '3': 'b'}},
+                {'reactants': {'3': 'b'}, 'products': {'4': 'c'}},
+                {'reactants': {'4': 'c'}, 'products': {'5': 'd'}},
+                {'reactants': {'5': 'd'}, 'products': {'6': 'c'}},
+                ]
+        self.assertEqual(1, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry()))
+
+        reactions = [
             {'reactants': {'1': 'a'}, 'products': {'2': 'b', '3': 'b'}},
             {'reactants': {'3': 'b'}, 'products': {'4': 'c'}},
             {'reactants': {'4': 'c'}, 'products': {'5': 'a'}},
@@ -28,6 +36,14 @@ class TestEvaluatorActualCycles(unittest.TestCase):
             {'reactants': {'6': 'e'}, 'products': {'7': 'a', '8': 'a'}},
         ]
         self.assertEqual(2, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry()))
+
+    def testBrokenCycles(self):
+        reactions = [
+                {'reactants': {'1': 'a'}, 'products': {'2': 'b', '3': 'b'}},
+                {'reactants': {'3': 'b'}, 'products': {'4': 'c'}},
+                {'reactants': {'6': 'c'}, 'products': {'5': 'a'}},  # Not the same 'c'
+                ]
+        self.assertEqual(0, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry()))
 
     def testMultiple(self):
         # aba -> ccf -> cf -> ad has stoichiometry of 2, other two reaction cycles have stoichiometry of 1.
