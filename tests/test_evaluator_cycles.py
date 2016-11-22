@@ -32,7 +32,6 @@ class TestEvaluatorCycles(unittest.TestCase):
         self.assertEqual(5, len(EvaluatorCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)))
 
     def testMultiple(self):
-        # aba -> ccf -> cf -> ad has stoichiometry of 2, other two reaction cycles have stoichiometry of 1.
         reactions = [
             {'reactants': {'1': 'a', '2': 'b', '3': 'a'}, 'products': {'4': 'c', '5': 'd'}},
             {'reactants': {'6': 'b', '7': 'a', '8': 'a'}, 'products': {'9': 'c', '10': 'c', '11': 'f'}},
