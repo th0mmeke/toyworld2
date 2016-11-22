@@ -35,7 +35,8 @@ class TestEvaluatorActualCycles(unittest.TestCase):
             {'reactants': {'5': 'a'}, 'products': {'6': 'e'}},
             {'reactants': {'6': 'e'}, 'products': {'7': 'a', '8': 'a'}},
         ]
-        self.assertEqual(2, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry()))
+        e = EvaluatorActualCycles(reactions=reactions)
+        self.assertEqual(4, len(e.get_population_stoichiometry()))
 
     def testBrokenCycles(self):
         reactions = [
@@ -46,7 +47,6 @@ class TestEvaluatorActualCycles(unittest.TestCase):
         self.assertEqual(0, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry()))
 
     def testMultiple(self):
-        # aba -> ccf -> cf -> ad has stoichiometry of 2, other two reaction cycles have stoichiometry of 1.
         reactions = [
             {'reactants': {'1': 'a', '2': 'b', '3': 'a'}, 'products': {'4': 'c', '5': 'd'}},
             {'reactants': {'6': 'b', '7': 'a', '8': 'a'}, 'products': {'9': 'c', '10': 'c', '11': 'f'}},
@@ -66,3 +66,29 @@ class TestEvaluatorActualCycles(unittest.TestCase):
         cycles = e.get_population_stoichiometry()
         for cycle in cycles:
             self.assertEqual(2, cycle['stoichiometry'])
+
+    def testTwoCycles(self):
+
+        # Simple case - one cycle, then another, sharing same smiles
+        reactions = [
+                {'reactants': {'1': 'a'}, 'products': {'2': 'b'}},
+                {'reactants': {'2': 'b'}, 'products': {'3': 'a'}},
+                {'reactants': {'4': 'a'}, 'products': {'5': 'b'}},
+                {'reactants': {'5': 'b'}, 'products': {'6': 'a'}}
+                ]
+        e = EvaluatorActualCycles(reactions=reactions)
+        cycles = e.get_population_stoichiometry()
+        self.assertEqual(2, len(cycles))
+
+        # Order of reactions shouldn't matter...
+        reactions = [
+            {'reactants': {'1': 'a'}, 'products': {'2': 'b'}},
+            {'reactants': {'4': 'a'}, 'products': {'5': 'b'}},
+            {'reactants': {'2': 'b'}, 'products': {'3': 'a'}},
+            {'reactants': {'5': 'b'}, 'products': {'6': 'a'}}
+        ]
+        e = EvaluatorActualCycles(reactions=reactions)
+        cycles = e.get_population_stoichiometry()
+        self.assertEqual(2, len(cycles))
+
+
