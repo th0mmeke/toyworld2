@@ -51,6 +51,16 @@ class TestEvaluatorCycles(unittest.TestCase):
         for cycle in cycles:
             self.assertEqual(2, cycle['stoichiometry'])
 
+        reactions = [
+            {'reactants': {'1': 'a', '2': 'a'}, 'products': {'3': 'c'}},
+            {'reactants': {'3': 'c'}, 'products': {'4': 'a', '5': 'a', '6': 'd'}}
+        ]
+
+        e = EvaluatorCycles(reactions=reactions)
+        cycles = e.get_population_stoichiometry(max_depth=10)
+        for cycle in cycles:
+            self.assertEqual(1, cycle['stoichiometry'])
+
     def test_get_reactants(self):
         reactions = [
             {'reactants': {'1': 'a'}, 'products': {'2': 'b', '3': 'b'}},

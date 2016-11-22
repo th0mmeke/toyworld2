@@ -32,14 +32,25 @@ class EvaluatorCycles(object):
                 if not self.g.has_edge(reactant, canonical_reactants):
                     self.g.add_edge(reactant, canonical_reactants)
 
-            for product, count in collections.Counter(reaction['products'].values()).iteritems():
+            # Determine reaction stoichiometry, and add an edge labelled appropriately to each product
+
+            common = set(reaction['reactants'].values()).intersection(reaction['products'].values())
+            reactant_counts = {count: smiles for count, smiles in collections.Counter(reaction['reactants'].values()).iteritems()}
+            product_counts = {count: smiles for count, smiles in collections.Counter(reaction['products'].values()).iteritems()}
+
+            for product in reaction['products'].values():
+                stoichiometry = product_counts[product]
+                if product in common:
+                    stoichiometry /= reactant_counts[product]
                 add_edge = True
                 if self.g.has_edge(canonical_products, product):
-                    existing_stoichiometries = set([edge['stoichiometry'] for edge in self.g.edge[canonical_products][product].itervalues()])
-                    if count in existing_stoichiometries:
+                    existing_stoichiometries = set(
+                        [edge['stoichiometry'] for edge in self.g.edge[canonical_products][product].values()])
+                    if stoichiometry in existing_stoichiometries:
                         add_edge = False
                 if add_edge:
-                    self.g.add_edge(canonical_products, product, stoichiometry=count)
+                    self.g.add_edge(canonical_products, product, stoichiometry=stoichiometry)
+
 
     def get_population_stoichiometry(self, minimum_length=0, minimum_stoichiometry=1, max_depth=5):
         """
