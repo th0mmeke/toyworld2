@@ -63,7 +63,7 @@ class EvaluatorActualCycles(EvaluatorCycles):
 
         for id_seed in self.smiles[acs_seed]:
 
-            cycles = list(self.find_shortest_paths(self.g, id_seed, acs_seed))
+            cycles = list(self.find_shortest_paths(self.g, id_seed, acs_seed, max_depth))
 
             # eliminate duplicate cycles
             canonical_cycles = set([self._make_canonical(cycle) for cycle in cycles])
@@ -81,9 +81,8 @@ class EvaluatorActualCycles(EvaluatorCycles):
 
         return reactant_stoichiometry
 
-
     @staticmethod
-    def find_shortest_paths(network, source, target):  # http://eddmann.com/posts/depth-first-search-and-breadth-first-search-in-python/
+    def find_shortest_paths(network, source, target, max_depth=5):  # http://eddmann.com/posts/depth-first-search-and-breadth-first-search-in-python/
         stack = [(source, [source])]
         while stack:
             (vertex, path) = stack.pop()
@@ -91,7 +90,8 @@ class EvaluatorActualCycles(EvaluatorCycles):
                 if not EvaluatorCycles.is_reaction(next_node) and network.node[next_node]['smiles'] == target:
                     yield list(reversed(path + [next_node]))  # reverse order as path found in reverse direction
                 else:
-                    stack.append((next_node, path + [next_node]))
+                    if len(path) < max_depth:
+                        stack.append((next_node, path + [next_node]))
 
     @classmethod
     def _make_canonical(cls, path):

@@ -11,14 +11,14 @@ class TestEvaluatorActualCycles(unittest.TestCase):
                 {'reactants': {'1': 'a'}, 'products': {'2': 'b'}},
                 {'reactants': {'2': 'b'}, 'products': {'4': 'a'}}
                 ]
-        self.assertEqual(1, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry()))
+        self.assertEqual(1, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)))
 
         reactions = [
                 {'reactants': {'1': 'a'}, 'products': {'2': 'b', '3': 'b'}},
                 {'reactants': {'3': 'b'}, 'products': {'4': 'c'}},
                 {'reactants': {'4': 'c'}, 'products': {'5': 'a'}},
                 ]
-        self.assertEqual(1, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry()))
+        self.assertEqual(1, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)))
 
         reactions = [
                 {'reactants': {'1': 'a'}, 'products': {'2': 'b', '3': 'b'}},
@@ -26,7 +26,7 @@ class TestEvaluatorActualCycles(unittest.TestCase):
                 {'reactants': {'4': 'c'}, 'products': {'5': 'd'}},
                 {'reactants': {'5': 'd'}, 'products': {'6': 'c'}},
                 ]
-        self.assertEqual(1, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry()))
+        self.assertEqual(1, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)))
 
         reactions = [
             {'reactants': {'1': 'a'}, 'products': {'2': 'b', '3': 'b'}},
@@ -36,7 +36,7 @@ class TestEvaluatorActualCycles(unittest.TestCase):
             {'reactants': {'6': 'e'}, 'products': {'7': 'a', '8': 'a'}},
         ]
         e = EvaluatorActualCycles(reactions=reactions)
-        self.assertEqual(4, len(e.get_population_stoichiometry()))
+        self.assertEqual(4, len(e.get_population_stoichiometry(max_depth=10)))
 
     def testBrokenCycles(self):
         reactions = [
@@ -44,7 +44,7 @@ class TestEvaluatorActualCycles(unittest.TestCase):
                 {'reactants': {'3': 'b'}, 'products': {'4': 'c'}},
                 {'reactants': {'6': 'c'}, 'products': {'5': 'a'}},  # Not the same 'c'
                 ]
-        self.assertEqual(0, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry()))
+        self.assertEqual(0, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)))
 
     def testMultiple(self):
         reactions = [
@@ -54,7 +54,7 @@ class TestEvaluatorActualCycles(unittest.TestCase):
         ]
 
         e = EvaluatorActualCycles(reactions=reactions)
-        self.assertEqual(2, len(e.get_population_stoichiometry()))
+        self.assertEqual(2, len(e.get_population_stoichiometry(max_depth=10)))
 
     def testStoichiometry(self):
         reactions = [
@@ -63,7 +63,7 @@ class TestEvaluatorActualCycles(unittest.TestCase):
         ]
 
         e = EvaluatorActualCycles(reactions=reactions)
-        cycles = e.get_population_stoichiometry()
+        cycles = e.get_population_stoichiometry(max_depth=10)
         for cycle in cycles:
             self.assertEqual(2, cycle['stoichiometry'])
 
@@ -77,7 +77,7 @@ class TestEvaluatorActualCycles(unittest.TestCase):
                 {'reactants': {'5': 'b'}, 'products': {'6': 'a'}}
                 ]
         e = EvaluatorActualCycles(reactions=reactions)
-        cycles = e.get_population_stoichiometry()
+        cycles = e.get_population_stoichiometry(max_depth=10)
         self.assertEqual(2, len(cycles))
 
         # Order of reactions shouldn't matter...
@@ -88,7 +88,7 @@ class TestEvaluatorActualCycles(unittest.TestCase):
             {'reactants': {'5': 'b'}, 'products': {'6': 'a'}}
         ]
         e = EvaluatorActualCycles(reactions=reactions)
-        cycles = e.get_population_stoichiometry()
+        cycles = e.get_population_stoichiometry(max_depth=10)
         self.assertEqual(2, len(cycles))
 
 
