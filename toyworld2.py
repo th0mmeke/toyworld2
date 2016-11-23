@@ -9,7 +9,7 @@ class ToyWorld2:
         self.reactor = reactor
         self.product_selection = product_selection
 
-    def run(self, generations, state):
+    def run(self, generations, state, environment):
 
         generation = 1
         non_reaction = 0
