@@ -121,7 +121,7 @@ class Kinetics2D(object):
         #########################
         # Confirm post-conditions
         # 1. Mass
-        assert Ulps.almost_equal(sum(in_mass), sum(out_mass))
+        assert Ulps.almost_equal(sum(in_mass), sum(out_mass))  # should be safe
 
         # 2. Momentum
 
@@ -130,10 +130,12 @@ class Kinetics2D(object):
         out_mv_total = total_mv(out_mv)
         logging.debug("IN MV = {}, OUT MV = {}".format(in_mv_total, out_mv_total))
         for in_, out_ in zip(in_mv_total, out_mv_total):
-            assert Ulps.almost_equal(in_, out_)
+            if not Ulps.almost_equal(in_, out_):
+                raise ValueError
 
         # 3. Energy
         out_ke = sum([cls.get_ke(m, *v) for m, v in zip(out_mass, out_v)])
-        assert Ulps.almost_equal(in_ke, out_ke, max_diff=3000)
+        if not Ulps.almost_equal(in_ke, out_ke, max_diff=3000):
+            raise ValueError  # if a calculation problem with the velocities, throw it back to the caller
 
         return out_v
