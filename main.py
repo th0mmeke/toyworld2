@@ -5,6 +5,8 @@ import argparse
 import random
 import itertools
 import nolds
+import time
+import copy
 
 from toyworld2 import ToyWorld2
 from length_biased_reactant_selection import LengthBiasedReactantSelection
@@ -18,9 +20,8 @@ import weighting_functions
 import bond_energies
 
 MAX_SD = 0.4
-N_REPEATS = 5
-N_ENVIRONMENTS = 10
-
+N_REPEATS = 3
+N_ENVIRONMENTS = 1
 
 def initialise_logging(args, basedir):
     level = getattr(logging, args.log_level.upper())
@@ -66,48 +67,50 @@ def get_environment_specification():
     # by lineage.
 
     for i in range(N_ENVIRONMENTS):
-        yield random.uniform(-MAX_SD, MAX_SD), random.uniform(0, MAX_SD), random.uniform(-MAX_SD/10, MAX_SD/10)
+        yield
 
 
-def runner(population, generations, number_of_repeats, number_of_environments):
+def run_experiment(filename, population, experiment, generations, environment=None):
+    reactor = experiment[0](population=copy.deepcopy(population))
+    initial_population = dict(Counter([str(x) for x in reactor.get_population()]))
 
-    factor_defns = {
-        'REACTANT_SELECTION': [LocalReactantSelection, UniformReactantSelection, SpatialReactantSelection, LengthBiasedReactantSelection],
-        'PRODUCT_SELECTION': [weighting_functions.least_energy_weighting, weighting_functions.uniform_weighting],
-    }
+    tw = ToyWorld2(reactor=reactor, product_selection=experiment[1], chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies))
 
-    experiment_number = run_number = 0
-    total_experiments = number_of_repeats * number_of_environments * len(factor_defns['REACTANT_SELECTION'])*len(factor_defns['PRODUCT_SELECTION'])
+    state = State(filename=filename, initial_population=initial_population)
+    state = tw.run(generations=generations, state=state, environment=environment)
 
-    with open('data/metadata.csv', 'w') as f:
-        for experiment in itertools.product(factor_defns['REACTANT_SELECTION'], factor_defns['PRODUCT_SELECTION']):
+    final_population = dict(Counter([str(x) for x in reactor.get_population()]))
+    state.close(final_population=final_population)
 
-            for environment_specification in get_environment_specification():
 
+def runner(population, factors, generations, number_of_repeats, number_of_environments):
+
+    filebase = int(time.time())
+    experiment_number = 0
+    total_experiments = number_of_repeats * number_of_environments * len(factors['REACTANT_SELECTION'])*len(factors['PRODUCT_SELECTION'])
+
+    with open('data/{}-metadata.csv'.format(filebase), 'w') as f:
+
+        for experiment in itertools.product(factors['REACTANT_SELECTION'], factors['PRODUCT_SELECTION']):
+
+            for environment_number in range(0, number_of_environments):
+
+                environment_specification = random.uniform(-MAX_SD, MAX_SD), random.uniform(0, MAX_SD), random.uniform(-MAX_SD/10, MAX_SD/10)
                 environment = get_ar_timeseries(*environment_specification, generations=generations)
+
                 metadata = [str(experiment_number), experiment[0].__name__, experiment[1].__name__]
                 metadata.extend([str(x) for x in environment_specification])
                 metadata.append(str(nolds.hurst_rs(environment)))
                 metadata.append(str(nolds.dfa(environment)))
                 metadata.append(str(nolds.sampen(environment)))
                 metadata.append(str(nolds.corr_dim(environment, 2)))
-                print(','.join(metadata))
-                #f.write(','.join(metadata))
 
-                for repeat in range(0, number_of_repeats):
+                f.write(','.join(metadata))
 
-                    print("{0}/{1}".format((experiment_number*number_of_repeats) + repeat + 1, total_experiments))
-
-                    # reactor = experiment[0](population=copy.deepcopy(population))
-                    # initial_population = dict(Counter([str(x) for x in reactor.get_population()]))
-
-                    # tw = ToyWorld2(reactor=reactor, product_selection=experiment[1], chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies))
-
-                    # state = State(filename="data/env-{}-{}.json".format(experiment_number, repeat), initial_population=initial_population)
-                    # state = tw.run(generations=args.generations, state=state, environments=environment)
-
-                    # final_population = dict(Counter([str(x) for x in reactor.get_population()]))
-                    # state.close(final_population=final_population)
+                for repeat_number in range(0, number_of_repeats):
+                    print("{0}/{1}".format((experiment_number*number_of_repeats) + repeat_number + 1, total_experiments))
+                    filename = "data/{}-{}-{}-{}.json".format(filebase, experiment_number, environment_number, repeat_number)
+                    run_experiment(filename, population, experiment, generations)
 
                 experiment_number += 1
 
@@ -162,6 +165,15 @@ if __name__ == "__main__":
             population.append(ChemMolecule(symbol))
 
     logging.info("Generations: {}".format(args.generations))
-    runner(population, generations=args.generations, number_of_repeats=N_REPEATS, number_of_environments=N_ENVIRONMENTS)
+
+    factors = {
+        'REACTANT_SELECTION': [LocalReactantSelection, UniformReactantSelection, SpatialReactantSelection, LengthBiasedReactantSelection],
+        'PRODUCT_SELECTION': [weighting_functions.least_energy_weighting, weighting_functions.uniform_weighting],
+    }
+
+    experiment = [SpatialReactantSelection, weighting_functions.least_energy_weighting]
+    run_experiment('data/informational_replicator.json', experiment=experiment, population=population, generations=args.generations)
+
+    #  runner(population, factors, generations=args.generations, number_of_repeats=3, number_of_environments=1)
 
 
