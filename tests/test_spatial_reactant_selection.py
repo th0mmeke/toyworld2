@@ -1,4 +1,5 @@
 import unittest
+import pymunk as pm
 
 from reaction import Reaction
 from spatial_reactant_selection import SpatialReactantSelection
@@ -64,7 +65,16 @@ class TestSpatialReactantSelection(unittest.TestCase):
         with self.assertRaises(ValueError):
             r.react(Reaction(reactants=[a, b], products=[c, d]))
 
+    def test_clamp_to_vessel(self):
+        x = 1.1
+        y = 2.2
+        location = pm.Vec2d(x, y)
+        bound = SpatialReactantSelection.REACTION_VESSEL_SIZE
+        self.assertEqual(pm.Vec2d(x, y), SpatialReactantSelection._clamp_to_vessel(location))
 
+        location = pm.Vec2d(-bound-1, -bound-1)
+        self.assertEqual(pm.Vec2d(-bound, -bound), SpatialReactantSelection._clamp_to_vessel(location))
 
-
+        location = pm.Vec2d(bound + 1, bound + 1)
+        self.assertEqual(pm.Vec2d(bound, bound), SpatialReactantSelection._clamp_to_vessel(location))
 

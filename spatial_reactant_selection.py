@@ -116,7 +116,6 @@ class SpatialReactantSelection(IReactantSelection):
         except KeyError:
             raise ValueError
 
-        #print(Counter([x.collision_type for x in self.shape2mol.keys()]))
         initial_bodies = len(self.space.bodies)
         initial_shapes = len(self.space.shapes)
         assert initial_bodies == initial_shapes - 4
@@ -151,6 +150,18 @@ class SpatialReactantSelection(IReactantSelection):
     def get_population(self):
         return self.shape2mol.values()
 
+    @classmethod
+    def _clamp_to_vessel(cls, location):
+        """
+        Limit to within the reaction vessel
+        :param location: Vec2d
+        :return: Vec2d
+        """
+
+        location.x = min(cls.REACTION_VESSEL_SIZE, max(-cls.REACTION_VESSEL_SIZE, location.x))
+        location.y = min(cls.REACTION_VESSEL_SIZE, max(-cls.REACTION_VESSEL_SIZE, location.y))
+        return location
+
     def _add_molecule(self, molecule, location, velocity, collision_type):
 
         """
@@ -163,6 +174,7 @@ class SpatialReactantSelection(IReactantSelection):
         :return:
         """
 
+        location = self._clamp_to_vessel(location)
         assert abs(location.x) <= self.REACTION_VESSEL_SIZE and abs(location.y) <= self.REACTION_VESSEL_SIZE
         # If fail assertion, then molecules are either skipping over walls, or the walls aren't reflecting them, or the walls are in the wrong place
 
