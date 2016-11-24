@@ -22,7 +22,7 @@ class ToyWorld2:
                 non_reaction += 1
                 if non_reaction > 200:
                     logging.info("Stopping, lack of reactions")
-                    exit()
+                    break
             else:
                 self.reactor.react(reaction)
                 logging.info("{}: reaction between {} giving {}".format(generation, str([r.get_symbol() for r in reaction.reactants]),
