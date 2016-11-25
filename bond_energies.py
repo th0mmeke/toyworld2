@@ -23,6 +23,12 @@ bond_energies = {
     'C3N': 213, 'N3C': 213,
     'C4C': 200,  # theoretically possible from valences, but in nature forms a C2C bond instead
 
+    'C1Cl': 394, 'Cl1C': 394,
+    'Cl1Cl': 436,
+    'Cl1H': 431, 'H1Cl': 431,
+    'Cl1P': 376, 'P1Cl': 376,
+    'Cl1O': 267, 'O1Cl': 267,
+
     'P1P': 50,
     'H1P': 77, 'P1H': 77,
     'C1P': 70, 'P1C': 70,
