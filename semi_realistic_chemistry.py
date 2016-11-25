@@ -82,7 +82,7 @@ class SemiRealisticChemistry(IChemistry):
         if partial_reaction is None:
             logging.debug("No reactants to enumerate")
             return None
-
+        # with stderr_redirected():
         reaction_options = self._get_change_options(partial_reaction)
         addition_options = self._get_addition_options(partial_reaction)
         if len(addition_options) > 0:
@@ -148,24 +148,26 @@ class SemiRealisticChemistry(IChemistry):
         # Check for possible bonds between all atoms with the potential for one or more additional bonds...
         for begin_atom in reactant.GetAtoms():
 
-            component = [i for i in components if begin_atom.GetIdx() in i][0]  # all idx in the same component as begin_atom_idx
+            this_component = set([i for i in components if begin_atom.GetIdx() in i][0])  # all idx in the same component as begin_atom_idx
+            end_atom_candidates = set(range(begin_atom.GetIdx() + 1, reactant.GetNumAtoms(onlyExplicit=False))) - this_component  # begin_atom and end_atom must join different components
 
-            for end_atom_idx in range(begin_atom.GetIdx() + 1, reactant.GetNumAtoms(onlyExplicit=False)):
-                if end_atom_idx not in component:  # begin_atom and end_atom must join different components
-                    for bond_order in range(1, 4):  # all bond options up to and including max_bond_order
-                        try:
-                            product = self._change_bond(copy.deepcopy(reactant), begin_atom.GetIdx(), end_atom_idx, bond_order)
+            for end_atom_idx in end_atom_candidates:
+                x = begin_atom.GetSymbol()
+                y = reactant.GetAtomWithIdx(end_atom_idx).GetSymbol()
+                for bond_order in range(1, 4):  # all bond options up to and including max_bond_order
+                    try:
+                        product = self._change_bond(copy.deepcopy(reactant), begin_atom.GetIdx(), end_atom_idx, bond_order)
 
-                        except ValueError:
-                            pass  # just ignore invalid options
-                        else:
-                            bond_energy = self._get_bond_energy(begin_atom.GetSymbol(),
-                                                                product.GetAtomWithIdx(end_atom_idx).GetSymbol(),
-                                                                to_bond_type=bond_order)  # bond creation of order bond_order
-                            options.append(Reaction(reactants=partial_reaction.get_reactants(),
-                                                    reactant_value=partial_reaction.reactant_value,
-                                                    products=SemiRealisticChemistry._split(product),
-                                                    product_value=bond_energy))
+                    except ValueError:
+                        pass  # just ignore invalid options
+                    else:
+                        bond_energy = self._get_bond_energy(begin_atom.GetSymbol(),
+                                                            product.GetAtomWithIdx(end_atom_idx).GetSymbol(),
+                                                            to_bond_type=bond_order)  # bond creation of order bond_order
+                        options.append(Reaction(reactants=partial_reaction.get_reactants(),
+                                                reactant_value=partial_reaction.reactant_value,
+                                                products=SemiRealisticChemistry._split(product),
+                                                product_value=bond_energy))
         return options
 
     @staticmethod
@@ -287,10 +289,9 @@ class SemiRealisticChemistry(IChemistry):
 
         new_mol = new_mol.GetMol()
 
-        with stderr_redirected():
-            Chem.SanitizeMol(new_mol)  # Raises ValueError if an invalid molecule can't be corrected
+        Chem.SanitizeMol(new_mol)  # Raises ValueError if an invalid molecule can't be corrected
 
-        # Removing a bond between H and another atom can add in extra Hs...for conservation of mass reject these:
+        # SanitizeMol adds in Hs when removing bonds between H and another atom can add in extra Hs...for conservation of mass reject these:
         if new_mol.GetNumAtoms(onlyExplicit=False) != mol.GetNumAtoms(onlyExplicit=False):
             raise ValueError(Chem.MolToSmiles(new_mol))
         if Chem.MolFromSmiles(Chem.MolToSmiles(new_mol)) is None:

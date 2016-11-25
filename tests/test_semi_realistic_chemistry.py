@@ -78,11 +78,22 @@ class TestSemiRealisticChemistry(unittest.TestCase):
 
         self.assertEqual(7, len(chem.enumerate(Reaction(reactants=[ChemMolecule('C=C')]))))  # five complete breaks, and one drop from double to single
 
+    def test_polymer_enumerate(self):
+        chem = SemiRealisticChemistry(bond_energies=bond_energies.bond_energies)
+        print()
+        options = chem.enumerate(Reaction(reactants=[ChemMolecule('[H]C([H])C([H])[H]'), ChemMolecule('[H]C([H])C([H])[H]')]))
+        for reaction in options:
+            print(len(reaction.get_products()), reaction.as_dict())
+
     def test_change_options(self):
         chem = SemiRealisticChemistry(bond_energies=bond_energies.bond_energies)
         mol = Chem.AddHs(Chem.MolFromSmiles('[H]O[H]'))
         new_mol = chem._change_bond(mol, 0, 1, 0)
         self.assertEqual(Chem.MolToSmiles(new_mol), '[H+].[H][O-]')
+
+        mol = Chem.MolFromSmiles('C=C')
+        with self.assertRaises(ValueError):
+            new_mol = chem._change_bond(mol, 0, 1, 1)  # Can't change bond without adding (non-existent) Hs
 
     def test_split(self):
         """
