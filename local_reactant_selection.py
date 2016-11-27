@@ -1,4 +1,5 @@
 import random
+import logging
 from i_reactant_selection import IReactantSelection
 from reaction import Reaction
 import pymunk as pm
@@ -14,8 +15,9 @@ class LocalReactantSelection(IReactantSelection):
     REACTION_VESSEL_SIZE = 500  # -500->500
     FOOD_SET = pm.Vec2d(REACTION_VESSEL_SIZE+1, REACTION_VESSEL_SIZE+1)
     BASE_MOLECULE_RADIUS = REACTION_VESSEL_SIZE / 500
+    VESICLE_SIZE_SQRD = BASE_MOLECULE_RADIUS * BASE_MOLECULE_RADIUS * 16
 
-    def __init__(self, population):
+    def __init__(self, population, **kwargs):
 
         """
         Population represents the Food Set of ChemMolecules. Only important thing is the relative proportions of the elements as this determines the
@@ -27,27 +29,59 @@ class LocalReactantSelection(IReactantSelection):
         if not isinstance(population, list):
             raise TypeError
 
-        self.population = {x: LocalReactantSelection.FOOD_SET for x in population}  # {ChemMolecule: (x,y)}
+        try:
+            self.ke = kwargs['ke']
+        except KeyError:
+            self.ke = 100
+
+        self.food_set = population
+        self.population = {}  # {ChemMolecule: (x,y)}
 
     def get_reactants(self):
-        if len(self.population) > 1:
-            reactants = random.sample(self.population.keys(), 2)
-        else:
-            reactants = self.population.keys()
+        """
+        Return the reactants for a reaction, essentially through uniform selection.
+        However to mimic the effects of a membrane, all non-foodset reactants must be within a given distance of each other.
+        We do this by first selecting a reactant with uniform probability from all molecules. If it is a foodset molecule,
+        we can select a second reactant without constraint in the same manner. If it is not however, our second reactant can
+        either be a foodset molecule or a molecule from the same location.
+
+        :return: Reaction
+        """
+
+        reactants = random.sample(self.get_population(), 2)
+
+        if reactants[0] not in self.food_set and reactants[1] not in self.food_set:
+
+            # Reactant is within vesicle - second reactant must then be either 1) foodset or 2) from same location
+            if random.random() <= len(self.food_set) * 1.0 / (len(self.population) + len(self.food_set)):
+                sample_population = self.food_set
+                logging.info("Food...")
+            else:
+                sample_population = self.population.copy()
+                del sample_population[reactants[0]]
+                sample_population = [x for x in sample_population if sample_population[x].get_dist_sqrd(self.population[reactants[0]]) <= self.VESICLE_SIZE_SQRD]
+                logging.info("Vesicle of size {}".format(len(sample_population)))
+
+            reactants[1] = random.sample(sample_population, 1)[0]
+
         assert type(reactants) == list
-        return Reaction(reactants=reactants)
+        return Reaction(reactants=reactants, reactant_value=self.ke)
 
     def react(self, reaction):
 
         """
+        Foodset molecules are treated as inexhaustible. The actual number of foodset molecules of a particular species
+        is only important for get_reactants(), which selects reactants in proportion to their abundance.
+        All products of a reaction are placed into the reaction vessel at the reaction location, with zero KE.
+        This is a simple way to approximate the effects of a membrane - products stay in close proximity to each other.
+
         :param reaction: Reaction
+        :return: Reaction
         """
 
         locations = []
         for x in reaction.get_reactants():
-            if x not in self.population:
-                raise ValueError
-            if self.population[x] != LocalReactantSelection.FOOD_SET:
+            if x in self.population:  # not in foodset
                 locations.append(self.population[x])
                 del self.population[x]
 
@@ -67,4 +101,4 @@ class LocalReactantSelection(IReactantSelection):
         :return: [ChemMolecule]
         """
 
-        return self.population.keys()
+        return self.food_set + self.population.keys()
