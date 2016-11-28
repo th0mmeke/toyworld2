@@ -54,6 +54,7 @@ def get_ar_timeseries(theta, sd, bias, generations):
             ts.append(value)
     return ts
 
+
 def get_environment_specification():
     # Environment change is modelled as a change in the relationship between entity and environment.
 
@@ -89,13 +90,16 @@ def runner(population, factors, generations, number_of_repeats, number_of_enviro
     experiment_number = 0
     total_experiments = number_of_repeats * number_of_environments * len(factors['REACTANT_SELECTION'])*len(factors['PRODUCT_SELECTION'])
 
-    with open('data/{}-metadata.csv'.format(filebase), 'w') as f:
+    with open('data/{}-metadata.csv'.format(filebase), 'w', 0) as f:
 
         for experiment in itertools.product(factors['REACTANT_SELECTION'], factors['PRODUCT_SELECTION']):
 
             for environment_number in range(0, number_of_environments):
 
-                environment_specification = random.uniform(-MAX_SD, MAX_SD), random.uniform(0, MAX_SD), random.uniform(-MAX_SD/10, MAX_SD/10)
+                if environment_number == 0:
+                    environment_specification = (0, 0, 0)
+                else:
+                    environment_specification = random.uniform(-MAX_SD, MAX_SD), random.uniform(0, MAX_SD), random.uniform(-MAX_SD/10, MAX_SD/10)
                 environment = get_ar_timeseries(*environment_specification, generations=generations)
 
                 metadata = [str(experiment_number), experiment[0].__name__, experiment[1].__name__]
@@ -103,14 +107,13 @@ def runner(population, factors, generations, number_of_repeats, number_of_enviro
                 metadata.append(str(nolds.hurst_rs(environment)))
                 metadata.append(str(nolds.dfa(environment)))
                 metadata.append(str(nolds.sampen(environment)))
-                metadata.append(str(nolds.corr_dim(environment, 2)))
 
-                f.write(','.join(metadata))
+                f.write(','.join(metadata) + "\n")
 
                 for repeat_number in range(0, number_of_repeats):
-                    print("{0}/{1}".format((experiment_number*number_of_repeats) + repeat_number + 1, total_experiments))
+                    print("{0}/{1} with {2}".format((experiment_number*number_of_repeats) + repeat_number + 1, total_experiments, environment_specification))
                     filename = "data/{}-{}-{}-{}.json".format(filebase, experiment_number, environment_number, repeat_number)
-                    run_experiment(filename, population, experiment, generations)
+                    run_experiment(filename, population, experiment, generations, environment=environment[:])
 
                 experiment_number += 1
 
@@ -126,7 +129,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     initialise_logging(args, os.getcwd())
 
-    #defn = {"[H][H]": 10, "FO": 10, "O": 20, "[O-][N+](=O)[N+]([O-])=O": 10, "N(=O)[O]": 10, "O=C=O": 20}
+
     proteinogenic_amino_acids = ["O=C(O)[C@@H](N)C",  # ALA
                    "NC(CCCNC(N)=N)C(O)=O",  # ARG
                    "O=C(N)C[C@H](N)C(=O)O",  # ASN
@@ -159,6 +162,7 @@ if __name__ == "__main__":
     rna_bases = [adenine, cytosine, guanine, uracil]
     #defn = {x: 100 for x in rna_bases}
 
+    defn = {"[H][H]": 10, "FO": 10, "O": 20, "[O-][N+](=O)[N+]([O-])=O": 10, "N(=O)[O]": 10, "O=C=O": 20}
     population = []
     for symbol, quantity in defn.iteritems():
         for i in range(quantity):
@@ -167,13 +171,13 @@ if __name__ == "__main__":
     logging.info("Generations: {}".format(args.generations))
 
     factors = {
-        'REACTANT_SELECTION': [LocalReactantSelection, UniformReactantSelection, SpatialReactantSelection, LengthBiasedReactantSelection],
+        'REACTANT_SELECTION': [LocalReactantSelection],
         'PRODUCT_SELECTION': [weighting_functions.least_energy_weighting, weighting_functions.uniform_weighting],
     }
 
-    experiment = [SpatialReactantSelection, weighting_functions.least_energy_weighting]
-    run_experiment('data/informational_replicator.json', experiment=experiment, population=population, generations=args.generations)
+    #experiment = [LocalReactantSelection, weighting_functions.least_energy_weighting]
+    #run_experiment('data/local_unchanging.json', experiment=experiment, population=population, generations=args.generations)
 
-    #  runner(population, factors, generations=args.generations, number_of_repeats=3, number_of_environments=1)
+    runner(population, factors, generations=args.generations, number_of_repeats=3, number_of_environments=5)
 
 

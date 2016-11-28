@@ -14,7 +14,11 @@ class ToyWorld2:
         generation = 1
         non_reaction = 0
         while generation <= generations:
-            partial_reaction = self.reactor.get_reactants()
+            try:
+                partial_reaction = self.reactor.get_reactants()
+            except ValueError:
+                logging.info("Stopping, lack of energy")
+                break
             reactions = self.chemistry.enumerate(partial_reaction)
             reaction = weighted_selection(reactions, self.product_selection)
 
@@ -28,6 +32,7 @@ class ToyWorld2:
                 logging.info("{}: reaction between {} giving {}".format(generation, str([r.get_symbol() for r in reaction.reactants]),
                                                                         str([p.get_symbol() for p in reaction.products])))
                 state.add(reaction.as_dict())
+                self.reactor.update_environment(environment.pop())
                 generation += 1
                 non_reaction = 0
 
