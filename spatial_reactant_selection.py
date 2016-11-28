@@ -83,8 +83,10 @@ class SpatialReactantSelection(IReactantSelection):
         while len(self.reactant_list) == 0:  # reactant_list maintained by _begin_handler()
             i += 1
             self.space.step(self.step_size)  # trigger _begin_handler on collision
-            if i > 10 and (len(self.reactant_list) == 0 or len(self.reactant_list) > 10):
-                #self.step_size = self._calculate_step_size()
+            if i > 30 and (len(self.reactant_list) == 0 or len(self.reactant_list) > 10):
+                self.step_size = self._calculate_step_size()
+                if self.step_size > 1E4:
+                    raise ValueError
                 i = 0
 
         # Now weed out any reactions that involve a molecule that no longer exists because of a prior reaction
