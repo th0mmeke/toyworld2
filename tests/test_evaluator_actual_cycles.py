@@ -53,6 +53,14 @@ class TestEvaluatorActualCycles(unittest.TestCase):
         ]
         self.assertEqual(1, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)))
 
+        reactions = [
+            {'reactants': {'4': 'a'}, 'products': {'6': 'e'}},
+            {'reactants': {'9': 'a'}, 'products': {'10': 'b'}},
+            {'reactants': {'6': 'e'}, 'products': {'7': 'a'}},
+            {'reactants': {'10': 'b'}, 'products': {'11': 'a'}},
+        ]
+        self.assertEqual(2, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)))
+
     def testBrokenCycles(self):
         reactions = [
                 {'reactants': {'1': 'a'}, 'products': {'2': 'b', '3': 'b'}},
