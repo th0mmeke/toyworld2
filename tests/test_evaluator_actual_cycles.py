@@ -13,6 +13,7 @@ class TestEvaluatorActualCycles(unittest.TestCase):
                 ]
         self.assertEqual(1, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)))
 
+    def testSimple2(self):
         reactions = [
                 {'reactants': {'1': 'a'}, 'products': {'2': 'b', '3': 'b'}},
                 {'reactants': {'3': 'b'}, 'products': {'4': 'c'}},
@@ -28,6 +29,7 @@ class TestEvaluatorActualCycles(unittest.TestCase):
                 ]
         self.assertEqual(1, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)))
 
+    def testSimple3(self):
         reactions = [
             {'reactants': {'1': 'a'}, 'products': {'2': 'b', '3': 'b'}},
             {'reactants': {'3': 'b'}, 'products': {'4': 'c'}},
@@ -35,8 +37,21 @@ class TestEvaluatorActualCycles(unittest.TestCase):
             {'reactants': {'5': 'a'}, 'products': {'6': 'e'}},
             {'reactants': {'6': 'e'}, 'products': {'7': 'a', '8': 'a'}},
         ]
-        e = EvaluatorActualCycles(reactions=reactions)
-        self.assertEqual(4, len(e.get_population_stoichiometry(max_depth=10)))
+        self.assertEqual(2, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)))
+
+    def testLoop(self):
+        # Two loops - through 7 and through 8? Or just one? Just one - don't double count
+        reactions = [
+            {'reactants': {'5': 'a'}, 'products': {'6': 'e'}},
+            {'reactants': {'6': 'e'}, 'products': {'7': 'a', '8': 'a'}},
+        ]
+        self.assertEqual(1, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)))
+
+        reactions = [
+            {'reactants': {'4': 'a', '5': 'a'}, 'products': {'6': 'e'}},
+            {'reactants': {'6': 'e'}, 'products': {'7': 'a', '8': 'a'}},
+        ]
+        self.assertEqual(1, len(EvaluatorActualCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)))
 
     def testBrokenCycles(self):
         reactions = [
@@ -54,7 +69,7 @@ class TestEvaluatorActualCycles(unittest.TestCase):
         ]
 
         e = EvaluatorActualCycles(reactions=reactions)
-        self.assertEqual(2, len(e.get_population_stoichiometry(max_depth=10)))
+        self.assertEqual(1, len(e.get_population_stoichiometry(max_depth=10)))  # same path
 
     def testStoichiometry(self):
         reactions = [

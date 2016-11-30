@@ -23,7 +23,7 @@ class EvaluatorActualCycles(EvaluatorCycles):
 
         self.g = nx.DiGraph()
         self.reactants = set()
-        self.smiles = defaultdict(list)  # smiles[x] = [all ids with smiles of x]
+        self.smiles = defaultdict(set)  # smiles[x] = [all ids with smiles of x]
 
         for reaction in reactions:
 
@@ -41,12 +41,12 @@ class EvaluatorActualCycles(EvaluatorCycles):
             for id, smiles in reaction['reactants'].iteritems():
                 if not self.g.has_node(id):  # reactant may already exist in the network
                     self.g.add_node(id, smiles=smiles)
-                self.smiles[smiles].append(id)
+                self.smiles[smiles].add(id)
                 self.g.add_edge(id, canonical_reactants, stoichiometry=reactant_stoichiometry[smiles])
 
             for id, smiles in reaction['products'].iteritems():
                 self.g.add_node(id, smiles=smiles)  # products are always new
-                self.smiles[smiles].append(id)
+                self.smiles[smiles].add(id)
                 if not self.g.has_edge(canonical_products, id):
                     self.g.add_edge(canonical_products, id, stoichiometry=product_stoichiometry[smiles])
 
@@ -63,12 +63,10 @@ class EvaluatorActualCycles(EvaluatorCycles):
 
         for id_seed in self.smiles[acs_seed]:
 
+            #  find all cycles - each will be unique as from unique seed
             cycles = list(self.find_shortest_paths(self.g, id_seed, acs_seed, max_depth))
 
-            # eliminate duplicate cycles
-            canonical_cycles = set([self._make_canonical(cycle) for cycle in cycles])
-
-            for cycle in canonical_cycles:
+            for cycle in cycles:
                 stoichiometry = 1
                 for start_node, end_node in zip(cycle[0:-1], cycle[1:]):
                     if self.is_reaction(start_node) and not self.is_reaction(end_node):  # end_node is product
@@ -77,7 +75,15 @@ class EvaluatorActualCycles(EvaluatorCycles):
                         stoichiometry /= float(self.g[start_node][end_node]['stoichiometry'])
 
                 if stoichiometry >= minimum_stoichiometry:
-                    reactant_stoichiometry.append({'cycle': cycle, 'stoichiometry': stoichiometry})
+                    #  first make sure don't already have this cycle to a different end molecule of the same species
+                    unique = True
+                    for candidate_cycle in reactant_stoichiometry:
+                        x = candidate_cycle['cycle']
+                        if self.g.node[x[0]]['smiles'] == self.g.node[cycle[0]]['smiles'] and x[1:-1] == cycle[1:-1] and self.g.node[x[-1]]['smiles'] == self.g.node[cycle[-1]]['smiles']:
+                            unique = False
+                            break
+                    if unique:
+                        reactant_stoichiometry.append({'cycle': cycle, 'stoichiometry': stoichiometry})
 
         return reactant_stoichiometry
 
@@ -92,9 +98,3 @@ class EvaluatorActualCycles(EvaluatorCycles):
                 else:
                     if len(path) < max_depth:
                         stack.append((next_node, path + [next_node]))
-
-    @classmethod
-    def _make_canonical(cls, path):
-        hashes = [hash(x) for x in path]
-        start_idx = hashes.index(min(hashes))
-        return tuple(path[(i + start_idx) % len(path)] for i in range(len(path)))
