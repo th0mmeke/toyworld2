@@ -1,17 +1,27 @@
 import json
-from evaluator_cycles import EvaluatorCycles
-import Levenshtein
+from evaluator_actual_cycles import EvaluatorActualCycles
+#import Levenshtein
 import itertools
 import networkx as nx
 
-filename = '../data/toyworld2.json'
+filename = '../data/1480307656-0-0-0.json'
 
 with open(filename) as f:
     reactions = json.load(f)
-e = EvaluatorCycles(reactions=reactions['reactions'])
+e = EvaluatorActualCycles(reactions=reactions['reactions'])
 
-all_cycles = [x['cycle'] for x in e.get_population_stoichiometry(max_depth=10, minimum_length=10, minimum_stoichiometry=3)]
-with open('all_cycles.json', mode='w') as f:
+print(e.g.number_of_nodes(), e.g.number_of_edges())
+population_stoichiometry = []
+count = 0
+for reactant in e.reactants:
+    count += 1
+    if len(reactant) >= 10:
+        print("{}/{}: {}".format(count, len(e.reactants), reactant))
+        population_stoichiometry.extend(e.get_reactant_stoichiometry(reactant, minimum_stoichiometry=3, max_depth=10))
+
+# e.get_population_stoichiometry(max_depth=10, minimum_length=10, minimum_stoichiometry=3)
+all_cycles = [x['cycle'] for x in population_stoichiometry]
+with open('1480307656-0-0-0-actual.json', mode='w') as f:
     json.dump(all_cycles, f)
 
 # with open('all_cycles.json', mode='r') as f:
