@@ -19,7 +19,7 @@ from state import State
 import weighting_functions
 import bond_energies
 
-MAX_SD = 0.4
+MAX_SD = 0.2
 N_REPEATS = 3
 N_ENVIRONMENTS = 1
 
@@ -115,7 +115,7 @@ def runner(population, factors, generations, number_of_repeats, number_of_enviro
                     filename = "data/{}-{}-{}-{}.json".format(filebase, experiment_number, environment_number, repeat_number)
                     run_experiment(filename, population, experiment, generations, environment=environment[:])
 
-                experiment_number += 1
+            experiment_number += 1
 
 
 if __name__ == "__main__":
