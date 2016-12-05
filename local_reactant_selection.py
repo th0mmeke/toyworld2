@@ -38,19 +38,28 @@ class LocalReactantSelection(IReactantSelection):
         self.food_set = population
         self.population = {}  # {ChemMolecule: (x,y)}
 
-    def _clamp_range(self, n):
-        lower_bound = 0
-        upper_bound = len(self.food_set)
-        return min(upper_bound, max(lower_bound, int(n * len(self.food_set))))
+    def update_environment(self, new_size):
+        """
+        Adjust the foodset to the new size. If bigger, extend by a sample from the current foodset; if smaller,
+        take a sample of the current set.
+        By bounding the sample size to the size of the foodset we potentially vary from any input timeseries. But the effects
+        are likely to be very minor.
 
-    def update_environment(self, delta):
-        if delta > 0:
+        :param new_size: New food set size
+        :return: [ChemMolecule]
+        """
+
+        new_size = int(new_size)
+        increment = new_size - len(self.food_set)
+        if increment > 0:
             # add molecules to foodset
-            n = min(self._clamp_range(delta), max(0, len(self.population)-len(self.food_set)))  # limit foodset size to twice population to prevent unrestricted growth scenarios
-            self.food_set.extend(random.sample(self.food_set, n ))
-        else:
+            sample_size = max(0, min(len(self.food_set), increment))
+            self.food_set.extend(random.sample(self.food_set, sample_size))
+        elif increment < 0:
             # remove molecules from foodset
-            self.food_set = random.sample(self.food_set, self._clamp_range(1 - delta))
+            sample_size = max(0, min(len(self.food_set), new_size))
+            self.food_set = random.sample(self.food_set, sample_size)
+
         logging.info("Food set size = {}".format(len(self.food_set)))
 
     def get_reactants(self):
@@ -71,12 +80,10 @@ class LocalReactantSelection(IReactantSelection):
             # Reactant is within vesicle - second reactant must then be either 1) foodset or 2) from same location
             if random.random() <= len(self.food_set) * 1.0 / (len(self.population) + len(self.food_set)):
                 sample_population = self.food_set
-                logging.info("Food...")
             else:
                 sample_population = self.population.copy()
                 del sample_population[reactants[0]]
                 sample_population = [x for x in sample_population if sample_population[x].get_dist_sqrd(self.population[reactants[0]]) <= self.VESICLE_SIZE_SQRD]
-                logging.info("Vesicle of size {}".format(len(sample_population)))
                 if len(sample_population) < 1:
                     # vesicle is tiny, and only holds reactant[0], so revert to food_set
                     sample_population = self.food_set
