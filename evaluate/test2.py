@@ -3,15 +3,16 @@ import json
 
 from evaluator_actual_cycles import EvaluatorActualCycles
 
-datadir = "..\data"
+datadir = "/home/cosc/guest/tjy17/Dropbox/Experiments"
 
-for filename in os.listdir(datadir):
+for filename in sorted(os.listdir(datadir)):
     basename, ext = os.path.splitext(filename)
-    evaluator_filename = "{}-actual.json".format(basename)
-    if ext == '.json' and not os.path.exists(evaluator_filename):  # in working directory
-        with open(os.path.join(datadir, filename)) as f:
-            reactions = json.load(f)
-        e = EvaluatorActualCycles(reactions=reactions['reactions'])
+    evaluator_filename = os.path.join(datadir, "{}-actual.json".format(basename))
+    if ext == '.json' and not os.path.exists(evaluator_filename) and (len(basename) > 7 and not basename[-7:] == '-actual'):
+        data_filename = os.path.join(datadir, filename)
+        with open(data_filename) as f:
+            state = json.load(f)
+        e = EvaluatorActualCycles(reactions=state['reactions'])
 
         print(filename, evaluator_filename, e.g.number_of_nodes(), e.g.number_of_edges())
 
