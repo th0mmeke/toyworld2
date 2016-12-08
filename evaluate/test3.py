@@ -1,26 +1,28 @@
 import json
 import os
 import collections
+import numpy as np
 
 
-evaldir = "C:\Users\Thom\Dropbox/Experiments"
-datadir = "C:\Users\Thom\Dropbox/Experiments"
+evaldir = "/home/cosc/guest/tjy17/Dropbox/Experiments"
+datadir = "/home/cosc/guest/tjy17/Dropbox/Experiments"
 
 
-
-print("File, No. of Cycles")
+stable_states = collections.defaultdict(lambda: collections.defaultdict(int))
 for filename in os.listdir(evaldir):
     basename, ext = os.path.splitext(filename)
     if ext == '.json' and basename[-3:] == 'ial':
         with open(os.path.join(evaldir, filename)) as f:
-            stable_states = collections.defaultdict(int)
-            all_cycles = json.load(f)
-            print(filename, len(all_cycles))
-            for cycle in all_cycles:
-                #print(cycle['stoichiometry'], cycle['cycle'])
-                stable_states[cycle['cycle'][0]] += 1
 
-            print(sum(stable_states.values())/len(stable_states), stable_states)
+            all_cycles = json.load(f)
+            for cycle in all_cycles:
+                stable_states[cycle['cycle'][0]][basename] += 1
+
+for seed, states in stable_states.iteritems():
+    print(seed, len(states.values()), np.average(states.values()), np.std(states.values()))
+
+for w in sorted(stable_states, key=lambda x: len(stable_states[x]), reverse=True):
+    print w, stable_states[w]
 
 # print("File, No. of Cycles")
 # for filename in os.listdir(evaldir):
