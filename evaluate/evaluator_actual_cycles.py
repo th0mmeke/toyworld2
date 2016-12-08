@@ -57,7 +57,7 @@ class EvaluatorActualCycles(EvaluatorCycles):
         :param acs_seed:
         :param minimum_stoichiometry:
         :param max_depth:
-        :return:
+        :return: [{'cycle':cycle, 'stoichiometry':stoichiometry}]
         """
         reactant_stoichiometry = []
 
@@ -98,3 +98,6 @@ class EvaluatorActualCycles(EvaluatorCycles):
                 else:
                     if len(path) < max_depth:
                         stack.append((next_node, path + [next_node]))
+
+    def get_smiles(self, id):
+        return self.g.node[id]['smiles']
