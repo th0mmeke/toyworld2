@@ -8,7 +8,8 @@ import csv
 datadir = "C:\Users\Thom\Dropbox\Experiments"
 
 metric = collections.defaultdict(lambda: collections.defaultdict(int))
-experiment = environment = 0
+
+experiment = environment = '0'
 with open(os.path.join(datadir, '1480963448-metadata.csv'), 'rb') as csvfile:
     r = csv.reader(csvfile, delimiter=',')
     for row in r:
