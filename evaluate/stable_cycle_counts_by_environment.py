@@ -4,6 +4,7 @@ import collections
 import csv
 from collections import Counter
 from collections import defaultdict
+import pickle
 
 
 def get_molecules(partial_reaction_string):
@@ -76,7 +77,7 @@ def discover_stable_cycles(cycles, smiles):
                         counts[i] += 1
                         break
             if len(counts) > 0:
-                stable_cycles[frozenset(cycle_type)] = counts
+                stable_cycles[frozenset(cycle_type)] = counts.values()
 
     return stable_cycles
 
@@ -91,7 +92,7 @@ experiment = environment = '0'
 with open(os.path.join(datadir, '1480963448-metadata.csv'), 'rb') as csvfile:
     r = csv.reader(csvfile, delimiter=',')
     for row in r:
-        metric[int(experiment)][int(environment)] = (row[-3], row[-1])
+        metric[int(experiment)][int(environment)] = row[-3]
         environment = str(int(environment) + 1)
         if row[0] != experiment:
             experiment = row[0]
@@ -99,12 +100,12 @@ with open(os.path.join(datadir, '1480963448-metadata.csv'), 'rb') as csvfile:
 
 # Construct list of stable cycles per environment
 
-states = collections.defaultdict(lambda: collections.defaultdict(int))
-
 for filename in os.listdir(datadir):
+
     basename, ext = os.path.splitext(filename)
     # Load actual cycle data
     if ext == '.json' and basename[-3:] == 'ual' and basename[:10] == '1480963448':
+        print(filename)
         datetime, experiment, environment, repeat, dummy = basename.split('-')
 
         with open(os.path.join(datadir, filename)) as f:
@@ -115,9 +116,9 @@ for filename in os.listdir(datadir):
 
         stable_cycles = discover_stable_cycles(all_cycles, smiles)
         print(stable_cycles)
-        # for cycle in stable_cycles:
-        #     x = metric[int(experiment)][int(environment)]
-        #     states[cycle['cycle'][0]][x] += 1
+
+        with open(os.path.join(datadir, '{}-{}-{}-{}-stablestates.json'.format(datetime, experiment, environment, repeat)), 'wb') as f:
+            json.dump(stable_cycles.values(), f, skipkeys=True)
 
 # with open(os.path.join(datadir, '1480963448-counts.csv'), 'wb+') as csvfile:
 #     w = csv.writer(csvfile, delimiter=',')
