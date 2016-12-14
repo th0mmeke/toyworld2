@@ -79,17 +79,21 @@ def discover_stable_cycles(cycles, smiles):
             if len(counts) > 0:
                 stable_cycles[frozenset(cycle_type)] = counts.values()
 
+    print(stable_cycles)
     return stable_cycles
 
 
-datadir = "C:\Users\Thom\Dropbox\Experiments"
+datadir = 'C:\Users\Thom\Dropbox/Experiments'
+if not os.path.isdir(datadir):
+    datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
+filebase = '1480963448'
 
 # Load environmental metrics
 
 metric = collections.defaultdict(lambda: collections.defaultdict(int))
 
 experiment = environment = '0'
-with open(os.path.join(datadir, '1480963448-metadata.csv'), 'rb') as csvfile:
+with open(os.path.join(datadir, filebase + '-metadata.csv'), 'rb') as csvfile:
     r = csv.reader(csvfile, delimiter=',')
     for row in r:
         metric[int(experiment)][int(environment)] = row[-3]
@@ -99,12 +103,12 @@ with open(os.path.join(datadir, '1480963448-metadata.csv'), 'rb') as csvfile:
             environment = 0
 
 # Construct list of stable cycles per environment
-
 for filename in os.listdir(datadir):
 
     basename, ext = os.path.splitext(filename)
+
     # Load actual cycle data
-    if ext == '.json' and basename[-3:] == 'ual' and basename[:10] == '1480963448':
+    if ext == '.json' and basename[-3:] == 'ual' and basename[:len(filebase)] == filebase:
         print(filename)
         datetime, experiment, environment, repeat, dummy = basename.split('-')
 
@@ -114,31 +118,5 @@ for filename in os.listdir(datadir):
             state = json.load(f)
             smiles = load_smiles(state['reactions'])
 
-        stable_cycles = discover_stable_cycles(all_cycles, smiles)
-        print(stable_cycles)
-
         with open(os.path.join(datadir, '{}-{}-{}-{}-stablestates.json'.format(datetime, experiment, environment, repeat)), 'wb') as f:
-            json.dump(stable_cycles.values(), f, skipkeys=True)
-
-# with open(os.path.join(datadir, '1480963448-counts.csv'), 'wb+') as csvfile:
-#     w = csv.writer(csvfile, delimiter=',')
-#     for seed, values in states.iteritems():
-#         if len(values) > 3:
-#             for hurst, count in values.iteritems():
-#                 w.writerow([seed, hurst, count])
-
-exit()
-
-
-for experiment, experiment_metrics in metric.iteritems():
-    for w in sorted(states, key=lambda x: len(states[x]), reverse=True):
-        # print(experiment_number, w, np.average(stable_states[w].values()), np.std(stable_states[w].values()), stable_states[w].values())
-        [metric[experiment_number][environment_number]] = states[w][environment_number]
-
-# print("File, No. of Cycles")
-# for filename in os.listdir(evaldir):
-#     basename, ext = os.path.splitext(filename)
-#     if ext == '.json' and (len(basename) > 7 and basename[-7:] == '-actual'):
-#         with open(os.path.join(evaldir, filename)) as f:
-#             all_cycles = json.load(f)
-#             print(filename, len(all_cycles))
+            json.dump(discover_stable_cycles(all_cycles, smiles).values(), f, skipkeys=True)

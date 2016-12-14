@@ -20,7 +20,10 @@ import weighting_functions
 import bond_energies
 
 
-BASE_DIR = "C:\Users\Thom\Dropbox\Experiments"
+BASE_DIR = 'C:\Users\Thom\Dropbox/Experiments'
+if not os.path.isdir(BASE_DIR):
+    BASE_DIR = '/home/cosc/guest/tjy17/Dropbox/Experiments'
+
 
 def initialise_logging(args, basedir):
     level = getattr(logging, args.log_level.upper())
@@ -81,6 +84,7 @@ def get_ar_timeseries2(theta, sd, generations):
         ts.append(value)
     return ts
 
+
 def run_experiment(filename, population, experiment, generations, environment=None):
     reactor = experiment[0](population=copy.deepcopy(population))
     initial_population = dict(Counter([str(x) for x in reactor.get_population()]))
@@ -109,11 +113,14 @@ def runner(population, factors, generations, number_of_repeats, number_of_enviro
                 # environment_specification = (theta, sd, bias): f(t) = theta * f(t-1) + random.gauss(0, sd)
                 if environment_number == 0:
                     environment_specification = (0, 0)
+                    environment = itertools.repeat(0, generations+1)
                 else:
-                    environment_specification = random.uniform(0.8, 1.0), random.uniform(0, 10)
-                # environment = get_ar_timeseries(*environment_specification, initial=len(population), generations=generations)
-                environment = get_ar_timeseries2(*environment_specification, generations=generations)
-                print(environment)
+                    if factors['PRODUCT_SELECTION'] == weighting_functions.least_energy_weighting:
+                        environment_specification = random.uniform(0, 1.0), random.uniform(0, 10)
+                        environment = get_ar_timeseries(*environment_specification, initial=len(population), generations=generations)
+                    else:
+                        environment_specification = random.uniform(0.8, 1.0), random.uniform(0, 10)
+                        environment = get_ar_timeseries2(*environment_specification, generations=generations)
 
                 metadata = [str(experiment_number), experiment[0].__name__, experiment[1].__name__]
                 metadata.extend([str(x) for x in environment_specification])
@@ -184,11 +191,8 @@ if __name__ == "__main__":
 
     factors = {
         'REACTANT_SELECTION': [LocalReactantSelection],
-        'PRODUCT_SELECTION': [weighting_functions.least_energy_weighting],
+        'PRODUCT_SELECTION': [weighting_functions.least_energy_weighting, weighting_functions.biased_least_energy_weighting],
     }
-
-    #experiment = [LocalReactantSelection, weighting_functions.least_energy_weighting]
-    #run_experiment('data/local_unchanging.json', experiment=experiment, population=population, generations=args.generations)
 
     runner(population, factors, generations=args.generations, number_of_repeats=1, number_of_environments=10)
 

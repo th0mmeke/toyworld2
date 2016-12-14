@@ -1,11 +1,12 @@
 import json
 import os
 import collections
-import numpy as np
 import csv
 
 
-datadir = "C:\Users\Thom\Dropbox\Experiments"
+datadir = 'C:\Users\Thom\Dropbox/Experiments'
+if not os.path.isdir(datadir):
+    datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
 
 metric = collections.defaultdict(lambda: collections.defaultdict(int))
 
@@ -40,17 +41,3 @@ with open(os.path.join(datadir, '1480963448-counts.csv'), 'wb+') as csvfile:
         if len(values) > 3:
             for hurst, count in values.iteritems():
                 w.writerow([seed, hurst, count])
-
-exit()
-for experiment, experiment_metrics in metric.iteritems():
-    for w in sorted(states_by_environment, key=lambda x: len(states_by_environment[x]), reverse=True):
-        # print(experiment_number, w, np.average(stable_states[w].values()), np.std(stable_states[w].values()), stable_states[w].values())
-        [metric[experiment_number][environment_number]] = states_by_environment[w][environment_number]
-
-# print("File, No. of Cycles")
-# for filename in os.listdir(evaldir):
-#     basename, ext = os.path.splitext(filename)
-#     if ext == '.json' and (len(basename) > 7 and basename[-7:] == '-actual'):
-#         with open(os.path.join(evaldir, filename)) as f:
-#             all_cycles = json.load(f)
-#             print(filename, len(all_cycles))
