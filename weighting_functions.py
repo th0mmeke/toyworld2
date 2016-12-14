@@ -49,7 +49,7 @@ def replicant_weighting(reaction):
     return best_weight
 
 
-def least_energy_weighting(reaction):
+def least_energy_weighting(reaction, bias):
 
     """
     Weight by the least energy strategy.
@@ -61,4 +61,4 @@ def least_energy_weighting(reaction):
     if reaction.product_value < 0:
         return -reaction.product_value
     else:
-        return max(0, reaction.reactant_value - reaction.product_value)
+        return max(0, reaction.reactant_value - reaction.product_value + bias)

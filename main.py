@@ -57,11 +57,29 @@ def get_ar_timeseries(theta, sd, initial, generations):
 
     ts = []
     value = 0
-    for i in range(0, generations):
+    for i in range(0, generations+1):
         value = theta * value + random.gauss(0, sd)
         ts.append(max(0, int(value + initial)))  # lower bound of zero
     return ts
 
+def get_ar_timeseries2(theta, sd, generations):
+
+    """
+    Return an integer AR(1) timeseries.
+
+    :param theta:
+    :param sd:
+    :param initial:
+    :param generations:
+    :return:
+    """
+
+    ts = []
+    value = 0
+    for i in range(0, generations+1):
+        value = theta * value + random.gauss(0, sd)
+        ts.append(value)
+    return ts
 
 def run_experiment(filename, population, experiment, generations, environment=None):
     reactor = experiment[0](population=copy.deepcopy(population))
@@ -92,8 +110,10 @@ def runner(population, factors, generations, number_of_repeats, number_of_enviro
                 if environment_number == 0:
                     environment_specification = (0, 0)
                 else:
-                    environment_specification = random.uniform(0, 1.0), random.uniform(0, 10)
-                environment = get_ar_timeseries(*environment_specification, initial=len(population), generations=generations)
+                    environment_specification = random.uniform(0.8, 1.0), random.uniform(0, 10)
+                # environment = get_ar_timeseries(*environment_specification, initial=len(population), generations=generations)
+                environment = get_ar_timeseries2(*environment_specification, generations=generations)
+                print(environment)
 
                 metadata = [str(experiment_number), experiment[0].__name__, experiment[1].__name__]
                 metadata.extend([str(x) for x in environment_specification])
@@ -105,7 +125,7 @@ def runner(population, factors, generations, number_of_repeats, number_of_enviro
 
                 for repeat_number in range(0, number_of_repeats):
                     print("{0}/{1} with {2}".format((experiment_number*number_of_repeats) + repeat_number + 1, total_experiments, environment_specification))
-                    filename = "{}-{}-{}-{}.json".format(filebase, experiment_number, environment_number, repeat_number)
+                    filename = "{}-energy-{}-{}-{}.json".format(filebase, experiment_number, environment_number, repeat_number)
                     run_experiment(os.path.join(BASE_DIR, filename), population, experiment, generations, environment=environment[:])
 
             experiment_number += 1
@@ -170,5 +190,5 @@ if __name__ == "__main__":
     #experiment = [LocalReactantSelection, weighting_functions.least_energy_weighting]
     #run_experiment('data/local_unchanging.json', experiment=experiment, population=population, generations=args.generations)
 
-    runner(population, factors, generations=args.generations, number_of_repeats=1, number_of_environments=50)
+    runner(population, factors, generations=args.generations, number_of_repeats=1, number_of_environments=10)
 

@@ -1,4 +1,5 @@
 import random
+import itertools
 
 
 def choice(elements, weights):
@@ -30,8 +31,8 @@ def choice(elements, weights):
     return None
 
 
-def weighted_selection(reactions, weight_function):
+def weighted_selection(reactions, weight_function, bias):
     if reactions is None or len(reactions) == 0:
         return None
 
-    return choice(elements=reactions, weights=map(weight_function, reactions))
+    return choice(elements=reactions, weights=map(weight_function, reactions, itertools.repeat(bias, len(reactions))))
