@@ -2,9 +2,24 @@ import json
 import os
 import collections
 import csv
-from collections import Counter
+from itertools import chain
 from collections import defaultdict
-import pickle
+
+
+def get_metrics(filebase):
+    metric = collections.defaultdict(lambda: collections.defaultdict(int))
+
+    experiment = environment = '0'
+    with open(os.path.join(datadir, filebase + '-metadata.csv'), 'rb') as csvfile:
+        r = csv.reader(csvfile, delimiter=',')
+        for row in r:
+            # print(experiment, environment, row[-3], row[-2], row[-1])
+            metric[int(experiment)][int(environment)] = row[-3]
+            environment = str(int(environment) + 1)
+            if row[0] != experiment:
+                experiment = row[0]
+                environment = 0
+    return metric
 
 
 def get_molecules(partial_reaction_string):
@@ -46,16 +61,20 @@ def discover_stable_cycles(cycles, smiles):
     - and where the cycles have the same "form", or sequence of molecule species (smiles) in the cycle
 
     :param cycles: [cycle in form of list of either cycle molecule or reactants ('r1+r2>') or products ('>p1+p2+...')]. Cycle molecules are identified by id, rather than by smiles.
-    :return: {frozenset(cycle): count}
+    :return: {frozenset(cycle): [count]}
     '''
 
-    sorted_cycles = defaultdict(list)
+    grouped_cycles = defaultdict(list)
+
     for cycle in cycles:
-        sorted_cycles[len(cycle)].append(cycle)
+        if type(cycle) == dict:
+            grouped_cycles[len(cycle['cycle'])].append(cycle['cycle'])
+        else:
+            grouped_cycles[len(cycle)].append(cycle)
 
     stable_cycles = {}
 
-    for cycle_type, cycles_of_length in sorted_cycles.iteritems():
+    for cycle_type, cycles_of_length in grouped_cycles.iteritems():
         # cycles_of_length has all cycles of same length, but not guaranteed to be of same type
         smiles_cycles = defaultdict(list)
         for cycle in cycles_of_length:
@@ -86,37 +105,35 @@ def discover_stable_cycles(cycles, smiles):
 datadir = 'C:\Users\Thom\Dropbox/Experiments'
 if not os.path.isdir(datadir):
     datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
-filebase = '1480963448'
+filebase = '1481670569'
 
 # Load environmental metrics
 
-metric = collections.defaultdict(lambda: collections.defaultdict(int))
-
-experiment = environment = '0'
-with open(os.path.join(datadir, filebase + '-metadata.csv'), 'rb') as csvfile:
-    r = csv.reader(csvfile, delimiter=',')
-    for row in r:
-        metric[int(experiment)][int(environment)] = row[-3]
-        environment = str(int(environment) + 1)
-        if row[0] != experiment:
-            experiment = row[0]
-            environment = 0
+metric = get_metrics(filebase)  # metric[experiment][environment]
 
 # Construct list of stable cycles per environment
-for filename in os.listdir(datadir):
 
-    basename, ext = os.path.splitext(filename)
+with open(os.path.join(datadir, filebase + '-stablecounts.csv'), 'wb') as csvfile:
+    w = csv.writer(csvfile, delimiter=',')
 
-    # Load actual cycle data
-    if ext == '.json' and basename[-3:] == 'ual' and basename[:len(filebase)] == filebase:
-        print(filename)
-        datetime, experiment, environment, repeat, dummy = basename.split('-')
+    for filename in os.listdir(datadir):
 
-        with open(os.path.join(datadir, filename)) as f:
-            all_cycles = json.load(f)
-        with open(os.path.join(datadir, '{}-{}-{}-{}.json'.format(datetime, experiment, environment, repeat))) as f:
-            state = json.load(f)
-            smiles = load_smiles(state['reactions'])
+        basename, ext = os.path.splitext(filename)
 
-        with open(os.path.join(datadir, '{}-{}-{}-{}-stablestates.json'.format(datetime, experiment, environment, repeat)), 'wb') as f:
-            json.dump(discover_stable_cycles(all_cycles, smiles).values(), f, skipkeys=True)
+        # Load actual cycle data
+        if ext == '.json' and basename[-3:] == 'ual' and basename[:len(filebase)] == filebase:
+            print(filename)
+            datetime, experiment, environment, repeat, dummy = basename.split('-')
+            with open(os.path.join(datadir, filename)) as f:
+                all_cycles = json.load(f)
+            with open(os.path.join(datadir, '{}-{}-{}-{}.json'.format(datetime, experiment, environment, repeat))) as f:
+                state = json.load(f)
+                smiles = load_smiles(state['reactions'])
+
+            stable_states = discover_stable_cycles(all_cycles, smiles).values()  # [[counts per cycle type]] for this file
+            hurst = metric[int(experiment)][int(environment)]
+            values = list(chain.from_iterable(stable_states))
+            if len(values) == 0:
+                w.writerow([experiment, environment, hurst, 'nan', 'nan', 'nan'])
+            else:
+                w.writerow([experiment, environment, hurst, min(values), sum(values)*1.0/len(values), max(values)])
