@@ -27,14 +27,14 @@ def evaluate(filename, datadir):
                     if evaluator != 'potential' or len(reactant) >= 10:
                         print("{}/{}: {}".format(count, len(e.reactants), reactant))
                         s = e.get_reactant_stoichiometry(reactant, minimum_stoichiometry=2, max_depth=10)
-                        for item in s: # item = {'cycle':cycle, 'stoichiometry': stoichiometry}
+                        for item in s:  # item = {'cycle':cycle, 'stoichiometry': stoichiometry}
                             if evaluator == 'potential':  # replace id with smiles
                                 cycle = []
                                 for step in item['cycle']:
                                     if '+' not in step and '>' not in step and '<' not in step:
                                         cycle.append(e.get_smiles(step))
                                 item['cycle'] = cycle
-                        population_stoichiometry.append({'stoichiometry': item['stoichiometry'], 'cycle': item['cycle']})
+                            population_stoichiometry.append({'stoichiometry': item['stoichiometry'], 'cycle': item['cycle']})
 
                 with open(evaluator_filename, mode='w') as f:
                     json.dump(population_stoichiometry, f)
@@ -43,7 +43,8 @@ datadir = 'C:\Users\Thom\Dropbox/Experiments'
 if not os.path.isdir(datadir):
     datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
 
-evaluate('1481398302-0-0-0.json', datadir)
+# evaluate('1481398302-0-19-0.json', datadir)
 
-# for filename in sorted(os.listdir(datadir), reverse=True):
-#     evaluate(filename, datadir)
+import glob
+for filename in glob.glob(os.path.join(datadir, '1481398302*.json')):
+    evaluate(filename, datadir)
