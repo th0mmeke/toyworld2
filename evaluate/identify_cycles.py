@@ -16,6 +16,8 @@ def evaluate(filename, datadir):
 
                 data_filename = os.path.join(datadir, filename)
                 print(data_filename, evaluator_filename)
+                open(evaluator_filename, mode='w').close()  # 'touch' the file to mark as in-progress to another instance - not totally safe but hopefully good enough...
+
                 with open(data_filename) as f:
                     state = json.load(f)
                 e = EvaluatorActualCycles(reactions=state['reactions'])
@@ -46,5 +48,5 @@ if not os.path.isdir(datadir):
 # evaluate('1481398302-0-19-0.json', datadir)
 
 import glob
-for filename in glob.glob(os.path.join(datadir, '1481398302*.json')):
+for filename in glob.glob(os.path.join(datadir, '1481665906*.json')):
     evaluate(filename, datadir)
