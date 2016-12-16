@@ -9,15 +9,14 @@ from collections import defaultdict
 def get_metrics(filebase):
     metric = collections.defaultdict(lambda: collections.defaultdict(int))
 
-    experiment = environment = '0'
+    experiment = environment = 0
     with open(os.path.join(datadir, filebase + '-metadata.csv'), 'rb') as csvfile:
         r = csv.reader(csvfile, delimiter=',')
         for row in r:
-            # print(experiment, environment, row[-3], row[-2], row[-1])
-            metric[int(experiment)][int(environment)] = row[-3]
-            environment = str(int(environment) + 1)
-            if row[0] != experiment:
-                experiment = row[0]
+            metric[experiment][environment] = row[-3]
+            environment += 1
+            if int(row[0]) != experiment:
+                experiment = int(row[0])
                 environment = 0
     return metric
 
@@ -115,6 +114,7 @@ metric = get_metrics(filebase)  # metric[experiment][environment]
 
 with open(os.path.join(datadir, filebase + '-stablecounts.csv'), 'wb') as csvfile:
     w = csv.writer(csvfile, delimiter=',')
+    w.writerow(['experiment', 'environment', 'hurst', 'min', 'mean', 'max'])
 
     for filename in os.listdir(datadir):
 
