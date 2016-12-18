@@ -84,6 +84,13 @@ def get_ar_timeseries2(theta, sd, generations):
         ts.append(value)
     return ts
 
+def get_alternating_timeseries(theta, sd, generations):
+    ts = []
+    while len(ts) < generations+10:
+        ts.extend(itertools.repeat(-theta, 100))
+        ts.extend(itertools.repeat(theta, 100))
+    print(len(ts))
+    return ts[:generations+5]
 
 def run_experiment(filename, population, experiment, generations, environment=None):
     reactor = experiment[0](population=copy.deepcopy(population))
@@ -106,36 +113,38 @@ def runner(population, factors, generations, number_of_repeats, number_of_enviro
 
     with open(os.path.join(BASE_DIR, '{}-metadata.csv'.format(filebase)), 'w', 0) as f:
 
-        for experiment in itertools.product(factors['REACTANT_SELECTION'], factors['PRODUCT_SELECTION']):
+        # for experiment in itertools.product(factors['REACTANT_SELECTION'], factors['PRODUCT_SELECTION']):
+        experiment = [LocalReactantSelection, weighting_functions.biased_least_energy_weighting]
 
-            for environment_number in range(0, number_of_environments):
+        for environment_number in range(0, number_of_environments):
 
-                # environment_specification = (theta, sd, bias): f(t) = theta * f(t-1) + random.gauss(0, sd)
-                if environment_number == 0:
-                    environment_specification = (0, 0)
-                    environment = itertools.repeat(0, generations+1)
-                else:
-                    if factors['PRODUCT_SELECTION'] == weighting_functions.least_energy_weighting:
-                        environment_specification = random.uniform(0, 1.0), random.uniform(0, 10)
-                        environment = get_ar_timeseries(*environment_specification, initial=len(population), generations=generations)
-                    else:
-                        environment_specification = random.uniform(0.8, 1.0), random.uniform(0, 10)
-                        environment = get_ar_timeseries2(*environment_specification, generations=generations)
+            # # environment_specification = (theta, sd, bias): f(t) = theta * f(t-1) + random.gauss(0, sd)
+            # if environment_number == 0:
+            #     environment_specification = (0, 0)
+            #     environment = list(itertools.repeat(0, generations+1))
+            # else:
+            #     if factors['PRODUCT_SELECTION'] == weighting_functions.least_energy_weighting:
+            #         environment_specification = random.uniform(0, 1.0), random.uniform(0, 10)
+            #         environment = get_ar_timeseries(*environment_specification, initial=len(population), generations=generations)
+            #     else:
+            #         environment_specification = random.uniform(0.8, 1.0), random.uniform(0, 10)
+            #         environment = get_ar_timeseries2(*environment_specification, generations=generations)
 
-                metadata = [str(experiment_number), experiment[0].__name__, experiment[1].__name__]
-                metadata.extend([str(x) for x in environment_specification])
-                metadata.append(str(nolds.hurst_rs(environment)))
-                metadata.append(str(nolds.dfa(environment)))
-                metadata.append(str(nolds.sampen(environment)))
+            environment_specification = random.uniform(5, 30), random.uniform(0, 5)
+            environment = get_alternating_timeseries(*environment_specification, generations=generations)
 
-                f.write(','.join(metadata) + "\n")
+            metadata = [str(experiment_number), experiment[0].__name__, experiment[1].__name__]
+            metadata.extend([str(x) for x in environment_specification])
+            #metadata.append(str(nolds.hurst_rs(environment)))
+            metadata.append(str(nolds.dfa(environment)))
+            metadata.append(str(nolds.sampen(environment)))
 
-                for repeat_number in range(0, number_of_repeats):
-                    print("{0}/{1} with {2}".format((experiment_number*number_of_repeats) + repeat_number + 1, total_experiments, environment_specification))
-                    filename = "{}-energy-{}-{}-{}.json".format(filebase, experiment_number, environment_number, repeat_number)
-                    run_experiment(os.path.join(BASE_DIR, filename), population, experiment, generations, environment=environment[:])
+            f.write(','.join(metadata) + "\n")
 
-            experiment_number += 1
+            for repeat_number in range(0, number_of_repeats):
+                print("{0}/{1} with {2}".format((experiment_number*number_of_repeats) + repeat_number + 1, total_experiments, environment_specification))
+                filename = "{}-alternating-energy-{}-{}-{}.json".format(filebase, experiment_number, environment_number, repeat_number)
+                run_experiment(os.path.join(BASE_DIR, filename), population, experiment, generations, environment=environment[:])
 
 
 if __name__ == "__main__":
@@ -191,8 +200,8 @@ if __name__ == "__main__":
 
     factors = {
         'REACTANT_SELECTION': [LocalReactantSelection],
-        'PRODUCT_SELECTION': [weighting_functions.least_energy_weighting, weighting_functions.biased_least_energy_weighting],
+        'PRODUCT_SELECTION': [weighting_functions.biased_least_energy_weighting],
     }
 
-    runner(population, factors, generations=args.generations, number_of_repeats=1, number_of_environments=10)
+    runner(population, factors, generations=50000, number_of_repeats=2, number_of_environments=5)
 
