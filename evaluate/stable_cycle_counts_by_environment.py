@@ -6,18 +6,19 @@ from itertools import chain
 from collections import defaultdict
 
 
-def get_metrics(filebase):
+def get_metrics(filename):
     metric = collections.defaultdict(lambda: collections.defaultdict(int))
 
-    experiment = environment = 0
-    with open(os.path.join(datadir, filebase + '-metadata.csv'), 'rb') as csvfile:
+    experiment = None
+    with open(os.path.join(datadir, filename), 'rb') as csvfile:
         r = csv.reader(csvfile, delimiter=',')
         for row in r:
-            metric[experiment][environment] = row[-3]
-            environment += 1
-            if int(row[0]) != experiment:
+            if experiment is None or int(row[0]) != experiment:
                 experiment = int(row[0])
                 environment = 0
+            metric[experiment][environment] = row[-3]
+            environment += 1
+
     return metric
 
 
@@ -72,6 +73,7 @@ def discover_stable_cycles(cycles, smiles):
             grouped_cycles[len(cycle)].append(cycle)
 
     stable_cycles = {}
+    seeds = {}
 
     for cycle_type, cycles_of_length in grouped_cycles.iteritems():
         # cycles_of_length has all cycles of same length, but not guaranteed to be of same type
@@ -80,6 +82,7 @@ def discover_stable_cycles(cycles, smiles):
             s = map_id_to_smiles(cycle, smiles)
             assert len(s) == cycle_type
             smiles_cycles[frozenset(s)].append(get_molecules_in_cycle(cycle))
+            seeds[frozenset(s)] = s[0]
 
         # smiles_cycles now contains lists of all identical cycles types, so just have to match up the connected ones
 
@@ -89,16 +92,15 @@ def discover_stable_cycles(cycles, smiles):
             counts = defaultdict(int)
             for cycle in cycles_of_type:
                 molecules = set(get_molecules_in_cycle(cycle))
-                for i in range(0,len(clusters)):
+                for i in range(0, len(clusters)):
                     if clusters[i].intersection(molecules):
                         clusters[i].union(molecules)
                         counts[i] += 1
                         break
             if len(counts) > 0:
-                stable_cycles[frozenset(cycle_type)] = counts.values()
+                stable_cycles[frozenset(cycle_type)] = max(counts.values())  # longest stable time!
 
-    print(stable_cycles)
-    return stable_cycles
+    return stable_cycles, seeds
 
 
 datadir = 'C:\Users\Thom\Dropbox/Experiments'
@@ -108,13 +110,13 @@ filebase = '1481670569'
 
 # Load environmental metrics
 
-metric = get_metrics(filebase)  # metric[experiment][environment]
+metric = get_metrics('1481670569-metadata.csv')  # metric[experiment][environment]
 
 # Construct list of stable cycles per environment
 
-with open(os.path.join(datadir, filebase + '-stablecounts.csv'), 'wb') as csvfile:
+with open(os.path.join(datadir, filebase + '-stablestates.csv'), 'wb') as csvfile:
     w = csv.writer(csvfile, delimiter=',')
-    w.writerow(['experiment', 'environment', 'hurst', 'min', 'mean', 'max'])
+    w.writerow(['experiment', 'environment', 'hurst', 'seeds', 'min', 'mean', 'max'])
 
     for filename in os.listdir(datadir):
 
@@ -130,10 +132,17 @@ with open(os.path.join(datadir, filebase + '-stablecounts.csv'), 'wb') as csvfil
                 state = json.load(f)
                 smiles = load_smiles(state['reactions'])
 
-            stable_states = discover_stable_cycles(all_cycles, smiles).values()  # [[counts per cycle type]] for this file
             hurst = metric[int(experiment)][int(environment)]
-            values = list(chain.from_iterable(stable_states))
-            if len(values) == 0:
-                w.writerow([experiment, environment, hurst, 'nan', 'nan', 'nan'])
+            stable_states, seeds = discover_stable_cycles(all_cycles, smiles)  # [[counts per cycle type]] for this file
+
+            values_by_seed = defaultdict(list)
+            for state, count in stable_states.iteritems():
+                values_by_seed[seeds[state]].append(count)  # seed:longest length of stable pathway for each state
+            counts_by_seed = {k:len(v) for k, v in values_by_seed.iteritems()}
+            print(values_by_seed)
+            print(counts_by_seed)
+
+            if len(counts_by_seed) == 0:
+                w.writerow([experiment, environment, hurst, len(counts_by_seed), 'nan', 'nan', 'nan'])
             else:
-                w.writerow([experiment, environment, hurst, min(values), sum(values)*1.0/len(values), max(values)])
+                w.writerow([experiment, environment, hurst, len(counts_by_seed), min(counts_by_seed.values()), sum(counts_by_seed.values())*1.0/len(counts_by_seed), max(counts_by_seed.values())])
