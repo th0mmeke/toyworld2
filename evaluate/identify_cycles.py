@@ -11,7 +11,7 @@ def evaluate(filename, datadir):
     if ext == '.json' and basename[-1:] in string.digits:
 
         for evaluator in ['actual', 'potential']:
-            evaluator_filename = os.path.join(datadir, '{}-{}.json'.format(basename, evaluator))
+            evaluator_filename = os.path.join(datadir, '{}-{}-sc.json'.format(basename, evaluator))
             if not os.path.exists(evaluator_filename):
 
                 data_filename = os.path.join(datadir, filename)
@@ -22,21 +22,18 @@ def evaluate(filename, datadir):
                     state = json.load(f)
                 e = EvaluatorActualCycles(reactions=state['reactions'])
 
-                population_stoichiometry = []
-                count = 0
-                for reactant in e.reactants:
-                    count += 1
-                    if evaluator != 'potential' or len(reactant) >= 10:
-                        print("{}/{}: {}".format(count, len(e.reactants), reactant))
-                        s = e.get_reactant_stoichiometry(reactant, minimum_stoichiometry=2, max_depth=10)
-                        for item in s:  # item = {'cycle':cycle, 'stoichiometry': stoichiometry}
-                            if evaluator == 'potential':  # replace id with smiles
-                                cycle = []
-                                for step in item['cycle']:
-                                    if '+' not in step and '>' not in step and '<' not in step:
-                                        cycle.append(e.get_smiles(step))
-                                item['cycle'] = cycle
-                            population_stoichiometry.append({'stoichiometry': item['stoichiometry'], 'cycle': item['cycle']})
+                # t = {x: len(e.smiles[x]) for x in e.reactants}
+                # import operator
+                # print(sorted(t.items(), key=operator.itemgetter(1),reverse=True))
+
+                if evaluator != 'potential':
+                    population_stoichiometry = e.get_population_stoichiometry()
+                else:
+                    population_stoichiometry = []
+                    for item in e.get_population_stoichiometry():  # item = {'cycle':cycle, 'stoichiometry': stoichiometry}
+                        # replace id with smiles
+                        cycle = [e.get_smiles(step) for step in item['cycle'] if '+' not in step and '>' not in step and '<' not in step]
+                        population_stoichiometry.append({'stoichiometry': item['stoichiometry'], 'cycle': cycle})
 
                 with open(evaluator_filename, mode='w') as f:
                     json.dump(population_stoichiometry, f)
@@ -45,8 +42,8 @@ datadir = 'C:\Users\Thom\Dropbox/Experiments'
 if not os.path.isdir(datadir):
     datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
 
-# evaluate('1481398302-0-19-0.json', datadir)
+evaluate('1481398302-0-19-0.json', datadir)
 
-import glob
-for filename in glob.glob(os.path.join(datadir, '1481665906*.json')):
-    evaluate(filename, datadir)
+# import glob
+# for filename in glob.glob(os.path.join(datadir, '1481939843*.json')):
+#     evaluate(filename, datadir)

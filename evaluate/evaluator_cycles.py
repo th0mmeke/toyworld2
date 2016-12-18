@@ -36,7 +36,7 @@ class EvaluatorCycles(object):
                 if not self.g.has_edge(canonical_products, product):
                     self.g.add_edge(canonical_products, product, stoichiometry=count)
 
-    def get_population_stoichiometry(self, minimum_length=0, minimum_stoichiometry=1, max_depth=5):
+    def get_population_stoichiometry(self, minimum_stoichiometry=1, max_depth=5):
         """
         Return dictionary of stoichiometry for each unique cycle in the reaction set
         :param minimum_length:
@@ -47,8 +47,7 @@ class EvaluatorCycles(object):
 
         population_stoichiometry = []
         for reactant in self.reactants:
-            if len(reactant) >= minimum_length:
-                population_stoichiometry.extend(self.get_reactant_stoichiometry(reactant, minimum_stoichiometry, max_depth))
+            population_stoichiometry.extend(self.get_reactant_stoichiometry(reactant, minimum_stoichiometry, max_depth))
 
         return population_stoichiometry
 

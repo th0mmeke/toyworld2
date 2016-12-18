@@ -77,7 +77,7 @@ class TestEvaluatorActualCycles(unittest.TestCase):
         ]
 
         e = EvaluatorActualCycles(reactions=reactions)
-        self.assertEqual(1, len(e.get_population_stoichiometry(max_depth=10)))  # same path
+        self.assertEqual(2, len(e.get_population_stoichiometry(max_depth=10)))  # same path
 
     def testStoichiometry(self):
         reactions = [
@@ -113,5 +113,4 @@ class TestEvaluatorActualCycles(unittest.TestCase):
         e = EvaluatorActualCycles(reactions=reactions)
         cycles = e.get_population_stoichiometry(max_depth=10)
         self.assertEqual(2, len(cycles))
-
 
