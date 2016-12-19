@@ -10,7 +10,7 @@ def evaluate(filename, datadir):
 
     if ext == '.json' and basename[-1:] in string.digits:
 
-        for evaluator in ['actual', 'potential']:
+        for evaluator in ['actual']:
             evaluator_filename = os.path.join(datadir, '{}-{}.json'.format(basename, evaluator))
             if not os.path.exists(evaluator_filename):
 
@@ -18,7 +18,7 @@ def evaluate(filename, datadir):
                 print(data_filename, evaluator_filename)
                 with open(data_filename) as f:
                     state = json.load(f)
-                e = EvaluatorActualCycles(reactions=state['reactions'])
+                e = EvaluatorActualCycles(reactions=state['reactions'][:10000])
 
                 population_stoichiometry = []
                 count = 0
@@ -46,5 +46,5 @@ if not os.path.isdir(datadir):
 # evaluate('1481398302-0-19-0.json', datadir)
 
 import glob
-for filename in glob.glob(os.path.join(datadir, '1481398302*.json')):
+for filename in glob.glob(os.path.join(datadir, '1481939843*.json')):
     evaluate(filename, datadir)
