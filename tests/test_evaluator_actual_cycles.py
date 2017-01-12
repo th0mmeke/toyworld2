@@ -71,15 +71,31 @@ class TestEvaluatorActualCycles(unittest.TestCase):
 
     def testMultiple(self):
         reactions = [
-            {'reactants': {'1': 'a', '2': 'b', '3': 'a'}, 'products': {'4': 'c', '5': 'd'}},
+            {'reactants': {'1': 'a', '2': 'b', '3': 'a'}, 'products': {'4': 'c', '5': 'd'}}, # ignore as no way from the INITIAL reactants to any other reactant with the same smiles
             {'reactants': {'6': 'b', '7': 'a', '8': 'a'}, 'products': {'9': 'c', '10': 'c', '11': 'f'}},
             {'reactants': {'9': 'c', '11': 'f'}, 'products': {'12': 'a', '13': 'd'}}
         ]
 
         e = EvaluatorActualCycles(reactions=reactions)
-        self.assertEqual(2, len(e.get_population_stoichiometry(max_depth=10)))  # same path
+        self.assertEqual(1, len(e.get_population_stoichiometry(max_depth=10)))  # same path
 
     def testStoichiometry(self):
+        reactions = [
+            {'reactants': {'6': 'b', '7': 'a', '8': 'a'}, 'products': {'9': 'c', '11': 'f'}},
+            {'reactants': {'9': 'c', '11': 'f'}, 'products': {'12': 'a', '13': 'd'}}
+        ]
+        e = EvaluatorActualCycles(reactions=reactions)
+        cycles = e.get_population_stoichiometry(max_depth=10, minimum_stoichiometry=0)
+        self.assertEqual(set([0.5]), set([cycle['stoichiometry'] for cycle in cycles]))  # 2 cycles each of form a+a>...>a = 0.5
+
+        reactions = [
+            {'reactants': {'6': 'b', '7': 'a', '8': 'a'}, 'products': {'9': 'c', '10': 'c', '11': 'f'}},
+            {'reactants': {'9': 'c', '11': 'f'}, 'products': {'12': 'a', '13': 'd'}}
+        ]
+        e = EvaluatorActualCycles(reactions=reactions)
+        cycles = e.get_population_stoichiometry(max_depth=10, minimum_stoichiometry=0)
+        self.assertEqual(set([0.5, 1.0]), set([cycle['stoichiometry'] for cycle in cycles]))
+
         reactions = [
             {'reactants': {'1': 'a', '2': 'b'}, 'products': {'3': 'c'}},
             {'reactants': {'3': 'c'}, 'products': {'4': 'a', '5': 'a', '6': 'd'}}

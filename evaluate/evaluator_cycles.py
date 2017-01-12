@@ -20,8 +20,8 @@ class EvaluatorCycles(object):
         for reaction in reactions:
 
             # Distinct treatment of reactant and product sets to avoid edges being added from reactants back to molecules
-            canonical_reactants = EvaluatorCycles.make_canonical(reaction['reactants'].values()) + '>'
-            canonical_products = '>' + EvaluatorCycles.make_canonical(reaction['products'].values())
+            canonical_reactants = self.make_canonical(reaction['reactants'].values()) + '>'
+            canonical_products = '>' + self.make_canonical(reaction['products'].values())
             self.reactants.update(reaction['reactants'].values())
 
             if not self.g.has_edge(canonical_reactants, canonical_products):
@@ -187,8 +187,7 @@ class EvaluatorCycles(object):
     def is_reaction(node):
         return node[-1] == '>' or node[0] == '>'
 
-    @classmethod
-    def make_canonical(cls, reactants):
+    def make_canonical(self, reactants):
         rle = Counter(sorted(reactants))  # Cannot rely on dict(a) == dict(b) if items in a == items in b, but in different order, so sort them first.
         rle_reactants = ["{}{}".format(count, reactant) for reactant, count in rle.iteritems()]
         return "+".join(rle_reactants)

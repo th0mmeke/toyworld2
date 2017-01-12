@@ -29,8 +29,8 @@ class EvaluatorActualCycles(EvaluatorCycles):
 
             self.reactants.update(reaction['reactants'].values())
 
-            canonical_reactants = EvaluatorCycles.make_canonical(reaction['reactants'].keys()) + '>'
-            canonical_products = '>' + EvaluatorCycles.make_canonical(reaction['products'].keys())
+            canonical_reactants = self.make_canonical(reaction['reactants'].keys()) + '>'
+            canonical_products = '>' + self.make_canonical(reaction['products'].keys())
 
             if not self.g.has_edge(canonical_reactants, canonical_products):
                 self.g.add_edge(canonical_reactants, canonical_products)
@@ -52,7 +52,7 @@ class EvaluatorActualCycles(EvaluatorCycles):
 
     def get_reactant_stoichiometry(self, acs_seed, minimum_stoichiometry=0, max_depth=5):
         """
-        Find the shortest cycle from each node that has the SMILES of acs_seed, if the node is in a cycle.
+        Find all unique cycles that include each node that has the SMILES of acs_seed.
 
         :param acs_seed:
         :param minimum_stoichiometry:
@@ -101,3 +101,7 @@ class EvaluatorActualCycles(EvaluatorCycles):
 
     def get_smiles(self, id):
         return self.g.node[id]['smiles']
+
+    def make_canonical(self, reactants):
+        """Simpler for reactions involving molecule ids rather than smiles as no need for stoichiometry as each id is by definition unique."""
+        return "+".join(sorted(reactants))
