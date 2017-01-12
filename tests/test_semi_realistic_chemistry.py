@@ -78,7 +78,7 @@ class TestSemiRealisticChemistry(unittest.TestCase):
 
         self.assertEqual(7, len(chem.enumerate(Reaction(reactants=[ChemMolecule('C=C')]))))  # five complete breaks, and one drop from double to single
 
-    def test_polymer_enumerate(self):
+    def polymer_enumerate(self):
         chem = SemiRealisticChemistry(bond_energies=bond_energies.bond_energies)
         print()
         options = chem.enumerate(Reaction(reactants=[ChemMolecule('[H]C([H])C([H])[H]'), ChemMolecule('[H]C([H])C([H])[H]')]))
