@@ -20,4 +20,4 @@ class TestWeightedSelection(unittest.TestCase):
         self.assertAlmostEqual(actual.count(1), n*2/6, delta=400)
 
     def testProductSelection(self):
-        self.assertIsNone(weighted_selection.weighted_selection(None, lambda x: x))
+        self.assertIsNone(weighted_selection.weighted_selection(None, lambda x: x, 0))
