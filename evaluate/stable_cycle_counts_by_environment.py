@@ -16,7 +16,7 @@ def get_metrics(filename):
             if experiment is None or int(row[0]) != experiment:
                 experiment = int(row[0])
                 environment = 0
-            metric[experiment][environment] = row[-3]
+            metric[experiment][environment] = row[-2]
             environment += 1
 
     return metric
@@ -106,17 +106,17 @@ def discover_stable_cycles(cycles, smiles):
 datadir = 'C:\Users\Thom\Dropbox/Experiments'
 if not os.path.isdir(datadir):
     datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
-filebase = '1481670569'
+filebase = '1480963448'
 
 # Load environmental metrics
 
-metric = get_metrics('1481670569-metadata.csv')  # metric[experiment][environment]
+metric = get_metrics(filebase+'-metadata.csv')  # metric[experiment][environment]
 
 # Construct list of stable cycles per environment
 
-with open(os.path.join(datadir, filebase + '-stablestates.csv'), 'wb') as csvfile:
+with open(os.path.join(datadir, filebase + '-number-stablestates.csv'), 'wb') as csvfile:
     w = csv.writer(csvfile, delimiter=',')
-    w.writerow(['experiment', 'environment', 'hurst', 'seeds', 'min', 'mean', 'max'])
+    w.writerow(['experiment', 'environment', 'repeat', 'dfa', 'seeds', 'min', 'mean', 'max'])
 
     for filename in os.listdir(datadir):
 
@@ -125,24 +125,22 @@ with open(os.path.join(datadir, filebase + '-stablestates.csv'), 'wb') as csvfil
         # Load actual cycle data
         if ext == '.json' and basename[-3:] == 'ual' and basename[:len(filebase)] == filebase:
             print(filename)
-            datetime, experiment, environment, repeat, dummy = basename.split('-')
+            datetime, experiment, environment, repeat, dummy2 = basename.split('-')
             with open(os.path.join(datadir, filename)) as f:
                 all_cycles = json.load(f)
             with open(os.path.join(datadir, '{}-{}-{}-{}.json'.format(datetime, experiment, environment, repeat))) as f:
                 state = json.load(f)
                 smiles = load_smiles(state['reactions'])
 
-            hurst = metric[int(experiment)][int(environment)]
+            dfa = metric[int(experiment)][int(environment)]
             stable_states, seeds = discover_stable_cycles(all_cycles, smiles)  # [[counts per cycle type]] for this file
 
             values_by_seed = defaultdict(list)
             for state, count in stable_states.iteritems():
                 values_by_seed[seeds[state]].append(count)  # seed:longest length of stable pathway for each state
-            counts_by_seed = {k:len(v) for k, v in values_by_seed.iteritems()}
-            print(values_by_seed)
-            print(counts_by_seed)
+            counts_by_seed = {k: len(v) for k, v in values_by_seed.iteritems()}
 
             if len(counts_by_seed) == 0:
-                w.writerow([experiment, environment, hurst, len(counts_by_seed), 'nan', 'nan', 'nan'])
+                w.writerow([experiment, environment, repeat, dfa, len(counts_by_seed), 'nan', 'nan', 'nan'])
             else:
-                w.writerow([experiment, environment, hurst, len(counts_by_seed), min(counts_by_seed.values()), sum(counts_by_seed.values())*1.0/len(counts_by_seed), max(counts_by_seed.values())])
+                w.writerow([experiment, environment, repeat, dfa, len(counts_by_seed), min(counts_by_seed.values()), sum(counts_by_seed.values()) * 1.0 / len(counts_by_seed), max(counts_by_seed.values())])
