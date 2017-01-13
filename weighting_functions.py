@@ -2,7 +2,7 @@ import itertools
 import Levenshtein
 
 
-def uniform_weighting(reaction):
+def uniform_weighting(dummy1, dummy2):
 
     """
     Uniform selection.
@@ -14,7 +14,7 @@ def uniform_weighting(reaction):
     return 1.0
 
 
-def replicant_weighting(reaction):
+def replicant_weighting(reaction, dummy):
 
     """
     Selection pressure towards A+X -> 2A + Y
