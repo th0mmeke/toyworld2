@@ -136,6 +136,7 @@ class Kinetics2D(object):
         # 3. Energy
         out_ke = sum([cls.get_ke(m, *v) for m, v in zip(out_mass, out_v)])
         if not Ulps.almost_equal(in_ke, out_ke, max_diff=3000):
+            print(in_v, in_mass, out_v, out_mass)
             raise ValueError  # if a calculation problem with the velocities, throw it back to the caller
 
         return out_v
