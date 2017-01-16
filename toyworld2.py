@@ -9,19 +9,24 @@ class ToyWorld2:
         self.reactor = reactor
         self.product_selection = product_selection
 
-    def run(self, generations, state, environment):
+    def run(self, generations, state):
 
         generation = 1
         non_reaction = 0
-        e = environment.pop()
+
         while generation <= generations:
+            if generation % 10000 == 0:
+                if self.reactor.ke == 50:
+                    self.reactor.ke = 140
+                else:
+                    self.reactor.ke = 50
             try:
                 partial_reaction = self.reactor.get_reactants()
             except ValueError:
                 logging.info("Stopping, lack of energy")
                 break
             reactions = self.chemistry.enumerate(partial_reaction)
-            reaction = weighted_selection(reactions, self.product_selection, e)
+            reaction = weighted_selection(reactions, self.product_selection, 0)
 
             if reaction is None:
                 non_reaction += 1
@@ -29,13 +34,16 @@ class ToyWorld2:
                     logging.info("Stopping, lack of reactions")
                     break
             else:
-                self.reactor.react(reaction)
-                logging.info("{}: bias={}, reaction between {} giving {}".format(generation, e, str([r.get_symbol() for r in reaction.reactants]),
-                                                                        str([p.get_symbol() for p in reaction.products])))
-                state.add(reaction.as_dict())
-                # self.reactor.update_environment(environment.pop())
-                generation += 1
-                non_reaction = 0
-                e = environment.pop()
+                try:
+                    self.reactor.react(reaction)
+                except ValueError:
+                    non_reaction += 1
+                else:
+                    logging.info("{}: reaction between {} giving {}".format(generation,str([r.get_symbol() for r in reaction.reactants]),
+                                                                            str([p.get_symbol() for p in reaction.products])))
+                    state.add(reaction.as_dict())
+                    # self.reactor.update_environment(environment.pop())
+                    generation += 1
+                    non_reaction = 0
 
         return state
