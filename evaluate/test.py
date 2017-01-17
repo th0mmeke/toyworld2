@@ -32,36 +32,64 @@ def compute_closure(g, foodset):
 
     # closure = molecules generated from foodset under reactions in graph e
     # closure != e.reactants as e.reactants doesn't include final 'sink' products
-    # print(len(closure))
     return closure
+
+
+def get_reactions(g):
+    return [node for node in g.nodes_iter() if EvaluatorCycles.is_reaction(node) and node[0] == '>']
+
+def get_reactions_b(g):
+    return [node for node in g.nodes_iter() if EvaluatorCycles.is_reaction(node) and node[-1] == '>']
+
+def RAF(e, foodset):
+    g = e.copy()
+    finished = False
+
+    while not finished:
+        finished = True
+        closure = compute_closure(g, foodset)
+        reactions = get_reactions_b(g)
+        # print("reactions", len(reactions))
+        for reaction in reactions:
+            #reactants = reaction.replace('>', '').split('+')  # must remove stoichiometry...
+            reactants = set(g.predecessors(reaction))
+            if len(reactants - closure) > 0:  # some reactant which isn't in the closure set
+                # Now remove reaction from g and repeat
+                g.remove_node(reaction)
+                finished = False
+    return g
 
 
 def irrRAF(e, foodset):
     #  irrRAF algorithm
-    reactions_a = [node for node in e.g.nodes_iter() if EvaluatorCycles.is_reaction(node) and node[0] == '>']
+    reactions_a = get_reactions(e)
 
-    print(len([node for node in e.g.nodes() if not EvaluatorCycles.is_reaction(node)]))
+    print("Original", len([node for node in e.nodes() if not EvaluatorCycles.is_reaction(node)]))
+
     for i in range(0, 10):
-        g = e.g.copy()
+        g = e.copy()
         random.shuffle(reactions_a)
         for reaction in reactions_a:
-            g_copy = g.copy()
-            g_copy.remove_node(reaction)
-            closure = compute_closure(g_copy, foodset)
-            if len(closure) != 0:
-                g = g_copy
+            if g.has_node(reaction):  # case where reduced graph no longer contains this reaction from original graph
+                g_copy = g.copy()
+                g_copy.remove_node(reaction)
+                sub_raf = RAF(g_copy, foodset)
+                if sub_raf.number_of_nodes() > 0:
+                    g = sub_raf
         irrRAF = [node for node in g.nodes() if not EvaluatorCycles.is_reaction(node)]
-        print(len(irrRAF))
+        print("irrRAF", len(irrRAF))
 
-for filename in glob.glob(os.path.join(datadir, '1484617345-0-0-selection.json')):
+for filename in glob.glob(os.path.join(datadir, '1484540618-0-*-selection.json')):
+#for filename in glob.glob(os.path.join(datadir, '1484617345-0-0-selection.json')):
 
+    print(filename)
     with open(filename) as f:
         state = json.load(f)
     foodset = state['initial_population'].keys()  # foodset is 'source' nodes for graph e
 
     e = EvaluatorCycles(reactions=state['reactions'])
 
-    irrRAF(e, foodset)
+    irrRAF(e.g, foodset)
 
 
 
