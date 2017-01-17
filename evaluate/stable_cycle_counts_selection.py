@@ -56,8 +56,8 @@ def discover_stable_cycles(cycles, smiles):
         else:
             grouped_cycles[len(cycle)].append(cycle)
 
-    stable_cycles = {}
-    seeds = {}
+    stable_cycles = defaultdict(list)
+    cycle_form = {}
 
     for cycle_type, cycles_of_length in grouped_cycles.iteritems():
         # cycles_of_length has all cycles of same length, but not guaranteed to be of same type
@@ -66,7 +66,8 @@ def discover_stable_cycles(cycles, smiles):
             s = map_id_to_smiles(cycle, smiles)
             assert len(s) == cycle_type
             smiles_cycles[frozenset(s)].append(get_molecules_in_cycle(cycle))
-            seeds[frozenset(s)] = s[0]
+
+            cycle_form[frozenset(s)] = s
 
         # smiles_cycles now contains lists of all identical cycles types, so just have to match up the connected ones
 
@@ -81,10 +82,10 @@ def discover_stable_cycles(cycles, smiles):
                         clusters[i].union(molecules)
                         counts[i] += 1
                         break
-            if len(counts) > 0:
-                stable_cycles[frozenset(cycle_type)] = max(counts.values())  # longest stable time!
+            if len(counts) > 0 and max(counts.values()) > 1:
+                stable_cycles[max(counts.values())].append(cycle_form[cycle_type])  # Longest stable duration > 1
 
-    return stable_cycles, seeds
+    return stable_cycles, [x[0] for x in cycle_form.itervalues()]
 
 import glob
 
@@ -108,6 +109,6 @@ for filename in glob.glob(os.path.join(datadir, filebase+'*actual.json')):
 
     stable_states, seeds = discover_stable_cycles(all_cycles, smiles)  # [[counts per cycle type]] for this file
     print(stable_states)
-    evaluator_filename = os.path.join(datadir, '{}-states.json'.format(basename))
+    evaluator_filename = os.path.join(datadir, '{}-states2.json'.format(basename))
     with open(evaluator_filename, mode='w') as f:
         json.dump(stable_states, f)
