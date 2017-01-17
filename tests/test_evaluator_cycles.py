@@ -1,6 +1,6 @@
 import unittest
 
-from evaluator_cycles import EvaluatorCycles
+from identify_species_cycles import IdentifySpeciesCycles
 
 
 class TestEvaluatorCycles(unittest.TestCase):
@@ -11,7 +11,7 @@ class TestEvaluatorCycles(unittest.TestCase):
                 {'reactants': {'1': 'a'}, 'products': {'2': 'b'}},
                 {'reactants': {'3': 'b'}, 'products': {'4': 'a'}}
                 ]
-        r = EvaluatorCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)
+        r = IdentifySpeciesCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)
         self.assertEqual(2, len(r))
 
         reactions = [
@@ -19,7 +19,7 @@ class TestEvaluatorCycles(unittest.TestCase):
                 {'reactants': {'3': 'b'}, 'products': {'4': 'c'}},
                 {'reactants': {'4': 'c'}, 'products': {'5': 'a'}},
                 ]
-        r = EvaluatorCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)
+        r = IdentifySpeciesCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)
         self.assertEqual(3, len(r))
 
         reactions = [
@@ -29,7 +29,7 @@ class TestEvaluatorCycles(unittest.TestCase):
             {'reactants': {'5': 'a'}, 'products': {'6': 'e'}},
             {'reactants': {'6': 'e'}, 'products': {'7': 'a', '8': 'a'}},
         ]
-        self.assertEqual(5, len(EvaluatorCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)))
+        self.assertEqual(5, len(IdentifySpeciesCycles(reactions=reactions).get_population_stoichiometry(max_depth=10)))
 
     def testMultiple(self):
         reactions = [
@@ -38,7 +38,7 @@ class TestEvaluatorCycles(unittest.TestCase):
             {'reactants': {'9': 'c', '11': 'f'}, 'products': {'12': 'a', '13': 'd'}}
         ]
 
-        e = EvaluatorCycles(reactions=reactions)
+        e = IdentifySpeciesCycles(reactions=reactions)
         r = e.get_population_stoichiometry(max_depth=10)
         self.assertEqual(2, len(r))
 
@@ -48,7 +48,7 @@ class TestEvaluatorCycles(unittest.TestCase):
             {'reactants': {'3': 'c'}, 'products': {'4': 'a', '5': 'a', '6': 'd'}}
         ]
 
-        e = EvaluatorCycles(reactions=reactions)
+        e = IdentifySpeciesCycles(reactions=reactions)
         cycles = e.get_population_stoichiometry(max_depth=10)
         for cycle in cycles:
             self.assertEqual(2, cycle['stoichiometry'])
@@ -58,7 +58,7 @@ class TestEvaluatorCycles(unittest.TestCase):
             {'reactants': {'3': 'c'}, 'products': {'4': 'a', '5': 'a', '6': 'd'}}
         ]
 
-        e = EvaluatorCycles(reactions=reactions)
+        e = IdentifySpeciesCycles(reactions=reactions)
         cycles = e.get_population_stoichiometry(max_depth=10)
         for cycle in cycles:
             self.assertEqual(1, cycle['stoichiometry'])
@@ -71,7 +71,7 @@ class TestEvaluatorCycles(unittest.TestCase):
             {'reactants': {'5': 'a'}, 'products': {'6': 'e'}},
             {'reactants': {'6': 'e'}, 'products': {'7': 'a', '8': 'a'}},
         ]
-        e = EvaluatorCycles(reactions=reactions)
+        e = IdentifySpeciesCycles(reactions=reactions)
         cycles = e.get_population_stoichiometry(max_depth=10)
         self.assertEqual(set({'a', 'c', 'e'}), e.get_reactant_set(cycles[1]['cycle']))
 
@@ -81,7 +81,7 @@ class TestEvaluatorCycles(unittest.TestCase):
             {'reactants': {'9': 'c', '11': 'f'}, 'products': {'12': 'a', '13': 'd'}}
         ]
 
-        e = EvaluatorCycles(reactions=reactions)
+        e = IdentifySpeciesCycles(reactions=reactions)
         cycles = e.get_population_stoichiometry(max_depth=10)
         self.assertEqual(set({'a', 'c', 'f', 'b'}), e.get_reactant_set(cycles[1]['cycle']))
 
@@ -93,7 +93,7 @@ class TestEvaluatorCycles(unittest.TestCase):
             {'reactants': {'5': 'a'}, 'products': {'6': 'e'}},
             {'reactants': {'6': 'e'}, 'products': {'7': 'a', '8': 'a'}},
         ]
-        e = EvaluatorCycles(reactions=reactions)
+        e = IdentifySpeciesCycles(reactions=reactions)
         cycles = e.get_population_stoichiometry(max_depth=10)
         self.assertEqual(set({'a', 'b', 'e'}), e.get_product_set(cycles[1]['cycle']))
 
@@ -103,7 +103,7 @@ class TestEvaluatorCycles(unittest.TestCase):
             {'reactants': {'9': 'c', '11': 'f'}, 'products': {'12': 'a', '13': 'd'}}
         ]
 
-        e = EvaluatorCycles(reactions=reactions)
+        e = IdentifySpeciesCycles(reactions=reactions)
         cycles = e.get_population_stoichiometry(max_depth=10)
         self.assertEqual(set({'a', 'c', 'f', 'd'}), e.get_product_set(cycles[1]['cycle']))
 
@@ -113,6 +113,6 @@ class TestEvaluatorCycles(unittest.TestCase):
             {'reactants': {'6': 'b', '7': 'a', '8': 'a'}, 'products': {'9': 'c', '10': 'c', '11': 'f'}},
             {'reactants': {'9': 'c', '11': 'f'}, 'products': {'12': 'a', '13': 'd'}}
         ]
-        e = EvaluatorCycles(reactions=reactions)
+        e = IdentifySpeciesCycles(reactions=reactions)
         cycles = e.get_population_stoichiometry(max_depth=10)
         self.assertEqual(set({'b'}), e.get_food_set(cycles[1]['cycle']))

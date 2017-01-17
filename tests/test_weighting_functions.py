@@ -19,7 +19,7 @@ class TestWeightingFunctions(unittest.TestCase):
                                    reactant_value=0, product_value=-20)]
 
     def testUniformWeighting(self):
-        self.assertListEqual([1, 1, 1], [weighting_functions.uniform_weighting(r) for r in self.reactions])
+        self.assertListEqual([1, 1, 1], [weighting_functions.uniform_weighting(r, 0) for r in self.reactions])
 
     def testLeastEnergyWeighting(self):
         # -product_value, if product_value < 0
@@ -28,4 +28,4 @@ class TestWeightingFunctions(unittest.TestCase):
         self.assertListEqual([0, 10, 20], [weighting_functions.least_energy_weighting(r, 0) for r in self.reactions])
 
     def testReplicantWeighting(self):
-        self.assertListEqual([1, 1, 6], [weighting_functions.replicant_weighting(r) for r in self.reactions])
+        self.assertListEqual([1, 1, 6], [weighting_functions.replicant_weighting(r, 0) for r in self.reactions])

@@ -3,10 +3,10 @@ from collections import Counter
 from collections import defaultdict
 
 
-from evaluator_cycles import EvaluatorCycles
+from identify_species_cycles import IdentifySpeciesCycles
 
 
-class EvaluatorActualCycles(EvaluatorCycles):
+class IdentifyMoleculeCycles(IdentifySpeciesCycles):
 
     def __init__(self, reactions, minimum_length=0):
 
@@ -93,7 +93,7 @@ class EvaluatorActualCycles(EvaluatorCycles):
         while stack:
             (vertex, path) = stack.pop()
             for next_node in set(network.predecessors(vertex)) - set(path):
-                if not EvaluatorCycles.is_reaction(next_node) and network.node[next_node]['smiles'] == target:
+                if not IdentifySpeciesCycles.is_reaction(next_node) and network.node[next_node]['smiles'] == target:
                     yield list(reversed(path + [next_node]))  # reverse order as path found in reverse direction
                 else:
                     if len(path) < max_depth:

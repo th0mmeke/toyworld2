@@ -1,15 +1,13 @@
 import os
 import json
-import string
 
-from evaluator_actual_cycles import EvaluatorActualCycles
+from identify_molecule_cycles import IdentifyMoleculeCycles
 
 
 def evaluate(filename, datadir):
     basename, ext = os.path.splitext(filename)
 
-
-    for evaluator in ['actual', 'potential']:
+    for evaluator in ['molecules', 'species']:
         evaluator_filename = os.path.join(datadir, '{}-{}.json'.format(basename, evaluator))
         if not os.path.exists(evaluator_filename):
 
@@ -17,21 +15,17 @@ def evaluate(filename, datadir):
             print(data_filename, evaluator_filename)
             with open(data_filename) as f:
                 state = json.load(f)
-            e = EvaluatorActualCycles(reactions=state['reactions'][:10000])
-
-            # t = {x: len(e.smiles[x]) for x in e.reactants}
-            # import operator
-            # print(sorted(t.items(), key=o
+            e = IdentifyMoleculeCycles(reactions=state['reactions'])
 
             population_stoichiometry = []
             count = 0
             for reactant in e.reactants:
                 count += 1
-                if evaluator != 'potential' or len(reactant) >= 10:
+                if evaluator != 'species' or len(reactant) >= 10:
                     print("{}/{}: {}".format(count, len(e.reactants), reactant))
                     s = e.get_reactant_stoichiometry(reactant, minimum_stoichiometry=2, max_depth=10)
                     for item in s:  # item = {'cycle':cycle, 'stoichiometry': stoichiometry}
-                        if evaluator == 'potential':  # replace id with smiles
+                        if evaluator == 'species':  # replace id with smiles
                             cycle = []
                             for step in item['cycle']:
                                 if '+' not in step and '>' not in step and '<' not in step:
@@ -49,6 +43,6 @@ if not os.path.isdir(datadir):
 # evaluate('1481398302-0-19-0.json', datadir)
 
 import glob
-for filename in glob.glob(os.path.join(datadir, '1484617345*.json')):
+for filename in glob.glob(os.path.join(datadir, '1484617345-0-0-selection.json')):
     print(filename)
     evaluate(filename, datadir)

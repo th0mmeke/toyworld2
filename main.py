@@ -14,6 +14,7 @@ from uniform_reactant_selection import UniformReactantSelection
 from spatial_reactant_selection import SpatialReactantSelection
 from local_reactant_selection import LocalReactantSelection
 from flow_reactant_selection import FlowReactantSelection
+from my_reactant_selection import MyReactantSelection
 from chem_molecule import ChemMolecule
 from semi_realistic_chemistry import SemiRealisticChemistry
 from state import State
@@ -198,9 +199,9 @@ if __name__ == "__main__":
     logging.info("Generations: {}".format(args.generations))
 
     factors = {
-        'REACTANT_SELECTION': [FlowReactantSelection],
+        'REACTANT_SELECTION': [MyReactantSelection],
         'PRODUCT_SELECTION': [weighting_functions.uniform_weighting],
     }
 
-    runner(population, factors, generations=50000, number_of_repeats=5, number_of_environments=1)
+    runner(population, factors, generations=50000, number_of_repeats=1, number_of_environments=1)
 
