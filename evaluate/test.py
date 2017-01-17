@@ -1,16 +1,72 @@
 import json
-from evaluator_actual_cycles import EvaluatorActualCycles
+from evaluator_cycles import EvaluatorCycles
 #import Levenshtein
 import itertools
 import networkx as nx
+import os
+import glob
+import random
 
-filename = '../data/1480307656-0-0-0.json'
+datadir = 'C:\Users\Thom\Dropbox/Experiments'
+if not os.path.isdir(datadir):
+    datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
 
-with open(filename) as f:
-    reactions = json.load(f)
-e = EvaluatorActualCycles(reactions=reactions['reactions'])
+# Construct list of stable cycles per environment
 
-print(e.g.number_of_nodes(), e.g.number_of_edges())
+
+def compute_closure(g, foodset):
+    closure = set(foodset[:])
+    node_front = set(closure)
+    visited = set()
+    finished = False
+    while len(node_front) > 0:
+        new_front = []
+        for node in node_front:
+            for successor in g.successors(node):
+                if successor not in visited:
+                    new_front.append(successor)
+                    if not EvaluatorCycles.is_reaction(successor):
+                        closure.add(successor)
+            visited.add(node)
+        node_front = new_front
+
+    # closure = molecules generated from foodset under reactions in graph e
+    # closure != e.reactants as e.reactants doesn't include final 'sink' products
+    # print(len(closure))
+    return closure
+
+
+def irrRAF(e, foodset):
+    #  irrRAF algorithm
+    reactions_a = [node for node in e.g.nodes_iter() if EvaluatorCycles.is_reaction(node) and node[0] == '>']
+
+    print(len([node for node in e.g.nodes() if not EvaluatorCycles.is_reaction(node)]))
+    for i in range(0, 10):
+        g = e.g.copy()
+        random.shuffle(reactions_a)
+        for reaction in reactions_a:
+            g_copy = g.copy()
+            g_copy.remove_node(reaction)
+            closure = compute_closure(g_copy, foodset)
+            if len(closure) != 0:
+                g = g_copy
+        irrRAF = [node for node in g.nodes() if not EvaluatorCycles.is_reaction(node)]
+        print(len(irrRAF))
+
+for filename in glob.glob(os.path.join(datadir, '1484617345-0-0-selection.json')):
+
+    with open(filename) as f:
+        state = json.load(f)
+    foodset = state['initial_population'].keys()  # foodset is 'source' nodes for graph e
+
+    e = EvaluatorCycles(reactions=state['reactions'])
+
+    irrRAF(e, foodset)
+
+
+
+exit()
+
 population_stoichiometry = []
 count = 0
 for reactant in e.reactants:
