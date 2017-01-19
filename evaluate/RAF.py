@@ -1,21 +1,12 @@
-import json
-import os
-import glob
 import random
 
 from identify_species_cycles import IdentifySpeciesCycles
-
-datadir = 'C:\Users\Thom\Dropbox/Experiments'
-if not os.path.isdir(datadir):
-    datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
-
-N_IRRRAF = 50
 
 def compute_closure(g, foodset):
     closure = set(foodset[:])
     node_front = set(closure)
     visited = set()
-    finished = False
+
     while len(node_front) > 0:
         new_front = []
         for node in node_front:
@@ -40,7 +31,7 @@ def get_reactions_b(g):
     return [node for node in g.nodes_iter() if IdentifySpeciesCycles.is_reaction(node) and node[-1] == '>']
 
 
-def RAF(e, foodset):
+def get_RAF(e, foodset):
     g = e.copy()
     finished = False
 
@@ -59,7 +50,7 @@ def RAF(e, foodset):
     return g
 
 
-def irrRAF(e, foodset):
+def get_irrRAF(e, foodset):
     #  irrRAF algorithm
 
     g = e.copy()  # don't modify original graph
@@ -70,28 +61,8 @@ def irrRAF(e, foodset):
         if g.has_node(reaction):  # case where reduced graph no longer contains this reaction from original graph
             g_copy = g.copy()
             g_copy.remove_node(reaction)
-            sub_raf = RAF(g_copy, foodset)
+            sub_raf = get_RAF(g_copy, foodset)
             if sub_raf.number_of_nodes() > 0:
                 g = sub_raf
 
     return [node for node in g.nodes() if not IdentifySpeciesCycles.is_reaction(node)]
-
-
-#for filename in glob.glob(os.path.join(datadir, '1484540618-0-*-selection.json')):
-for filename in glob.glob(os.path.join(datadir, '1484617345-0-0-selection.json')):
-
-    print(filename)
-    with open(filename) as f:
-        state = json.load(f)
-
-    e = IdentifySpeciesCycles(reactions=state['reactions'])
-
-    basename, ext = os.path.splitext(filename)
-    evaluator_filename = os.path.join(datadir, '{}-irrraf.json'.format(basename))
-
-    foodset = state['initial_population'].keys()  # foodset is 'source' nodes for graph e
-    with open(evaluator_filename, mode='w') as f:
-        for i in range(0, N_IRRRAF):
-            print("{}/{}".format(i, N_IRRRAF))
-            mols_in_irrRAF = irrRAF(e.g, foodset)
-            json.dump(mols_in_irrRAF, f)
