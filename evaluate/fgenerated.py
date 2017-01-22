@@ -31,7 +31,7 @@ def get_reactions_b(g):
     return [node for node in g.nodes_iter() if IdentifySpeciesCycles.is_reaction(node) and node[-1] == '>']
 
 
-def get_RAF(e, foodset):
+def get_fgenerated(e, foodset):
     g = e.copy()
     finished = False
 
@@ -45,12 +45,16 @@ def get_RAF(e, foodset):
             reactants = set(g.predecessors(reaction))
             if len(reactants - closure) > 0:  # some reactant which isn't in the closure set
                 # Now remove reaction from g and repeat
+                for product in set(g.successors(reaction)) - set(foodset):  # don't remove foodset molecules
+                    if len(g.predecessors(product)) == 1:  # this reaction is only source of this product
+                        g.remove_node(product)
                 g.remove_node(reaction)
+
                 finished = False
     return g
 
 
-def get_irrRAF(e, foodset):
+def get_irr_fgenerated(e, foodset):
     #  irrRAF algorithm
 
     g = e.copy()  # don't modify original graph
@@ -61,8 +65,9 @@ def get_irrRAF(e, foodset):
         if g.has_node(reaction):  # case where reduced graph no longer contains this reaction from original graph
             g_copy = g.copy()
             g_copy.remove_node(reaction)
-            sub_raf = get_RAF(g_copy, foodset)
-            if sub_raf.number_of_nodes() > 0:
+            sub_raf = get_fgenerated(g_copy, foodset)
+
+            if len(get_reactions(sub_raf)) > 0:
                 g = sub_raf
 
-    return [node for node in g.nodes() if not IdentifySpeciesCycles.is_reaction(node)]
+    return compute_closure(g, foodset)
