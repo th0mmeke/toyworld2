@@ -36,6 +36,9 @@ class TestFgenerated(unittest.TestCase):
         closure = fgenerated.compute_closure(e.g, ['a', 'b'])
         self.assertEqual(set(['a', 'b', 'c']), closure)
 
+        closure = fgenerated.compute_closure(e.g, ['a', 'b', 'e'])
+        self.assertEqual(set(['a', 'b', 'c', 'd', 'e']), closure)
+
         foodset = ['a', 'b']
         reactions = [
             {'reactants': {'1': 'a', '2': 'b'}, 'products': {'3': 'c'}},
@@ -97,7 +100,6 @@ class TestFgenerated(unittest.TestCase):
         ]
         e = IdentifySpeciesCycles(reactions=reactions)
         molecules = fgenerated.get_irr_fgenerated(e.g, foodset)['molecules']
-        expected_nodes = ['c']
 
         self.assertTrue(molecules == ['c'] or molecules == ['d'])  # small network has single RAF and hence irrRAF
 

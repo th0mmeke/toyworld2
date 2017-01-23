@@ -2,38 +2,43 @@ import random
 
 from identify_species_cycles import IdentifySpeciesCycles
 
+
 def compute_closure(g, foodset):
+
+    """
+
+    Closure = molecules generated from foodset under reactions in graph e
+    Closure != e.reactants as e.reactants doesn't include final 'sink' products
+
+    :param g:
+    :param foodset:
+    :return:
+    """
+
     closure = set(foodset[:])
     node_front = set(closure)
-    visited = set(closure)
+    visited = set()
 
     while len(node_front) > 0:
         new_front = []
         for node in node_front:
-            successors = g.successors(node)
+
             for successor in g.successors(node):
+
                 if successor not in visited:
 
-                    if IdentifySpeciesCycles.is_reaction(successor):
-                        reaction_b = g.successors(successor)[0]
-                        visited.add(successor)
-                        visited.add(reaction_b)
+                    if IdentifySpeciesCycles.is_reaction_a(successor):
                         # all reactants must be available
-                        all_reactants_available = True
-                        for predecessor in g.predecessors(successor):
-                            if predecessor not in closure:
-                                all_reactants_available = False
-                        if all_reactants_available:
-                            new_front.append(reaction_b)
+                        if all([predecessor in closure for predecessor in g.predecessors(successor)]):
+                            new_front.extend(g.successors(successor))  # add in reaction part b's
                     else:
-                        closure.add(successor)
+                        visited.add(successor)
+                        if not IdentifySpeciesCycles.is_reaction(successor):
+                            closure.add(successor)
                         new_front.append(successor)
-                        visited.add(node)
 
         node_front = new_front
 
-    # closure = molecules generated from foodset under reactions in graph e
-    # closure != e.reactants as e.reactants doesn't include final 'sink' products
     return closure
 
 

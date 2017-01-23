@@ -187,6 +187,14 @@ class IdentifySpeciesCycles(object):
     def is_reaction(node):
         return node[-1] == '>' or node[0] == '>'
 
+    @staticmethod
+    def is_reaction_a(node):
+        return node[-1] == '>'
+
+    @staticmethod
+    def is_reaction_b(node):
+        return node[0] == '>'
+
     def make_canonical(self, reactants):
         rle = Counter(sorted(reactants))  # Cannot rely on dict(a) == dict(b) if items in a == items in b, but in different order, so sort them first.
         rle_reactants = ["{}{}".format(count, reactant) for reactant, count in rle.iteritems()]
