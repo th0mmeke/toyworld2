@@ -66,15 +66,13 @@ def get_fgenerated(e, foodset):
         finished = True
         closure = compute_closure(g, foodset)
 
-        for reaction in get_reactions_b(g):
-            if len(g.predecessors(reaction)) != 1:
-                print("FAIL", reaction, g.predecessors(reaction))
-            reaction_a = g.predecessors(reaction)[0]  # can guarantee only one predecessor
-            reactants = set(g.predecessors(reaction_a))
+        for reaction in get_reactions_a(g):
+
+            reactants = set(g.predecessors(reaction))
             if len(reactants - closure) > 0:  # some reactant which isn't in the closure set
                 # Now remove reaction from g and repeat
+                g.remove_nodes_from(g.successors(reaction))
                 g.remove_node(reaction)
-                g.remove_node(reaction_a)
 
                 finished = False
 
@@ -94,23 +92,22 @@ def get_irr_fgenerated(e, foodset):
     """
 
     g = e.copy()  # don't modify original graph
-    reactions = get_reactions_b(g)
+    reactions = get_reactions_a(g)
     random.shuffle(reactions)
 
-    print(reactions)
     for reaction in reactions:
         if g.has_node(reaction):  # case where reduced graph no longer contains this reaction from original graph
             g_copy = g.copy()
-            reaction_a = g.predecessors(reaction)[0]
+            reaction_b = random.choice(g.successors(reaction))
             g_copy.remove_node(reaction)
-            g_copy.remove_node(reaction_a)
+            g_copy.remove_node(reaction_b)
             sub = get_fgenerated(g_copy, foodset)
 
-            if len(get_reactions_b(sub)) > 0:  # still an f-generated set, check to see if can remove further
+            if len(get_reactions_a(sub)) > 0:  # still an f-generated set, check to see if can remove further
                 g = sub
-                print("{}{} can be removed".format(reaction_a, reaction))
-            else:
-                print("{}{} cannot".format(reaction_a, reaction))
+            #     print("{}{} can be removed".format(reaction, reaction_b))
+            # else:
+            #     print("{}{} cannot".format(reaction, reaction_b))
 
     reactions = []
 
