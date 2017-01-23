@@ -1,5 +1,6 @@
 import unittest
 import networkx as nx
+import collections
 
 from identify_species_cycles import IdentifySpeciesCycles
 import fgenerated
@@ -129,7 +130,12 @@ class TestFgenerated(unittest.TestCase):
 
         e = IdentifySpeciesCycles(reactions=reactions)
 
+        count = collections.defaultdict(int)
         for i in range(0, 40):
-            irr = fgenerated.get_irr_fgenerated(e.g, foodset)['molecules']
-            self.assertEqual(1, len(irr))
-            self.assertTrue(irr == ['c'] or irr == ['f'])
+            irr = fgenerated.get_irr_fgenerated(e.g, foodset)
+            self.assertEqual(1, len(irr['molecules']))
+            self.assertTrue(irr['molecules'] == ['c'] or irr['molecules'] == ['f'])
+            count[irr['molecules'][0]] += 1
+            self.assertEqual(1, len(irr['reactions']))
+
+        self.assertTrue(all([n > 0 for n in count.itervalues()]))  # roughly evenly distributed between c and f

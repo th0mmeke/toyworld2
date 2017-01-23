@@ -112,8 +112,8 @@ def get_irr_fgenerated(e, foodset):
             #     print(get_reactions(sub))
             #     print("{}{} cannot".format(reaction_a, reaction_b))
 
-    reactions = []
-
+    reactions = get_reactions(g)
     molecules = [node for node in g.nodes() if not IdentifySpeciesCycles.is_reaction(node) and node not in foodset]
+
     return {'molecules': molecules, 'reactions': reactions}
 
