@@ -29,8 +29,8 @@ for filename in glob.glob(os.path.join(datadir, '1484540618-0-*-selection.json')
         f.write("[")
         for i in range(0, N_IRRRAF):
             print("{}/{}".format(i, N_IRRRAF))
-            mols_in_irrRAF = fgenerated.get_irr_fgenerated(e.g, foodset)
-            json.dump(mols_in_irrRAF, f)
+            irr_f = fgenerated.get_irr_fgenerated(e.g, foodset)
+            json.dump(irr_f, f)
             if i < N_IRRRAF-1:
                 f.write(",")
         f.write("]")

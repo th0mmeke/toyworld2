@@ -109,6 +109,6 @@ for filename in glob.glob(os.path.join(datadir, filebase+'*actual.json')):
 
     stable_states, seeds = discover_stable_cycles(all_cycles, smiles)  # [[counts per cycle type]] for this file
     print(stable_states)
-    evaluator_filename = os.path.join(datadir, '{}-states2.json'.format(basename))
+    evaluator_filename = os.path.join(datadir, '{}-states.json'.format(basename))
     with open(evaluator_filename, mode='w') as f:
         json.dump(stable_states, f)
