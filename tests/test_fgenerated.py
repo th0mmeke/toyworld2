@@ -88,6 +88,18 @@ class TestFgenerated(unittest.TestCase):
         f = fgenerated.get_fgenerated(e.g, foodset)
         self.assertItemsEqual(['f1', 'f2'], f.nodes())
 
+    def test_removal(self):
+        # Example from midway through test_reduction_to_irr_f
+        foodset = ['a', 'b']
+        reactions = [
+            {'reactants': {'1': 'a', '2': 'b'}, 'products': {'3': 'c'}},
+            {'reactants': {'3': 'c', '5': 'b'}, 'products': {'6': 'd'}},
+        ]
+
+        e = IdentifySpeciesCycles(reactions=reactions)
+        f = fgenerated.get_fgenerated(e.g, foodset)
+        self.assertItemsEqual(['a', '>1c', 'c', 'b', 'd', '>1d', '1a+1b>', '1c+1b>'], f.nodes())
+
     def test_get_irr_f(self):
         """
         Based on Fig 2 Hordijk and Steel 2004
@@ -102,21 +114,22 @@ class TestFgenerated(unittest.TestCase):
 
         self.assertTrue(molecules == ['c'] or molecules == ['d'])  # small network has single RAF and hence irrRAF
 
-    # def test_reduction_to_irr_f(self):
-    #     """
-    #     Based on fig 2 from Hordijk and Steel 2004
-    #     """
-    #     foodset = ['a', 'b']
-    #
-    #     reactions = [
-    #         {'reactants': {'1': 'a', '2': 'b'}, 'products': {'3': 'c'}},
-    #         {'reactants': {'3': 'c', '5': 'b'}, 'products': {'6': 'd'}},
-    #         {'reactants': {'11': 'a', '12': 'b'}, 'products': {'13': 'f'}},
-    #         {'reactants': {'13': 'f', '15': 'b'}, 'products': {'16': 'g'}}
-    #     ]
-    #
-    #     e = IdentifySpeciesCycles(reactions=reactions)
-    #     for i in range(0, 40):
-    #         irr = fgenerated.get_irr_fgenerated(e.g, foodset)['molecules']
-    #         self.assertEqual(1, len(irr))
-    #         self.assertTrue(irr == ['c'] or irr == ['f'])
+    def test_reduction_to_irr_f(self):
+        """
+        Based on fig 2 from Hordijk and Steel 2004
+        """
+        foodset = ['a', 'b']
+
+        reactions = [
+            {'reactants': {'1': 'a', '2': 'b'}, 'products': {'3': 'c'}},
+            {'reactants': {'3': 'c', '5': 'b'}, 'products': {'6': 'd'}},
+            {'reactants': {'11': 'a', '12': 'b'}, 'products': {'13': 'f'}},
+            {'reactants': {'13': 'f', '15': 'b'}, 'products': {'16': 'g'}}
+        ]
+
+        e = IdentifySpeciesCycles(reactions=reactions)
+
+        for i in range(0, 40):
+            irr = fgenerated.get_irr_fgenerated(e.g, foodset)['molecules']
+            self.assertEqual(1, len(irr))
+            self.assertTrue(irr == ['c'] or irr == ['f'])

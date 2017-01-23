@@ -42,6 +42,10 @@ def compute_closure(g, foodset):
     return closure
 
 
+def get_reactions(g):
+    return [(reaction_a, reaction_b) for reaction_a in get_reactions_a(g) for reaction_b in
+                 g.successors(reaction_a)]
+
 def get_reactions_b(g):
     return [node for node in g.nodes_iter() if IdentifySpeciesCycles.is_reaction(node) and node[0] == '>']
 
@@ -92,22 +96,21 @@ def get_irr_fgenerated(e, foodset):
     """
 
     g = e.copy()  # don't modify original graph
-    reactions = get_reactions_a(g)
+    reactions = get_reactions(g)
     random.shuffle(reactions)
 
-    for reaction in reactions:
-        if g.has_node(reaction):  # case where reduced graph no longer contains this reaction from original graph
+    for reaction_a, reaction_b in reactions:
+        if g.has_node(reaction_a) and g.has_node(reaction_b):  # might have already removed an upstream node
             g_copy = g.copy()
-            reaction_b = random.choice(g.successors(reaction))
-            g_copy.remove_node(reaction)
             g_copy.remove_node(reaction_b)
             sub = get_fgenerated(g_copy, foodset)
 
-            if len(get_reactions_a(sub)) > 0:  # still an f-generated set, check to see if can remove further
+            if len(get_reactions(sub)) > 0:  # still an f-generated set, check to see if can remove further
                 g = sub
-            #     print("{}{} can be removed".format(reaction, reaction_b))
+            #     print("{}{} can be removed".format(reaction_a, reaction_b))
             # else:
-            #     print("{}{} cannot".format(reaction, reaction_b))
+            #     print(get_reactions(sub))
+            #     print("{}{} cannot".format(reaction_a, reaction_b))
 
     reactions = []
 
