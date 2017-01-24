@@ -70,14 +70,22 @@ class IdentifySpeciesCycles(object):
 
         return reactant_stoichiometry
 
-    def get_food_set(self, cycle):
+    def get_foodset(self,  cycle):
+
         """
         Food set is all the reactants required by the cycle less those it can generate itself.
         :param cycle:
         :return:
         """
 
-        return self.get_reactant_set(cycle).difference(self.get_product_set(cycle))
+        cycle = set(cycle)
+        foodset = cycle
+        new_foodset = foodset
+
+        while new_foodset != set():
+            new_foodset = self.get_reactant_set(foodset).difference(self.get_product_set(foodset))
+            foodset = foodset.union(new_foodset)
+        return foodset - cycle
 
     def get_reactant_set(self, cycle):
         """

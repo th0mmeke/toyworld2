@@ -73,7 +73,7 @@ class TestEvaluatorCycles(unittest.TestCase):
         ]
         e = IdentifySpeciesCycles(reactions=reactions)
         cycles = e.get_population_stoichiometry(max_depth=10)
-        self.assertEqual(set({'a', 'c', 'e'}), e.get_reactant_set(cycles[1]['cycle']))
+        self.assertEqual({'a', 'c', 'e'}, e.get_reactant_set(cycles[1]['cycle']))
 
         reactions = [
             {'reactants': {'1': 'a', '2': 'b', '3': 'a'}, 'products': {'4': 'c', '5': 'd'}},
@@ -83,7 +83,7 @@ class TestEvaluatorCycles(unittest.TestCase):
 
         e = IdentifySpeciesCycles(reactions=reactions)
         cycles = e.get_population_stoichiometry(max_depth=10)
-        self.assertEqual(set({'a', 'c', 'f', 'b'}), e.get_reactant_set(cycles[1]['cycle']))
+        self.assertEqual({'a', 'c', 'f', 'b'}, e.get_reactant_set(cycles[1]['cycle']))
 
     def test_get_products(self):
         reactions = [
@@ -95,7 +95,7 @@ class TestEvaluatorCycles(unittest.TestCase):
         ]
         e = IdentifySpeciesCycles(reactions=reactions)
         cycles = e.get_population_stoichiometry(max_depth=10)
-        self.assertEqual(set({'a', 'b', 'e'}), e.get_product_set(cycles[1]['cycle']))
+        self.assertEqual({'a', 'b', 'e'}, e.get_product_set(cycles[1]['cycle']))
 
         reactions = [
             {'reactants': {'1': 'a', '2': 'b', '3': 'a'}, 'products': {'4': 'c', '5': 'd'}},
@@ -105,7 +105,7 @@ class TestEvaluatorCycles(unittest.TestCase):
 
         e = IdentifySpeciesCycles(reactions=reactions)
         cycles = e.get_population_stoichiometry(max_depth=10)
-        self.assertEqual(set({'a', 'c', 'f', 'd'}), e.get_product_set(cycles[1]['cycle']))
+        self.assertEqual({'a', 'c', 'f', 'd'}, e.get_product_set(cycles[1]['cycle']))
 
     def test_get_food_set(self):
         reactions = [
@@ -115,4 +115,18 @@ class TestEvaluatorCycles(unittest.TestCase):
         ]
         e = IdentifySpeciesCycles(reactions=reactions)
         cycles = e.get_population_stoichiometry(max_depth=10)
-        self.assertEqual(set({'b'}), e.get_food_set(cycles[1]['cycle']))
+        self.assertEqual({'b'}, e.get_foodset(cycles[1]['cycle']))
+
+        # Based on Fig 2 Hordijk and Steel 2004
+        reactions = [
+            {'reactants': {'1': 'a', '2': 'b'}, 'products': {'3': 'c'}},
+            {'reactants': {'3': 'c', '5': 'b'}, 'products': {'6': 'd'}}
+        ]
+        e = IdentifySpeciesCycles(reactions=reactions)
+
+        foodset = e.get_foodset({'c'})
+        self.assertItemsEqual({'a', 'b'}, foodset)
+
+        foodset = e.get_foodset({'d'})
+        self.assertItemsEqual({'a', 'b', 'c'}, foodset)
+

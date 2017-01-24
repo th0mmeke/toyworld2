@@ -13,7 +13,7 @@ if not os.path.isdir(datadir):
 N_IRRRAF = 5
 
 for filename in glob.glob(os.path.join(datadir, '1484540618-0-*-selection.json')):
-#for filename in glob.glob(os.path.join(datadir, '1484617345-0-0-selection.json')):
+# for filename in glob.glob(os.path.join(datadir, '1484617345-0-0-selection.json')):
 
     print(filename)
     with open(filename) as f:
