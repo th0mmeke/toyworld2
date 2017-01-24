@@ -38,27 +38,20 @@ def load_smiles(reactions):
             mapping[id] = smiles
     return mapping
 
+def identify_clusters(cycles):
 
-def discover_stable_cycles(cycles, smiles):
-    '''
-    Stable cycles are those where there are a chain of two or more cycles...
-    - linked by a product in one cycle being a reactant in another
-    - and where the cycles have the same "form", or sequence of molecule species (smiles) in the cycle
+    """
+    Add cycles into clusters of two or more cycles linked by one or more molecules in common.
 
-    :param cycles: [cycle in form of list of either cycle molecule or reactants ('r1+r2>') or products ('>p1+p2+...')]. Cycle molecules are identified by id, rather than by smiles.
-    :return: {frozenset(cycle): [count]}
-    '''
-
-    cycles = [cycle['cycle'] for cycle in cycles]
+    :param cycles:
+    :param clusters:
+    :return:
+    """
 
     clusters = []
     unclustereds = []
 
-    i = 0
-    print(len(cycles))
     for cycle in cycles:
-        i += 1
-        # print("{}/{}".format(i,len(cycles)))
 
         cycle_molecules = set(get_molecules_in_cycle(cycle))
         new_clusters = []
@@ -88,9 +81,41 @@ def discover_stable_cycles(cycles, smiles):
         if not can_cluster:
             unclustereds.append(cycle)
 
-    print([len(x) for x in new_clusters])
-    return clusters
 
+    return unclustereds, clusters
+
+def discover_stable_cycles(cycles, smiles):
+    '''
+    Stable cycles are those where there are a chain of two or more cycles...
+    - linked by a product in one cycle being a reactant in another
+    - and where the cycles have the same "form", or sequence of molecule species (smiles) in the cycle
+
+    :param cycles: [cycle in form of list of either cycle molecule or reactants ('r1+r2>') or products ('>p1+p2+...')]. Cycle molecules are identified by id, rather than by smiles.
+    :return: {frozenset(cycle): [count]}
+    '''
+
+    # Construct lists of cycles of the same species
+    species = defaultdict(list)
+    for cycle in cycles:
+        cycle_length = len(cycle['cycle'])
+        if cycle_length > 8:
+            key = map_id_to_smiles(cycle['cycle'], smiles)
+            species[frozenset(key)].append(cycle['cycle'])
+
+    stable_cycles = []
+    for cycles in species.itervalues():
+        unclustereds, clusters = identify_clusters(cycles)
+
+        for cluster in clusters:
+            if len(cluster) > 3:
+                for cycle in cluster:
+                    if cycle not in stable_cycles:
+                        stable_cycles.append(cycle)
+
+    unclustereds, clusters = identify_clusters(stable_cycles)
+
+    print([len(x) for x in clusters])
+    return clusters
 
 import glob
 
@@ -114,5 +139,5 @@ for filename in glob.glob(os.path.join(datadir, filebase+'*actual.json')):
         smiles = load_smiles(state['reactions'])
 
     clusters = discover_stable_cycles(all_cycles, smiles)  # [[counts per cycle type]] for this file
-    #print(clusters)
+    print(json.dumps(clusters, indent=4))
     evaluator_filename = os.path.join(datadir, '{}-replicators.json'.format(basename))
