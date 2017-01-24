@@ -96,7 +96,7 @@ filebase = '1484540618'
 
 # Construct list of stable cycles per environment
 
-for filename in glob.glob(os.path.join(datadir, filebase+'*actual.json')):
+for filename in glob.glob(os.path.join(datadir, filebase+'*molecules.json')):
 
     basename, ext = os.path.splitext(filename)
     print(filename)

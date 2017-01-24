@@ -2,18 +2,11 @@ from collections import Counter
 import os
 import logging
 import argparse
-import random
 import itertools
-import nolds
 import time
 import copy
 
 from toyworld2 import ToyWorld2
-from length_biased_reactant_selection import LengthBiasedReactantSelection
-from uniform_reactant_selection import UniformReactantSelection
-from spatial_reactant_selection import SpatialReactantSelection
-from local_reactant_selection import LocalReactantSelection
-from flow_reactant_selection import FlowReactantSelection
 from my_reactant_selection import MyReactantSelection
 from chem_molecule import ChemMolecule
 from semi_realistic_chemistry import SemiRealisticChemistry
@@ -70,7 +63,7 @@ def runner(population, factors, generations, number_of_repeats):
     for experiment in itertools.product(factors['REACTANT_SELECTION'], factors['PRODUCT_SELECTION']):
         for repeat_number in range(0, number_of_repeats):
             print("{0}/{1}".format((experiment_number*number_of_repeats) + repeat_number + 1, total_experiments))
-            filename = "{}-{}-{}-selection.json".format(filebase, experiment_number, repeat_number)
+            filename = "{}-{}-{}-bistate.json".format(filebase, experiment_number, repeat_number)
             run_experiment(os.path.join(BASE_DIR, filename), population, experiment, generations)
 
         experiment_number += 1
@@ -99,5 +92,5 @@ if __name__ == "__main__":
         'PRODUCT_SELECTION': [weighting_functions.least_energy_weighting],
     }
 
-    runner(population, factors, generations=100000, number_of_repeats=3)
+    runner(population, factors, generations=1000, number_of_repeats=3)
 

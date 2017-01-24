@@ -127,19 +127,19 @@ filebase = '1484540618'
 
 # Construct list of stable cycles per environment
 
-for filename in glob.glob(os.path.join(datadir, filebase+'*actual.json')):
+for filename in glob.glob(os.path.join(datadir, filebase+'*molecules.json')):
 
     basename, ext = os.path.splitext(filename)
     print(filename)
-    datetime, experiment, repeat, dummy1, dummy2 = basename.split('-')
-    with open(os.path.join(datadir, filename)) as f:
-        all_cycles = json.load(f)
-    with open(os.path.join(datadir, '{}-{}-{}-{}.json'.format(datetime, experiment, repeat, dummy1))) as f:
-        state = json.load(f)
-        smiles = load_smiles(state['reactions'])
-
-    clusters = discover_stable_cycles(all_cycles, smiles)  # [[counts per cycle type]] for this file
-    print(json.dumps(clusters, indent=4))
-    evaluator_filename = os.path.join(datadir, '{}-replicators.json'.format(basename))
-    with open(evaluator_filename, mode='w') as f:
-        json.dump(clusters, f)
+    # datetime, experiment, repeat, dummy1, dummy2 = basename.split('-')
+    # with open(os.path.join(datadir, filename)) as f:
+    #     all_cycles = json.load(f)
+    # with open(os.path.join(datadir, '{}-{}-{}-{}.json'.format(datetime, experiment, repeat, dummy1))) as f:
+    #     state = json.load(f)
+    #     smiles = load_smiles(state['reactions'])
+    #
+    # clusters = discover_stable_cycles(all_cycles, smiles)  # [[counts per cycle type]] for this file
+    # print(json.dumps(clusters, indent=4))
+    # evaluator_filename = os.path.join(datadir, '{}-replicators.json'.format(basename))
+    # with open(evaluator_filename, mode='w') as f:
+    #     json.dump(clusters, f)
