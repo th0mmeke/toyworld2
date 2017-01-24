@@ -122,8 +122,8 @@ import glob
 datadir = 'C:\Users\Thom\Dropbox/Experiments'
 if not os.path.isdir(datadir):
     datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
-# filebase = '1484540618'
-filebase = '1484617345'
+filebase = '1484540618'
+# filebase = '1484617345'
 
 # Construct list of stable cycles per environment
 
@@ -141,3 +141,5 @@ for filename in glob.glob(os.path.join(datadir, filebase+'*actual.json')):
     clusters = discover_stable_cycles(all_cycles, smiles)  # [[counts per cycle type]] for this file
     print(json.dumps(clusters, indent=4))
     evaluator_filename = os.path.join(datadir, '{}-replicators.json'.format(basename))
+    with open(evaluator_filename, mode='w') as f:
+        json.dump(clusters, f)
