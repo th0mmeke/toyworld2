@@ -123,7 +123,7 @@ with open(os.path.join(datadir, filebase + '-number-stablestates.csv'), 'wb') as
         basename, ext = os.path.splitext(filename)
 
         # Load actual cycle data
-        if ext == '.json' and basename[-3:] == 'ual' and basename[:len(filebase)] == filebase:
+        if ext == '.json' and basename[-3:] == 'ule' and basename[:len(filebase)] == filebase:
             print(filename)
             datetime, experiment, environment, repeat, dummy2 = basename.split('-')
             with open(os.path.join(datadir, filename)) as f:
@@ -138,8 +138,9 @@ with open(os.path.join(datadir, filebase + '-number-stablestates.csv'), 'wb') as
             values_by_seed = defaultdict(list)
             for state, count in stable_states.iteritems():
                 values_by_seed[seeds[state]].append(count)  # seed:longest length of stable pathway for each state
-            counts_by_seed = {k: len(v) for k, v in values_by_seed.iteritems()}
+            counts_by_seed = {k: len(v) for k, v in values_by_seed.iteritems()}  # counts_by_seed = seed: number of states
 
+            # counts_by_seed is number of states for each seed
             if len(counts_by_seed) == 0:
                 w.writerow([experiment, environment, repeat, dfa, len(counts_by_seed), 'nan', 'nan', 'nan'])
             else:
