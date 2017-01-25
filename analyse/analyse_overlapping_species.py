@@ -25,7 +25,7 @@ def discover_overlapping_cycles(cycles, smiles):
 
     stable_cycles = []
     for cycles in species.itervalues():
-        unclustereds, clusters = cycle_utilities.identify_clusters(cycles)
+        clusters = cycle_utilities.identify_clusters(cycles)
 
         for cluster in clusters:
             if len(cluster) > 3:
@@ -33,7 +33,7 @@ def discover_overlapping_cycles(cycles, smiles):
                     if cycle not in stable_cycles:
                         stable_cycles.append(cycle)
 
-    unclustereds, clusters = cycle_utilities.identify_clusters(stable_cycles)
+    clusters = cycle_utilities.identify_clusters(stable_cycles)
 
     print([len(x) for x in clusters])
     return clusters

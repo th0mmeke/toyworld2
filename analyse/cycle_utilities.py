@@ -2,6 +2,10 @@ from collections import defaultdict
 from identify_species_cycles import IdentifySpeciesCycles
 
 
+def flatten(list_of_lists):
+    return [a for b in list_of_lists for a in b]
+
+
 def map_id_to_smiles(molecule_cycle, smiles):
     smiles_cycle = []
     for step in molecule_cycle:
@@ -48,6 +52,13 @@ def get_reactants(cycle):
 
 def discover_species(molecular_cycles, smiles, length=9):
 
+    """
+    Return dictionary with species (as frozenset) as key, and value a list of each molecular cycle of that species
+    :param molecular_cycles:
+    :param smiles:
+    :param length:
+    :return:
+    """
     species = defaultdict(list)
     for cycle in molecular_cycles:
         if len(cycle['cycle']) >= length:
@@ -57,12 +68,12 @@ def discover_species(molecular_cycles, smiles, length=9):
     return species
 
 
-def identify_clusters(cycles):
+def identify_clusters(molecular_cycles):
 
     """
     Add cycles into clusters of two or more cycles linked by one or more molecules in common.
 
-    :param cycles:
+    :param molecular_cycles:
     :param clusters:
     :return:
     """
@@ -70,7 +81,7 @@ def identify_clusters(cycles):
     clusters = []
     unclustereds = []
 
-    for cycle in cycles:
+    for cycle in molecular_cycles:
 
         cycle_molecules = get_molecules_in_cycle(cycle)
         new_clusters = []
@@ -93,18 +104,14 @@ def identify_clusters(cycles):
         if not can_cluster:
             for unclustered in unclustereds:
                 if get_molecules_in_cycle(unclustered).intersection(cycle_molecules):
-                    clusters.append([unclustered, cycle])
+                    clusters.append([unclustered, cycle])  # TODO: should now removed unclustered from unclusters...
                     can_cluster = True
 
         # If still can't cluster, then add to unclustereds and hope for later...
         if not can_cluster:
             unclustereds.append(cycle)
 
-    return unclustereds, clusters
-
-
-def flatten(list_of_lists):
-    return [a for b in list_of_lists for a in b]
+    return clusters
 
 
 def discover_stable_cycles(cycles, smiles):

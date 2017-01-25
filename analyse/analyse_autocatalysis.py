@@ -5,7 +5,7 @@ import cycle_utilities
 from cycle_utilities import flatten
 
 
-def discover_autocatalysis(species):
+def discover_autocatalysis(molecular_cycles_by_species):
     '''
     Stable cycles are those where there are a chain of two or more cycles...
     - linked by a product in one cycle being a reactant in another
@@ -13,8 +13,8 @@ def discover_autocatalysis(species):
     '''
 
     autocatalytic = []
-    for cycles in species.itervalues():
-        unclustereds, clusters = cycle_utilities.identify_clusters(cycles)
+    for cycles in molecular_cycles_by_species.itervalues():
+        clusters = cycle_utilities.identify_clusters(cycles)
 
         for cluster in clusters:
             # now look for cycle that is upstream of two or more other cycles
