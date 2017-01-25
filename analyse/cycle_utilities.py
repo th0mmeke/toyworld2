@@ -1,6 +1,5 @@
-import json
-import os
-import glob
+from collections import defaultdict
+from identify_species_cycles import IdentifySpeciesCycles
 
 
 def map_id_to_smiles(molecule_cycle, smiles):
@@ -29,9 +28,13 @@ def get_molecules(partial_reaction_string):
 
 
 def get_molecules_in_cycle(cycle):
-    molecules = []
+    """
+    :param cycle:
+    :return: {all molecules in cycle}
+    """
+    molecules = set()
     for step in cycle:
-        molecules.extend(get_molecules(step))
+        molecules = molecules.union(set(get_molecules(step)))
     return molecules
 
 
@@ -43,13 +46,12 @@ def get_reactants(cycle):
     return set(flatten([get_molecules(item) for item in cycle if IdentifySpeciesCycles.is_reaction_a(item)]))
 
 
-def discover_species(cycles, smiles):
+def discover_species(molecular_cycles, smiles, length=9):
 
     species = defaultdict(list)
-    for cycle in cycles:
-        cycle_length = len(cycle['cycle'])
-        if cycle_length > 8:
-            key = cycle_utilities.map_id_to_smiles(cycle['cycle'], smiles)
+    for cycle in molecular_cycles:
+        if len(cycle['cycle']) >= length:
+            key = map_id_to_smiles(cycle['cycle'], smiles)
             species[frozenset(key)].append(cycle['cycle'])
 
     return species
@@ -70,7 +72,7 @@ def identify_clusters(cycles):
 
     for cycle in cycles:
 
-        cycle_molecules = set(get_molecules_in_cycle(cycle))
+        cycle_molecules = get_molecules_in_cycle(cycle)
         new_clusters = []
         can_cluster = False
 
@@ -78,7 +80,7 @@ def identify_clusters(cycles):
         for cluster in clusters:
             new_cluster = cluster[:]
             for cluster_molecule in cluster:
-                if set(get_molecules_in_cycle(cluster_molecule)).intersection(cycle_molecules):
+                if get_molecules_in_cycle(cluster_molecule).intersection(cycle_molecules):
                     new_cluster.append(cycle)
                     can_cluster = True
                     break
@@ -90,7 +92,7 @@ def identify_clusters(cycles):
         # Now check if can form new clusters by checking against all previously unclustered cycles
         if not can_cluster:
             for unclustered in unclustereds:
-                if set(get_molecules_in_cycle(unclustered)).intersection(cycle_molecules):
+                if get_molecules_in_cycle(unclustered).intersection(cycle_molecules):
                     clusters.append([unclustered, cycle])
                     can_cluster = True
 
