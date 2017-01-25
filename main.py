@@ -158,38 +158,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     initialise_logging(args, os.getcwd())
 
-    proteinogenic_amino_acids = ["O=C(O)[C@@H](N)C",  # ALA
-                   "NC(CCCNC(N)=N)C(O)=O",  # ARG
-                   "O=C(N)C[C@H](N)C(=O)O",  # ASN
-                   "O=C(O)CC(N)C(=O)O",  # ASP
-                   "C([C@@H](C(=O)O)N)S",  # CYS
-                   "C(CC(=O)O)C(C(=O)O)N",  # GLU
-                   "O=C(N)CCC(N)C(=O)O",  # GLN
-                   "C(C(=O)O)N",  # GLY
-                   "O=C([C@H](CC1=CNC=N1)N)O",  # HIS
-                   "CC[C@H](C)[C@@H](C(=O)O)N",  # ILE
-                   "CC(C)C[C@@H](C(=O)O)N",  # LEU
-                   "C(CCN)CC(C(=O)O)N",  # LYS
-                   "CSCCC(C(=O)O)N",  # MET
-                   "C1=CC=C(C=C1)CC(C(=O)O)N",  # PHE
-                   "OC(=O)C1CCCN1",  # PRO
-                   "C([C@@H](C(=O)O)N)O",  # SER
-                   "C[C@H]([C@@H](C(=O)O)N)O",  # THR
-                   "c1ccc2c(c1)c(c[nH]2)C[C@@H](C(=O)O)N",  # TRP
-                   "N[C@@H](Cc1ccc(O)cc1)C(O)=O",  # TYR
-                   "CC(C)[C@@H](C(=O)O)N",  # VAL
-                   ]
-    defn = {x: 40 for x in proteinogenic_amino_acids}
-
-    # adenine, guanine, cytosine, uracil
-    adenine = "Nc1ncnc2[nH]cnc12"  # https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:16708
-    cytosine = "Nc1cc[nH]c(=O)n1" # https://www.ebi.ac.uk/chebi/searchId.do?chebiId=16040
-    guanine = "Nc1nc2[nH]cnc2c(=O)[nH]1"  # https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:16235
-    uracil = "O=c1cc[nH]c(=O)[nH]1"  # https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:17568
-
-    rna_bases = [adenine, cytosine, guanine, uracil]
-    #defn = {x: 100 for x in rna_bases}
-
     defn = {"[H][H]": 10, "FO": 10, "O": 20, "[O-][N+](=O)[N+]([O-])=O": 10, "N(=O)[O]": 10, "O=C=O": 20}
     population = []
     for symbol, quantity in defn.iteritems():
@@ -200,8 +168,8 @@ if __name__ == "__main__":
 
     factors = {
         'REACTANT_SELECTION': [MyReactantSelection],
-        'PRODUCT_SELECTION': [weighting_functions.uniform_weighting],
+        'PRODUCT_SELECTION': [weighting_functions.biased_least_energy_weighting],
     }
 
-    runner(population, factors, generations=50000, number_of_repeats=1, number_of_environments=1)
+    runner(population, factors, generations=50000, number_of_repeats=1, number_of_environments=50)
 
