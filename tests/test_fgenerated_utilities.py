@@ -3,7 +3,7 @@ import networkx as nx
 import collections
 
 from identify_species_cycles import IdentifySpeciesCycles
-import fgenerated
+import fgenerated_utilities
 
 class TestFgenerated(unittest.TestCase):
 
@@ -17,8 +17,8 @@ class TestFgenerated(unittest.TestCase):
         ]
         e = IdentifySpeciesCycles(reactions=reactions)
 
-        self.assertItemsEqual(['>1c', '>1e', '>1a', '>2b', '>2a'], fgenerated.get_reactions_b(e.g))
-        self.assertItemsEqual(['1a>', '1b>', '1c>', '1e>'], fgenerated.get_reactions_a(e.g))
+        self.assertItemsEqual(['>1c', '>1e', '>1a', '>2b', '>2a'], fgenerated_utilities.get_reactions_b(e.g))
+        self.assertItemsEqual(['1a>', '1b>', '1c>', '1e>'], fgenerated_utilities.get_reactions_a(e.g))
 
     def test_closure(self):
 
@@ -26,7 +26,7 @@ class TestFgenerated(unittest.TestCase):
             {'reactants': {'1': 'a', '2': 'b'}, 'products': {'3': 'c'}},
         ]
         e = IdentifySpeciesCycles(reactions=reactions)
-        closure = fgenerated.compute_closure(e.g, ['a', 'b'])
+        closure = fgenerated_utilities.compute_closure(e.g, ['a', 'b'])
         self.assertEqual(set(['a', 'b', 'c']), closure)
 
         reactions = [
@@ -34,10 +34,10 @@ class TestFgenerated(unittest.TestCase):
             {'reactants': {'4': 'b', '5': 'e'}, 'products': {'6': 'd'}},
         ]
         e = IdentifySpeciesCycles(reactions=reactions)
-        closure = fgenerated.compute_closure(e.g, ['a', 'b'])
+        closure = fgenerated_utilities.compute_closure(e.g, ['a', 'b'])
         self.assertEqual(set(['a', 'b', 'c']), closure)
 
-        closure = fgenerated.compute_closure(e.g, ['a', 'b', 'e'])
+        closure = fgenerated_utilities.compute_closure(e.g, ['a', 'b', 'e'])
         self.assertEqual(set(['a', 'b', 'c', 'd', 'e']), closure)
 
         foodset = ['a', 'b']
@@ -48,7 +48,7 @@ class TestFgenerated(unittest.TestCase):
             {'reactants': {'13': 'f', '15': 'b'}, 'products': {'16': 'g'}}
         ]
         e = IdentifySpeciesCycles(reactions=reactions)
-        closure = fgenerated.compute_closure(e.g, foodset)
+        closure = fgenerated_utilities.compute_closure(e.g, foodset)
         self.assertEqual(set(['a', 'b', 'c', 'd', 'f', 'g']), closure)
 
     def test_get_f(self):
@@ -59,7 +59,7 @@ class TestFgenerated(unittest.TestCase):
             {'reactants': {'3': 'c', '5': 'b'}, 'products': {'6': 'd'}}
         ]
         e = IdentifySpeciesCycles(reactions=reactions)
-        f = fgenerated.get_fgenerated(e.g, ['a', 'b'])
+        f = fgenerated_utilities.get_fgenerated(e.g, ['a', 'b'])
         self.assertTrue(nx.is_isomorphic(e.g, f))  # small network has single RAF
 
         # Steel et al 2013 fig 2b - F-generated
@@ -72,8 +72,8 @@ class TestFgenerated(unittest.TestCase):
         ]
         e = IdentifySpeciesCycles(reactions=reactions)
         expected_nodes = [node for node in e.g.nodes() if not IdentifySpeciesCycles.is_reaction(node)]
-        raf = fgenerated.get_fgenerated(e.g, foodset)
-        self.assertItemsEqual(expected_nodes, list(fgenerated.compute_closure(raf, foodset)))
+        raf = fgenerated_utilities.get_fgenerated(e.g, foodset)
+        self.assertItemsEqual(expected_nodes, list(fgenerated_utilities.compute_closure(raf, foodset)))
         actual_nodes = [node for node in raf if not IdentifySpeciesCycles.is_reaction(node)]
         self.assertListEqual(expected_nodes, actual_nodes)
 
@@ -86,7 +86,7 @@ class TestFgenerated(unittest.TestCase):
         ]
         e = IdentifySpeciesCycles(reactions=reactions)
 
-        f = fgenerated.get_fgenerated(e.g, foodset)
+        f = fgenerated_utilities.get_fgenerated(e.g, foodset)
         self.assertItemsEqual(['f1', 'f2'], f.nodes())
 
     def test_removal(self):
@@ -98,7 +98,7 @@ class TestFgenerated(unittest.TestCase):
         ]
 
         e = IdentifySpeciesCycles(reactions=reactions)
-        f = fgenerated.get_fgenerated(e.g, foodset)
+        f = fgenerated_utilities.get_fgenerated(e.g, foodset)
         self.assertItemsEqual(['a', '>1c', 'c', 'b', 'd', '>1d', '1a+1b>', '1c+1b>'], f.nodes())
 
     def test_get_irr_f(self):
@@ -111,7 +111,7 @@ class TestFgenerated(unittest.TestCase):
             {'reactants': {'3': 'c', '5': 'b'}, 'products': {'6': 'd'}}
         ]
         e = IdentifySpeciesCycles(reactions=reactions)
-        molecules = fgenerated.get_irr_fgenerated(e.g, foodset)['molecules']
+        molecules = fgenerated_utilities.get_irr_fgenerated(e.g, foodset)['molecules']
 
         self.assertTrue(molecules == ['c'] or molecules == ['d'])  # small network has single RAF and hence irrRAF
 
@@ -132,7 +132,7 @@ class TestFgenerated(unittest.TestCase):
 
         count = collections.defaultdict(int)
         for i in range(0, 40):
-            irr = fgenerated.get_irr_fgenerated(e.g, foodset)
+            irr = fgenerated_utilities.get_irr_fgenerated(e.g, foodset)
             self.assertEqual(1, len(irr['molecules']))
             self.assertTrue(irr['molecules'] == ['c'] or irr['molecules'] == ['f'])
             count[irr['molecules'][0]] += 1

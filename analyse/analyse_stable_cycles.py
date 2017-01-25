@@ -1,41 +1,7 @@
 import json
 import os
-import collections
-import csv
-from itertools import chain
 from collections import defaultdict
-
-
-def get_molecules(partial_reaction_string):
-    return partial_reaction_string.replace('>', '').split('+')
-
-
-def get_molecules_in_cycle(cycle):
-    molecules = []
-    for step in cycle:
-        molecules.extend(get_molecules(step))
-    return molecules
-
-
-def map_id_to_smiles(id_cycle, smiles):
-    smiles_cycle = []
-    for step in id_cycle:
-        new_step = step
-        for id, s in smiles.iteritems():
-            new_step = new_step.replace(id, s)
-        smiles_cycle.append(new_step)
-    assert len(id_cycle) == len(smiles_cycle)
-    return smiles_cycle
-
-
-def load_smiles(reactions):
-    mapping = {}
-    for reaction in reactions:
-        for id, smiles in reaction['reactants'].iteritems():
-            mapping[id] = smiles
-        for id, smiles in reaction['products'].iteritems():
-            mapping[id] = smiles
-    return mapping
+import cycle_utilities
 
 
 def discover_stable_cycles(cycles, smiles):
@@ -63,9 +29,9 @@ def discover_stable_cycles(cycles, smiles):
         # cycles_of_length has all cycles of same length, but not guaranteed to be of same type
         smiles_cycles = defaultdict(list)
         for cycle in cycles_of_length:
-            s = map_id_to_smiles(cycle, smiles)
+            s = cycle_utilities.map_id_to_smiles(cycle, smiles)
             assert len(s) == cycle_type
-            smiles_cycles[frozenset(s)].append(get_molecules_in_cycle(cycle))
+            smiles_cycles[frozenset(s)].append(cycle_utilities.get_molecules_in_cycle(cycle))
 
             cycle_form[frozenset(s)] = s
 
@@ -73,10 +39,10 @@ def discover_stable_cycles(cycles, smiles):
 
         for cycle_type, cycles_of_type in smiles_cycles.iteritems():
             # cycle_type is the smiles form, cycles_of_type every unique cycle with molecule ids
-            clusters = [set(get_molecules_in_cycle(cycles_of_type.pop()))]
+            clusters = [set(cycle_utilities.get_molecules_in_cycle(cycles_of_type.pop()))]
             counts = defaultdict(int)
             for cycle in cycles_of_type:
-                molecules = set(get_molecules_in_cycle(cycle))
+                molecules = set(cycle_utilities.get_molecules_in_cycle(cycle))
                 for i in range(0, len(clusters)):
                     if clusters[i].intersection(molecules):
                         clusters[i].union(molecules)
@@ -105,7 +71,7 @@ for filename in glob.glob(os.path.join(datadir, filebase+'*molecules.json')):
         all_cycles = json.load(f)
     with open(os.path.join(datadir, '{}-{}-{}-{}.json'.format(datetime, experiment, repeat, dummy1))) as f:
         state = json.load(f)
-        smiles = load_smiles(state['reactions'])
+        smiles = cycle_utilities.load_smiles(state['reactions'])
 
     stable_states, seeds = discover_stable_cycles(all_cycles, smiles)  # [[counts per cycle type]] for this file
     print(stable_states)

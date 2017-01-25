@@ -2,9 +2,9 @@ import json
 import os
 import collections
 import csv
-from itertools import chain
 from collections import defaultdict
-
+from cycle_utilities import get_molecules_in_cycle
+from cycle_utilities import load_smiles
 
 def get_metrics(filename):
     metric = collections.defaultdict(lambda: collections.defaultdict(int))
@@ -20,38 +20,6 @@ def get_metrics(filename):
             environment += 1
 
     return metric
-
-
-def get_molecules(partial_reaction_string):
-    return partial_reaction_string.replace('>', '').split('+')
-
-
-def get_molecules_in_cycle(cycle):
-    molecules = []
-    for step in cycle:
-        molecules.extend(get_molecules(step))
-    return molecules
-
-
-def map_id_to_smiles(id_cycle, smiles):
-    smiles_cycle = []
-    for step in id_cycle:
-        new_step = step
-        for id, s in smiles.iteritems():
-            new_step = new_step.replace(id, s)
-        smiles_cycle.append(new_step)
-    assert len(id_cycle) == len(smiles_cycle)
-    return smiles_cycle
-
-
-def load_smiles(reactions):
-    mapping = {}
-    for reaction in reactions:
-        for id, smiles in reaction['reactants'].iteritems():
-            mapping[id] = smiles
-        for id, smiles in reaction['products'].iteritems():
-            mapping[id] = smiles
-    return mapping
 
 
 def discover_stable_cycles(cycles, smiles):

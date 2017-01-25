@@ -2,7 +2,7 @@ import json
 import os
 import glob
 
-import fgenerated
+import fgenerated_utilities
 
 from identify_species_cycles import IdentifySpeciesCycles
 
@@ -12,8 +12,7 @@ if not os.path.isdir(datadir):
 
 N_IRRRAF = 5
 
-for filename in glob.glob(os.path.join(datadir, '1484540618-0-*-selection.json')):
-# for filename in glob.glob(os.path.join(datadir, '1484617345-0-0-selection.json')):
+for filename in glob.glob(os.path.join(datadir, '1484540618*bistate.json')):
 
     print(filename)
     with open(filename) as f:
@@ -29,7 +28,7 @@ for filename in glob.glob(os.path.join(datadir, '1484540618-0-*-selection.json')
         f.write("[")
         for i in range(0, N_IRRRAF):
             print("{}/{}".format(i, N_IRRRAF))
-            irr_f = fgenerated.get_irr_fgenerated(e.g, foodset)
+            irr_f = fgenerated_utilities.get_irr_fgenerated(e.g, foodset)
             json.dump(irr_f, f)
             if i < N_IRRRAF-1:
                 f.write(",")
