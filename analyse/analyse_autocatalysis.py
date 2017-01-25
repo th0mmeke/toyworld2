@@ -131,7 +131,7 @@ def discover_autocatalysis(species):
             if linkages:
                 product_linkage_molecules_by_cycle = [get_products(cycle).intersection(reactants) for cycle in cluster]
                 for linkage_molecules_in_cycle in product_linkage_molecules_by_cycle:
-                    reactant_linkages = [get_reactants(cycle).intersection(linkage_molecules_in_cycle) for cycle in cluster]
+                    reactant_linkages = [list(get_reactants(cycle).intersection(linkage_molecules_in_cycle)) for cycle in cluster]
                     number_downstream_cycles = sum(map(int, [len(x) > 0 for x in reactant_linkages]))
                     # print(reactant_linkages)
                     if number_downstream_cycles > 1:  # two or more downstream cycles for single upstream -> autocatalytic
@@ -143,8 +143,8 @@ def discover_autocatalysis(species):
 datadir = 'C:\Users\Thom\Dropbox/Experiments'
 if not os.path.isdir(datadir):
     datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
-# filebase = '1484540618'
-filebase = '1484617345'
+filebase = '1484540618'
+# filebase = '1484617345'
 
 for filename in glob.glob(os.path.join(datadir, filebase+'*molecules.json')):
 
@@ -160,3 +160,6 @@ for filename in glob.glob(os.path.join(datadir, filebase+'*molecules.json')):
     autocatalytic = discover_autocatalysis(species)
     print(len(species), len(all_cycles))
     print(len(autocatalytic))
+    evaluator_filename = os.path.join(datadir, '{}-autocatalytic.json'.format(basename))
+    with open(evaluator_filename, mode='w') as f:
+        json.dump(autocatalytic, f)
