@@ -7,12 +7,15 @@ from identify_molecule_cycles import IdentifyMoleculeCycles
 def evaluate(filename, datadir):
     basename, ext = os.path.splitext(filename)
 
-    for evaluator in ['molecules', 'species']:
+    for evaluator in ['molecules']:
         evaluator_filename = os.path.join(datadir, '{}-{}.json'.format(basename, evaluator))
         if not os.path.exists(evaluator_filename):
 
+            with open(evaluator_filename, 'a'):  # fairly racy way to stop another instance evaluating same data
+                os.utime(evaluator_filename, None)
+
             data_filename = os.path.join(datadir, filename)
-            print(data_filename, evaluator_filename)
+
             with open(data_filename) as f:
                 state = json.load(f)
             e = IdentifyMoleculeCycles(reactions=state['reactions'])
@@ -43,6 +46,6 @@ if not os.path.isdir(datadir):
 # analyse('1481398302-0-19-0.json', datadir)
 
 import glob
-for filename in glob.glob(os.path.join(datadir, '1484617345-0-0-selection.json')):
+for filename in glob.glob(os.path.join(datadir, '1485450056-0-0-bistate.json')):
     print(filename)
     evaluate(filename, datadir)
