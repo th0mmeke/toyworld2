@@ -160,3 +160,39 @@ def discover_stable_cycles(cycles, smiles):
                 stable_cycles[max(counts.values())].append(cycle_form[cycle_type])  # Longest stable duration > 1
 
     return stable_cycles, [x[0] for x in cycle_form.itervalues()]
+
+
+def discover_autocatalysis(molecular_cycles_by_species):
+    '''
+    Stoichiometric autocatalysis occurs when a cycles has two or more linkage molecules, as products,
+    to two or more different cycles.
+
+    :return:
+    '''
+
+    autocatalytic = []
+
+    for cycles in molecular_cycles_by_species:
+        clusters = identify_clusters(cycles)
+
+        for cluster in clusters:
+            # now look for cycle that is upstream of two or more other cycles
+            # "two or more other cycles":
+            #   linkages = find all molecules in two (or more) cycles
+            #   find all cycles with two (or more) linkage molecules
+            # "upstream":
+            #   linkage molecule appears as product, not reactant in upstream cycle
+
+            products = set(flatten([get_products(cycle) for cycle in cluster]))
+            reactants = set(flatten([get_reactants(cycle) for cycle in cluster]))
+            linkages = products.intersection(reactants)
+            if linkages:
+                product_linkage_molecules_by_cycle = [get_products(cycle).intersection(reactants) for cycle in cluster]
+                for linkage_molecules_in_cycle in product_linkage_molecules_by_cycle:
+                    reactant_linkages = [list(get_reactants(cycle).intersection(linkage_molecules_in_cycle)) for cycle in cluster]
+                    number_downstream_cycles = sum(map(int, [len(x) > 0 for x in reactant_linkages]))
+                    # print(reactant_linkages)
+                    if number_downstream_cycles > 1:  # two or more downstream cycles for single upstream -> autocatalytic
+                        autocatalytic.append(reactant_linkages)
+
+    return autocatalytic

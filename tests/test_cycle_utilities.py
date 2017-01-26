@@ -65,3 +65,34 @@ class TestCycleUtilities(unittest.TestCase):
         expected = [[['1', '1+2>', '>3+4+5', '3'], ['4>', '>9']]]
         self.assertListEqual(actual, expected)
 
+    def test_discover_autocatalysis(self):
+        clusters = [[['1', '1+2>', '>3+4+5', '3'], ['3+6>', '>7']]]
+        actual = cycle_utilities.discover_autocatalysis(clusters)
+        expected = []
+        self.assertListEqual(actual, expected)
+
+        clusters = [[['1', '1+2>', '>3+4+5', '3'], ['4>', '>9']]]
+        actual = cycle_utilities.discover_autocatalysis(clusters)
+        expected = []
+        self.assertListEqual(actual, expected)
+
+        clusters = [[['1', '1+2>', '>3+4+5', '3'], ['3+6>', '>7'], ['4+9>', '>10']]]
+        actual = cycle_utilities.discover_autocatalysis(clusters)
+        expected = [[[], ['3'], ['4']]]  # linkage molecules in downstream cycles
+        self.assertListEqual(actual, expected)
+
+        clusters = [[['1', '1+2>', '>3+4+5', '3'], ['3+6>', '>7'], ['4+9>', '>10']], [['11', '11+12>', '>13+14+15'], ['13+16>', '>17'], ['14+19>', '>20']]]
+        actual = cycle_utilities.discover_autocatalysis(clusters)
+        expected = [[[], ['3'], ['4']], [[], ['13'], ['14']]]
+        self.assertListEqual(actual, expected)
+
+        clusters = [[['1', '1+2>', '>3+4+5', '3'], ['3+6>', '>7'], ['4+9>', '>10']], [['13+16>', '>17'], ['11', '11+12>', '>13+14+15'], ['14+19>', '>20']]]
+        actual = cycle_utilities.discover_autocatalysis(clusters)
+        print(actual)
+        expected = [[[], ['3'], ['4']], [['13'], [], ['14']]]
+        self.assertListEqual(actual, expected)
+
+        clusters = [[['1', '1+2>', '>3+4+5'], ['3+10>', '>7'], ['4+3>', '>10']]]
+        actual = cycle_utilities.discover_autocatalysis(clusters)
+        expected = [[[], ['3'], ['3', '4']]]  # linkage molecules in downstream cycles
+        self.assertListEqual(actual, expected)
