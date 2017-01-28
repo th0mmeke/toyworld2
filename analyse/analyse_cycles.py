@@ -46,6 +46,6 @@ if not os.path.isdir(datadir):
 # analyse('1481398302-0-19-0.json', datadir)
 
 import glob
-for filename in glob.glob(os.path.join(datadir, '1485450056-0-0-bistate.json')):
+for filename in glob.glob(os.path.join(datadir, '1485450056-0-1-bistate.json')):
     print(filename)
     evaluate(filename, datadir)

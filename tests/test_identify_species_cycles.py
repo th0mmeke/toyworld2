@@ -3,7 +3,7 @@ import unittest
 from identify_species_cycles import IdentifySpeciesCycles
 
 
-class TestEvaluatorCycles(unittest.TestCase):
+class TestIdentifySpeciesCycles(unittest.TestCase):
 
     def testSimple(self):
         # a->a->b->a => a->b
@@ -107,7 +107,7 @@ class TestEvaluatorCycles(unittest.TestCase):
         cycles = e.get_population_stoichiometry(max_depth=10)
         self.assertEqual({'a', 'c', 'f', 'd'}, e.get_product_set(cycles[1]['cycle']))
 
-    def test_get_food_set(self):
+    def test_get_foodset(self):
         reactions = [
             {'reactants': {'1': 'a', '2': 'b', '3': 'a'}, 'products': {'4': 'c', '5': 'd'}},
             {'reactants': {'6': 'b', '7': 'a', '8': 'a'}, 'products': {'9': 'c', '10': 'c', '11': 'f'}},

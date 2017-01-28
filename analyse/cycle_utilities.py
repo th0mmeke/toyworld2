@@ -167,7 +167,14 @@ def discover_autocatalysis(molecular_cycles_by_species):
     Stoichiometric autocatalysis occurs when a cycles has two or more linkage molecules, as products,
     to two or more different cycles.
 
-    :return:
+    Return a list for each cluster containing, where each element represents a cycle in the cluster and is either:
+    - [] if this cycle is not an autocatalytic product of an earlier cycle
+    - [reactant molecules that are also products of an earlier cycle] if this cycle is an autocatalytic product
+
+    WARNING: if molecular_cycles_by_species contains overlapping cycles (alternative cycles) then the return from
+    this method will contain duplicate entries also (at most one for each overlapping cycle)
+
+    :return: [[reactants in each downstream cycle in a cluster]]
     '''
 
     autocatalytic = []
