@@ -96,7 +96,7 @@ class MyReactantSelection(IReactantSelection):
             for molecule in add_list:
                 velocity = pm.Vec2d(math.sqrt(2.0 * self.ke / molecule.mass), 0)
                 wall_location = random.uniform(-MyReactantSelection.REACTION_VESSEL_SIZE, MyReactantSelection.REACTION_VESSEL_SIZE)
-                velocity.angle = random.uniform(-math.pi, math.pi)
+                velocity.angle = random.uniform(-math.pi, math.pi)  # TODO: Should be in 0 to 2*math.pi. Currently most molecules enter from right wall, and immediately bounce...
                 if 1.0/4.0*math.pi < velocity.angle <= 3.0/4.0*math.pi:  # bottom wall
                     location = pm.Vec2d(wall_location, -MyReactantSelection.REACTION_VESSEL_SIZE)
                 elif 3.0/4.0*math.pi < velocity.angle <= 5.0/4.0*math.pi:  # left wall

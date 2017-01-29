@@ -42,7 +42,7 @@ def initialise_logging(args, basedir):
 
 
 def run_experiment(filename, population, experiment, generations):
-    reactor = experiment[0](population=copy.deepcopy(population), ke=50)
+    reactor = experiment[0](population=copy.deepcopy(population), ke=95)
     initial_population = dict(Counter([str(x) for x in reactor.get_population()]))
 
     tw = ToyWorld2(reactor=reactor, product_selection=experiment[1], chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies))
@@ -92,5 +92,5 @@ if __name__ == "__main__":
         'PRODUCT_SELECTION': [weighting_functions.least_energy_weighting],
     }
 
-    runner(population, factors, generations=1000, number_of_repeats=3)
+    runner(population, factors, generations=100000, number_of_repeats=3)
 
