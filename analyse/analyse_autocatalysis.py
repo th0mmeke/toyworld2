@@ -7,18 +7,23 @@ import cycle_utilities
 datadir = 'C:\Users\Thom\Dropbox/Experiments'
 if not os.path.isdir(datadir):
     datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
-filebase = '1484540618'
+# filebase = '1484540618'
 # filebase = '1484617345'
+
+filebase = '1481952255'
+#filebase = '1481939843'
+
 
 for filename in glob.glob(os.path.join(datadir, filebase+'*molecules.json')):
 
     basename, ext = os.path.splitext(filename)
     print(filename)
-    datetime, experiment, repeat, bistate, molecules = basename.split('-')
+    nc = basename.split('-')
+    # datetime, experiment, repeat, bistate, molecules = basename.split('-')
 
     with open(os.path.join(datadir, filename)) as f:
         all_cycles = json.load(f)
-    with open(os.path.join(datadir, '{}-{}-{}-{}.json'.format(datetime, experiment, repeat, bistate))) as f:
+    with open(os.path.join(datadir, '{}-{}-{}-{}-{}-{}.json'.format(nc[0], nc[1], nc[2], nc[3], nc[4], nc[5]))) as f:
         state = json.load(f)
         smiles = cycle_utilities.load_smiles(state['reactions'])
 
