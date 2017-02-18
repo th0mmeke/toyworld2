@@ -26,7 +26,7 @@ def evaluate(filename, datadir):
                 count += 1
                 if evaluator != 'species' or len(reactant) >= 10:
                     print("{}/{}: {}".format(count, len(e.reactants), reactant))
-                    s = e.get_reactant_stoichiometry(reactant, minimum_stoichiometry=2, max_depth=10)
+                    s = e.get_reactant_stoichiometry(reactant, minimum_stoichiometry=2, max_depth=7)
                     for item in s:  # item = {'cycle':cycle, 'stoichiometry': stoichiometry}
                         if evaluator == 'species':  # replace id with smiles
                             cycle = []
@@ -46,6 +46,6 @@ if not os.path.isdir(datadir):
 # analyse('1481398302-0-19-0.json', datadir)
 
 import glob
-for filename in glob.glob(os.path.join(datadir, '1485450056-0-1-bistate.json')):
+for filename in glob.glob(os.path.join(datadir, '1487376025-*.json')):
     print(filename)
     evaluate(filename, datadir)

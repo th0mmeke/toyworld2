@@ -15,11 +15,8 @@ class ToyWorld2:
         non_reaction = 0
 
         while generation <= generations:
-            if generation % 10000 == 0:
-                if self.reactor.ke == 50:
-                    self.reactor.ke = 140
-                else:
-                    self.reactor.ke = 50
+
+
             try:
                 partial_reaction = self.reactor.get_reactants()
             except ValueError:
