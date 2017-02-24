@@ -10,6 +10,7 @@ import copy
 
 from toyworld2 import ToyWorld2
 from kinetic_reactant_selection import KineticReactantSelection
+from uniform_reactant_selection import UniformReactantSelection
 from chem_molecule import ChemMolecule
 from semi_realistic_chemistry import SemiRealisticChemistry
 from state import State
@@ -120,13 +121,14 @@ def runner(population, factors, generations, number_of_repeats):
                     filename = "{}-{}-0-{}.json".format(filebase, experiment_number, repeat_number)
                     run_experiment(os.path.join(BASE_DIR, filename), population, experiment, generations)
 
+                experiment_number += 1
 
 if __name__ == "__main__":
 
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument('-l', '--log_level', default='INFO', help="Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL")
     parent_parser.add_argument('-f', '--log_filename', help="Filename for logging (relative to location of evaluation design file) (optional)")
-    parent_parser.add_argument('-g', '--generations', type=int, help="Number of generations", default=50000)
+    parent_parser.add_argument('-g', '--generations', type=int, help="Number of generations", default=25000)
     parser = argparse.ArgumentParser(parents=[parent_parser])
 
     args = parser.parse_args()
@@ -141,9 +143,9 @@ if __name__ == "__main__":
     logging.info("Generations: {}".format(args.generations))
 
     factors = {
-        'REACTANT_SELECTION': [KineticReactantSelection],
-        'PRODUCT_SELECTION': [weighting_functions.least_energy_weighting],
+        'REACTANT_SELECTION': [UniformReactantSelection, KineticReactantSelection],
+        'PRODUCT_SELECTION': [weighting_functions.least_energy_weighting, weighting_functions.uniform_weighting],
     }
 
-    runner(population, factors, generations=50000, number_of_repeats=3)
+    runner(population, factors, generations=args.generations, number_of_repeats=3)
 
