@@ -8,6 +8,8 @@ def evaluate(filename, datadir):
     basename, ext = os.path.splitext(filename)
 
     for evaluator in ['molecules']:
+        if basename.find(evaluator) > 0:  # reading an evaluation result...
+            break
         evaluator_filename = os.path.join(datadir, '{}-{}.json'.format(basename, evaluator))
         if not os.path.exists(evaluator_filename):
 
@@ -46,6 +48,6 @@ if not os.path.isdir(datadir):
 # analyse('1481398302-0-19-0.json', datadir)
 
 import glob
-for filename in glob.glob(os.path.join(datadir, '1487376025-*.json')):
+for filename in glob.glob(os.path.join(datadir, '1487535886*.json')):
     print(filename)
     evaluate(filename, datadir)

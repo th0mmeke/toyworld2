@@ -114,7 +114,7 @@ def identify_clusters(molecular_cycles):
     return clusters
 
 
-def discover_stable_cycles(cycles, smiles):
+def discover_multipliers(cycles, smiles):
     '''
     Stable cycles are those where there are a chain of two or more cycles...
     - linked by a product in one cycle being a reactant in another
@@ -139,8 +139,8 @@ def discover_stable_cycles(cycles, smiles):
         # cycles_of_length has all cycles of same length, but not guaranteed to be of same type
         smiles_cycles = defaultdict(list)
         for cycle in cycles_of_length:
-            s = cycle_utilities.map_id_to_smiles(cycle, smiles)
-            smiles_cycles[frozenset(s)].append(cycle_utilities.get_molecules_in_cycle(cycle))
+            s = map_id_to_smiles(cycle, smiles)
+            smiles_cycles[frozenset(s)].append(get_molecules_in_cycle(cycle))
 
             cycle_form[frozenset(s)] = s
 

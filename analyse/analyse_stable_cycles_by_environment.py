@@ -51,7 +51,7 @@ with open(os.path.join(datadir, filebase + '-number-stablestates.csv'), 'wb') as
                 smiles = cycle_utilities.load_smiles(state['reactions'])
 
             dfa = metric[int(experiment)][int(environment)]
-            stable_states, seeds = cycle_utilities.discover_stable_cycles(all_cycles, smiles)  # [[counts per cycle type]] for this file
+            stable_states, seeds = cycle_utilities.discover_multipliers(all_cycles, smiles)  # [[counts per cycle type]] for this file
 
             values_by_seed = defaultdict(list)
             for state, count in stable_states.iteritems():
