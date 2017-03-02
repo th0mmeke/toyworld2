@@ -113,56 +113,56 @@ def identify_clusters(molecular_cycles):
 
     return clusters
 
+#
+# def discover_multipliers(cycles, smiles):
+#     '''
+#     Stable cycles are those where there are a chain of two or more cycles...
+#     - linked by a product in one cycle being a reactant in another
+#     - and where the cycles have the same "form", or sequence of molecule species (smiles) in the cycle
+#
+#     :param cycles: [cycle in form of list of either cycle molecule or reactants ('r1+r2>') or products ('>p1+p2+...')]. Cycle molecules are identified by id, rather than by smiles.
+#     :return: {frozenset(cycle): [count]}
+#     '''
+#
+#     grouped_cycles = defaultdict(list)
+#
+#     for cycle in cycles:
+#         if type(cycle) == dict:
+#             grouped_cycles[len(cycle['cycle'])].append(cycle['cycle'])
+#         else:
+#             grouped_cycles[len(cycle)].append(cycle)
+#
+#     stable_cycles = defaultdict(list)
+#     cycle_form = {}
+#
+#     for cycles_of_length in grouped_cycles.itervalues():
+#         # cycles_of_length has all cycles of same length, but not guaranteed to be of same type
+#         smiles_cycles = defaultdict(list)
+#         for cycle in cycles_of_length:
+#             s = map_id_to_smiles(cycle, smiles)
+#             smiles_cycles[frozenset(s)].append(get_molecules_in_cycle(cycle))
+#
+#             cycle_form[frozenset(s)] = s
+#
+#         # smiles_cycles now contains lists of all identical cycles types, so just have to match up the connected ones
+#
+#         for cycle_type, cycles_of_type in smiles_cycles.iteritems():
+#             # cycle_type is the smiles form, cycles_of_type every unique cycle with molecule ids
+#             clusters = [cycles_of_type.pop()]
+#             counts = defaultdict(int)
+#             for cycle_molecules in cycles_of_type:
+#                 for i in range(0, len(clusters)):
+#                     if clusters[i].intersection(cycle_molecules):
+#                         clusters[i].union(cycle_molecules)
+#                         counts[i] += 1
+#                         break
+#             if len(counts) > 0 and max(counts.values()) > 1:
+#                 stable_cycles[max(counts.values())].append(cycle_form[cycle_type])  # Longest stable duration > 1
+#
+#     return stable_cycles, [x[0] for x in cycle_form.itervalues()]
+#
 
-def discover_multipliers(cycles, smiles):
-    '''
-    Stable cycles are those where there are a chain of two or more cycles...
-    - linked by a product in one cycle being a reactant in another
-    - and where the cycles have the same "form", or sequence of molecule species (smiles) in the cycle
-
-    :param cycles: [cycle in form of list of either cycle molecule or reactants ('r1+r2>') or products ('>p1+p2+...')]. Cycle molecules are identified by id, rather than by smiles.
-    :return: {frozenset(cycle): [count]}
-    '''
-
-    grouped_cycles = defaultdict(list)
-
-    for cycle in cycles:
-        if type(cycle) == dict:
-            grouped_cycles[len(cycle['cycle'])].append(cycle['cycle'])
-        else:
-            grouped_cycles[len(cycle)].append(cycle)
-
-    stable_cycles = defaultdict(list)
-    cycle_form = {}
-
-    for cycles_of_length in grouped_cycles.itervalues():
-        # cycles_of_length has all cycles of same length, but not guaranteed to be of same type
-        smiles_cycles = defaultdict(list)
-        for cycle in cycles_of_length:
-            s = map_id_to_smiles(cycle, smiles)
-            smiles_cycles[frozenset(s)].append(get_molecules_in_cycle(cycle))
-
-            cycle_form[frozenset(s)] = s
-
-        # smiles_cycles now contains lists of all identical cycles types, so just have to match up the connected ones
-
-        for cycle_type, cycles_of_type in smiles_cycles.iteritems():
-            # cycle_type is the smiles form, cycles_of_type every unique cycle with molecule ids
-            clusters = [cycles_of_type.pop()]
-            counts = defaultdict(int)
-            for cycle_molecules in cycles_of_type:
-                for i in range(0, len(clusters)):
-                    if clusters[i].intersection(cycle_molecules):
-                        clusters[i].union(cycle_molecules)
-                        counts[i] += 1
-                        break
-            if len(counts) > 0 and max(counts.values()) > 1:
-                stable_cycles[max(counts.values())].append(cycle_form[cycle_type])  # Longest stable duration > 1
-
-    return stable_cycles, [x[0] for x in cycle_form.itervalues()]
-
-
-def discover_autocatalysis(molecular_cycles_by_species):
+def discover_multipliers(molecular_cycles_by_species):
     '''
     Stoichiometric autocatalysis occurs when a cycles has two or more linkage molecules, as products,
     to two or more different cycles.

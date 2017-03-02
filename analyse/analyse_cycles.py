@@ -1,5 +1,6 @@
 import os
 import json
+import random
 
 from identify_molecule_cycles import IdentifyMoleculeCycles
 
@@ -10,7 +11,7 @@ def evaluate(filename, datadir):
     for evaluator in ['molecules']:
         if basename.find(evaluator) > 0:  # reading an evaluation result...
             break
-        evaluator_filename = os.path.join(datadir, '{}-{}.json'.format(basename, evaluator))
+        evaluator_filename = os.path.join(datadir, '{}-{}sample.json'.format(basename, evaluator))
         if not os.path.exists(evaluator_filename):
 
             with open(evaluator_filename, 'a'):  # fairly racy way to stop another instance evaluating same data
@@ -20,26 +21,30 @@ def evaluate(filename, datadir):
 
             with open(data_filename) as f:
                 state = json.load(f)
-            e = IdentifyMoleculeCycles(reactions=state['reactions'])
+            try:
+                e = IdentifyMoleculeCycles(reactions=state['reactions'])
+            except:
+                pass
+            else:
+                sample = random.sample(e.reactants, len(e.reactants)/5)
+                population_stoichiometry = []
+                count = 0
+                for reactant in sample:
+                    count += 1
+                    if evaluator != 'species' or len(reactant) >= 10:
+                        print("{}/{}: {}".format(count, len(e.reactants), reactant))
+                        s = e.get_reactant_stoichiometry(reactant, minimum_stoichiometry=2, max_depth=7)
+                        for item in s:  # item = {'cycle':cycle, 'stoichiometry': stoichiometry}
+                            if evaluator == 'species':  # replace id with smiles
+                                cycle = []
+                                for step in item['cycle']:
+                                    if '+' not in step and '>' not in step and '<' not in step:
+                                        cycle.append(e.get_smiles(step))
+                                item['cycle'] = cycle
+                            population_stoichiometry.append({'stoichiometry': item['stoichiometry'], 'cycle': item['cycle']})
 
-            population_stoichiometry = []
-            count = 0
-            for reactant in e.reactants:
-                count += 1
-                if evaluator != 'species' or len(reactant) >= 10:
-                    print("{}/{}: {}".format(count, len(e.reactants), reactant))
-                    s = e.get_reactant_stoichiometry(reactant, minimum_stoichiometry=2, max_depth=7)
-                    for item in s:  # item = {'cycle':cycle, 'stoichiometry': stoichiometry}
-                        if evaluator == 'species':  # replace id with smiles
-                            cycle = []
-                            for step in item['cycle']:
-                                if '+' not in step and '>' not in step and '<' not in step:
-                                    cycle.append(e.get_smiles(step))
-                            item['cycle'] = cycle
-                        population_stoichiometry.append({'stoichiometry': item['stoichiometry'], 'cycle': item['cycle']})
-
-            with open(evaluator_filename, mode='w') as f:
-                json.dump(population_stoichiometry, f)
+                with open(evaluator_filename, mode='w') as f:
+                    json.dump(population_stoichiometry, f)
 
 datadir = 'C:\Users\Thom\Dropbox/Experiments'
 if not os.path.isdir(datadir):
