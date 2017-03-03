@@ -1,5 +1,5 @@
 from molecule import Molecule
-
+import time
 from rdkit.Chem import AllChem as Chem
 
 
@@ -29,10 +29,14 @@ class ChemMolecule(Molecule):
         mol = Chem.AddHs(mol)   # MolFromSmiles doesn't add Hs even if SMILES contains explicit Hs
 
         self.mass = sum([atom.GetMass() for atom in mol.GetAtoms()])
-        self.symbol = Chem.MolToSmiles(mol)  # will include Hs
+        self._symbol = Chem.MolToSmiles(mol)  # will include Hs
+        self._id = "{}.{}".format(id(self), time.clock())
+
+    def get_id(self):
+        return self._id
 
     def get_symbol(self):
-        return self.symbol
+        return self._symbol
 
     def __str__(self):
-        return self.symbol
+        return self._symbol

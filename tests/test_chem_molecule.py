@@ -33,3 +33,11 @@ class TestMolecule(unittest.TestCase):
             ChemMolecule(symbol="[H]OC(=O)[c-]1[n-][c-]([H])[c-][c-]1[H]")
         with self.assertRaises(ValueError):
             ChemMolecule(symbol="O.[H]OC(=O)[c-]1[n-][c-]([H])[c-][c-]1[H]")
+
+    def test_id(self):
+        # Check unique ids
+        self.assertNotEqual(ChemMolecule('O').get_id(), ChemMolecule('O').get_id())
+        a = ChemMolecule('O').get_id()
+        b = ChemMolecule('O').get_id()
+        self.assertNotEqual(a, b)
+
