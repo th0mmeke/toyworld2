@@ -106,18 +106,11 @@ def runner(population, factors, generations, number_of_repeats):
 
         for experiment in itertools.product(factors['REACTANT_SELECTION'], factors['PRODUCT_SELECTION']):
 
-                environment_specification = (0, 0)
-                environment = list(itertools.repeat(0, generations+1))
-
                 metadata = [str(experiment_number), experiment[0].__name__, experiment[1].__name__]
-                metadata.extend([str(x) for x in environment_specification])
-                metadata.append(str(nolds.dfa(environment)))
-                metadata.append(str(nolds.sampen(environment)))
-
                 f.write(','.join(metadata) + "\n")
 
                 for repeat_number in range(0, number_of_repeats):
-                    print("{0}/{1} with {2}".format((experiment_number*number_of_repeats) + repeat_number + 1, total_experiments, environment_specification))
+                    print("{0}/{1}".format((experiment_number*number_of_repeats) + repeat_number + 1, total_experiments))
                     filename = "{}-{}-0-{}.json".format(filebase, experiment_number, repeat_number)
                     run_experiment(os.path.join(BASE_DIR, filename), population, experiment, generations)
 
