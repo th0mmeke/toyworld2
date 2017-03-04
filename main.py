@@ -21,7 +21,7 @@ import bond_energies
 BASE_DIR = 'C:\Users\Thom\Dropbox/Experiments'
 if not os.path.isdir(BASE_DIR):
     BASE_DIR = '/home/cosc/guest/tjy17/Dropbox/Experiments'
-
+BASE_DIR = '.'
 
 def initialise_logging(args, basedir):
     level = getattr(logging, args.log_level.upper())
