@@ -6,12 +6,12 @@ def flatten(list_of_lists):
     return [a for b in list_of_lists for a in b]
 
 
-def map_id_to_smiles(molecule_cycle, smiles):
+def map_id_to_smiles(molecule_cycle, id_to_smiles):
     smiles_cycle = []
     for step in molecule_cycle:
-        new_step = step
-        for id, s in smiles.iteritems():
-            new_step = new_step.replace(id, s)
+        new_step = step  # string so copies
+        for mol in get_molecules(new_step):
+            new_step = new_step.replace(mol, id_to_smiles[mol])
         smiles_cycle.append(new_step)
     assert len(molecule_cycle) == len(smiles_cycle)
     return smiles_cycle
