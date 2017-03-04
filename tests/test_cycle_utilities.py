@@ -28,7 +28,7 @@ class TestCycleUtilities(unittest.TestCase):
                             cycle_utilities.get_molecules_in_cycle(['>1a+1b', '2c+4a>', '1d>']))
 
     def test_map_id_to_smiles(self):
-        smiles = { '1': 'a',
+        id_to_smiles = { '1': 'a',
                    '2': 'b',
                    '3': 'c',
                    '4': 'd',
@@ -36,7 +36,7 @@ class TestCycleUtilities(unittest.TestCase):
                    }
         molecular_cycles = ['1', '1+2>', '>3+4+5', '3']
         species_cycle = ['a', 'a+b>', '>c+d+e', 'c']
-        self.assertListEqual(species_cycle, cycle_utilities.map_id_to_smiles(molecular_cycles, smiles))
+        self.assertListEqual(species_cycle, cycle_utilities.map_id_to_smiles(molecular_cycles, id_to_smiles))
 
     def test_discover_species(self):
         smiles = { '1': 'a',
