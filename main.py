@@ -102,12 +102,12 @@ def runner(population, factors, generations, number_of_repeats):
     experiment_number = 0
     total_experiments = number_of_repeats * len(factors['REACTANT_SELECTION'])*len(factors['PRODUCT_SELECTION'])
 
-    with open(os.path.join(BASE_DIR, '{}-metadata.csv'.format(filebase)), 'w', 0) as f:
+    with open(os.path.join(BASE_DIR, '{}-metadata.csv'.format(filebase)), 'w', buffering=0) as f:
 
         for experiment in itertools.product(factors['REACTANT_SELECTION'], factors['PRODUCT_SELECTION']):
 
                 metadata = [str(experiment_number), experiment[0].__name__, experiment[1].__name__]
-                f.write(','.join(metadata) + "\n")
+                f.write(','.join(metadata) + "\n", )
 
                 for repeat_number in range(0, number_of_repeats):
                     print("{0}/{1}".format((experiment_number*number_of_repeats) + repeat_number + 1, total_experiments))
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     logging.info("Generations: {}".format(args.generations))
 
     factors = {
-        'REACTANT_SELECTION': [UniformReactantSelection, KineticReactantSelection],
+        'REACTANT_SELECTION': [KineticReactantSelection],
         'PRODUCT_SELECTION': [weighting_functions.least_energy_weighting, weighting_functions.uniform_weighting],
     }
 
