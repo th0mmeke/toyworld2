@@ -25,7 +25,6 @@ for filename in glob.glob(os.path.join(datadir, filebase+'*sample.json')):
                 smiles = cycle_utilities.load_smiles(state['reactions'])
 
             species = cycle_utilities.discover_species(all_cycles, smiles)
-            print("Species=", len(species))
 
             multipliers = cycle_utilities.discover_multipliers(species.itervalues())
 
