@@ -82,7 +82,6 @@ def runner(population, factors, generations, number_of_repeats, number_of_enviro
 
     experiments = (dict(itertools.izip(factors, x)) for x in itertools.product(*factors.itervalues()))
     total_experiments = number_of_repeats * number_of_environments * len(list(experiments))
-    print(total_experiments)
 
     with open(os.path.join(BASE_DIR, '{}-metadata.csv'.format(filebase)), 'w', buffering=0) as f:
 
@@ -95,10 +94,9 @@ def runner(population, factors, generations, number_of_repeats, number_of_enviro
                     environment_specification = random.uniform(0.0, 1.0), random.uniform(0, 20)
 
                 if experiment['ENVIRONMENT_SHAPE'] == 'BISTATE' and environment_number > 0:
-                    environment = list(itertools.chain.from_iterable([[-20]*100 + [20]*100] * (int(generations/20000)+1)))
+                    environment = list(itertools.chain.from_iterable([[-20]*10000 + [20]*10000] * (int(generations/20000)+1)))
                 else:
                     environment = get_ar_timeseries2(*environment_specification, n=generations)
-                print(environment)
                 assert len(environment) >= generations
 
                 metadata = [str(experiment_number)]
@@ -108,15 +106,14 @@ def runner(population, factors, generations, number_of_repeats, number_of_enviro
                 metadata.append(str(nolds.dfa(environment)))
                 metadata.append(str(nolds.sampen(environment)))
 
-                print(','.join(metadata))
                 f.write(','.join(metadata) + "\n")
 
                 for repeat_number in range(0, number_of_repeats):
                     print("{0}/{1}".format((experiment_number*number_of_repeats) + repeat_number + 1, total_experiments))
-                    filename = "{}-{}-0-{}.json".format(filebase, experiment_number, repeat_number)
+                    filename = "{}-{}-{}-{}.json".format(filebase, experiment_number, environment_number, repeat_number)
                     run_experiment(os.path.join(BASE_DIR, filename), population, experiment, generations, environment=environment)
 
-                experiment_number += 1
+            experiment_number += 1
 
 if __name__ == "__main__":
 
@@ -128,8 +125,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     initialise_logging(args, os.getcwd())
-
-    args.generations = 200
 
     defn = {"[H][H]": 10, "FO": 10, "O": 20, "[O-][N+](=O)[N+]([O-])=O": 10, "N(=O)[O]": 10, "O=C=O": 20}
     population = []
@@ -146,5 +141,5 @@ if __name__ == "__main__":
         'ENVIRONMENT_TARGET': ['POPULATION', 'KE']
     }
 
-    runner(population, factors, generations=args.generations, number_of_repeats=2, number_of_environments=2)
+    runner(population, factors, generations=args.generations, number_of_repeats=1, number_of_environments=3)
 
