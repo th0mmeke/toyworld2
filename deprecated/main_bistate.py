@@ -1,19 +1,18 @@
-from collections import Counter
-import os
-import logging
 import argparse
-import itertools
-import time
 import copy
+import itertools
+import logging
+import os
+import time
+from collections import Counter
 
-from toyworld2 import ToyWorld2
-from my_reactant_selection import MyReactantSelection
+import bond_energies
+import weighting_functions
 from chem_molecule import ChemMolecule
+from deprecated.my_reactant_selection import MyReactantSelection
 from semi_realistic_chemistry import SemiRealisticChemistry
 from state import State
-import weighting_functions
-import bond_energies
-
+from toyworld2 import ToyWorld2
 
 BASE_DIR = 'C:\Users\Thom\Dropbox/Experiments'
 if not os.path.isdir(BASE_DIR):

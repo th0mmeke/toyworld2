@@ -1,9 +1,10 @@
 import unittest
+
 import pymunk as pm
 
-from reaction import Reaction
-from spatial_reactant_selection import SpatialReactantSelection
 from chem_molecule import ChemMolecule
+from deprecated.spatial_reactant_selection import SpatialReactantSelection
+from reaction import Reaction
 
 
 class TestSpatialReactantSelection(unittest.TestCase):

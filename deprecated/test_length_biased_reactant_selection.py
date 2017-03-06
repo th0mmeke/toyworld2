@@ -1,8 +1,8 @@
 import unittest
 
-from reaction import Reaction
-from length_biased_reactant_selection import LengthBiasedReactantSelection
+from deprecated.length_biased_reactant_selection import LengthBiasedReactantSelection
 from molecule import Molecule
+from reaction import Reaction
 
 
 class TestLengthBiasedReactantSelection(unittest.TestCase):
