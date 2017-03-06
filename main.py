@@ -44,75 +44,77 @@ def initialise_logging(args, basedir):
     logger.addHandler(fh)
 
 
-def get_ar_timeseries(theta, sd, initial, generations):
+def get_ar_timeseries2(theta, sd, n):
 
     """
-    Return an integer AR(1) timeseries.
+    Return an AR(1) timeseries.
 
     :param theta:
     :param sd:
-    :param initial:
-    :param generations:
+    :param n:
     :return:
     """
 
     ts = []
     value = 0
-    for i in range(0, generations+1):
-        value = theta * value + random.gauss(0, sd)
-        ts.append(max(0, int(value + initial)))  # lower bound of zero
-    return ts
-
-def get_ar_timeseries2(theta, sd, generations):
-
-    """
-    Return an integer AR(1) timeseries.
-
-    :param theta:
-    :param sd:
-    :param initial:
-    :param generations:
-    :return:
-    """
-
-    ts = []
-    value = 0
-    for i in range(0, generations+1):
+    for i in range(0, n+1):
         value = theta * value + random.gauss(0, sd)
         ts.append(value)
     return ts
 
 
-def run_experiment(filename, population, experiment, generations):
-    reactor = experiment[0](population=copy.deepcopy(population))
+def run_experiment(filename, population, factors, generations, environment):
+    reactor = factors['REACTANT_SELECTION'](population=copy.deepcopy(population))
     initial_population = dict(Counter([str(x) for x in reactor.get_population()]))
-
-    tw = ToyWorld2(reactor=reactor, product_selection=experiment[1], chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies))
-
     state = State(filename=filename, initial_population=initial_population)
-    state = tw.run(generations=generations, state=state)
+
+    tw = ToyWorld2(reactor=reactor, product_selection=factors['PRODUCT_SELECTION'], chemistry=SemiRealisticChemistry(bond_energies=bond_energies.bond_energies))
+    state = tw.run(generations=generations, state=state,  environment_target=factors['ENVIRONMENT_TARGET'], environment_shape=environment)
 
     final_population = dict(Counter([str(x) for x in reactor.get_population()]))
     state.close(final_population=final_population)
 
 
-def runner(population, factors, generations, number_of_repeats):
+def runner(population, factors, generations, number_of_repeats, number_of_environments):
 
     filebase = int(time.time())
     experiment_number = 0
-    total_experiments = number_of_repeats * len(factors['REACTANT_SELECTION'])*len(factors['PRODUCT_SELECTION'])
+
+    experiments = (dict(itertools.izip(factors, x)) for x in itertools.product(*factors.itervalues()))
+    total_experiments = number_of_repeats * number_of_environments * len(list(experiments))
+    print(total_experiments)
 
     with open(os.path.join(BASE_DIR, '{}-metadata.csv'.format(filebase)), 'w', buffering=0) as f:
 
-        for experiment in itertools.product(factors['REACTANT_SELECTION'], factors['PRODUCT_SELECTION']):
+        for experiment in (dict(itertools.izip(factors, x)) for x in itertools.product(*factors.itervalues())):
+            for environment_number in range(0, number_of_environments):
 
-                metadata = [str(experiment_number), experiment[0].__name__, experiment[1].__name__]
-                f.write(','.join(metadata) + "\n", )
+                if experiment['ENVIRONMENT_SHAPE'] == 'BISTATE' or environment_number == 0:
+                    environment_specification = (0, 0)
+                else:
+                    environment_specification = random.uniform(0.0, 1.0), random.uniform(0, 20)
+
+                if experiment['ENVIRONMENT_SHAPE'] == 'BISTATE' and environment_number > 0:
+                    environment = list(itertools.chain.from_iterable([[-20]*100 + [20]*100] * (int(generations/20000)+1)))
+                else:
+                    environment = get_ar_timeseries2(*environment_specification, n=generations)
+                print(environment)
+                assert len(environment) >= generations
+
+                metadata = [str(experiment_number)]
+                metadata.extend([experiment['REACTANT_SELECTION'].__name__, experiment['PRODUCT_SELECTION'].__name__])
+                metadata.extend([experiment['ENVIRONMENT_TARGET'], experiment['ENVIRONMENT_SHAPE']])
+                metadata.extend([str(x) for x in environment_specification])
+                metadata.append(str(nolds.dfa(environment)))
+                metadata.append(str(nolds.sampen(environment)))
+
+                print(','.join(metadata))
+                f.write(','.join(metadata) + "\n")
 
                 for repeat_number in range(0, number_of_repeats):
                     print("{0}/{1}".format((experiment_number*number_of_repeats) + repeat_number + 1, total_experiments))
                     filename = "{}-{}-0-{}.json".format(filebase, experiment_number, repeat_number)
-                    run_experiment(os.path.join(BASE_DIR, filename), population, experiment, generations)
+                    run_experiment(os.path.join(BASE_DIR, filename), population, experiment, generations, environment=environment)
 
                 experiment_number += 1
 
@@ -127,6 +129,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     initialise_logging(args, os.getcwd())
 
+    args.generations = 200
+
     defn = {"[H][H]": 10, "FO": 10, "O": 20, "[O-][N+](=O)[N+]([O-])=O": 10, "N(=O)[O]": 10, "O=C=O": 20}
     population = []
     for symbol, quantity in defn.iteritems():
@@ -138,7 +142,9 @@ if __name__ == "__main__":
     factors = {
         'REACTANT_SELECTION': [KineticReactantSelection],
         'PRODUCT_SELECTION': [weighting_functions.least_energy_weighting, weighting_functions.uniform_weighting],
+        'ENVIRONMENT_SHAPE': ['AR', 'BISTATE'],
+        'ENVIRONMENT_TARGET': ['POPULATION', 'KE']
     }
 
-    runner(population, factors, generations=args.generations, number_of_repeats=3)
+    runner(population, factors, generations=args.generations, number_of_repeats=2, number_of_environments=2)
 

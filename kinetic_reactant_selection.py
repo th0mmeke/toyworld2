@@ -1,10 +1,12 @@
 import random
 import math
+import logging
 
 import pymunk as pm
 from i_reactant_selection import IReactantSelection
 from kinetics_2D import Kinetics2D
 from reaction import Reaction
+from chem_molecule import ChemMolecule
 
 
 class KineticReactantSelection(IReactantSelection):
@@ -19,7 +21,6 @@ class KineticReactantSelection(IReactantSelection):
     PRODUCT = 2
     WALL = 3
     BASE_MOLECULE_RADIUS = REACTION_VESSEL_SIZE / 500
-    TURNOVER = 5
 
     def __init__(self, population, **kwargs):
 
@@ -43,6 +44,7 @@ class KineticReactantSelection(IReactantSelection):
             ke = 100
 
         self.ke = ke
+        self.foodset = [mol.get_symbol() for mol in population]
 
         self.space = pm.Space()
         self.space.gravity = pm.Vec2d(0, 0)
@@ -75,6 +77,67 @@ class KineticReactantSelection(IReactantSelection):
             self._add_molecule(molecule, location=location, velocity=velocity, collision_type=KineticReactantSelection.REACTANT)
 
         self.step_size = self._calculate_step_size()
+        self._previous_value = None
+
+    def update_environment(self, target, value):
+        print(value)
+        if self._previous_value is not None:
+            delta = self._previous_value - int(value)
+            if delta != 0:
+                if target == "POPULATION":
+                    self.adjust_population(delta)
+                elif target == "KE":
+                    self.ke += delta
+
+        self._previous_value = int(value)
+
+    def adjust_population(self, delta):
+        """
+        Adjust the foodset to the new size. If bigger, extend by a sample from the current foodset; if smaller,
+        take a sample of the current set.
+        By bounding the sample size to the size of the foodset we potentially vary from any input timeseries. But the effects
+        are likely to be very minor.
+
+        :param new_size: New food set size
+        :return: [ChemMolecule]
+        """
+
+        # Adjust foodset size
+        # if increment > 0:
+        #     # add molecules to foodset
+        #     sample_size = max(0, min(len(self.foodset), increment))
+        #     self.foodset.extend(random.sample(self.foodset, sample_size))
+        # elif increment < 0:
+        #     # remove molecules from foodset
+        #     sample_size = max(0, min(len(self.foodset), len(self.foodset) + increment))
+        #     self.foodset = random.sample(self.foodset, sample_size)
+
+        if delta < 0:
+            # Remove random molecules
+            kill_list = random.sample(self.shape2mol.values(), -delta)
+            self._remove_molecules(kill_list)
+        else:
+            # Add new molecules from foodset with ke=self.ke, with random direction from random wall
+            add_list = [ChemMolecule(smiles) for smiles in random.sample(self.foodset, delta)]
+
+            for molecule in add_list:
+
+                velocity = pm.Vec2d(math.sqrt(2.0 * self.ke / molecule.mass), 0)
+                wall_location = random.uniform(-KineticReactantSelection.REACTION_VESSEL_SIZE, KineticReactantSelection.REACTION_VESSEL_SIZE)
+                velocity.angle = random.uniform(0, 2*math.pi)
+
+                if 1.0/4.0*math.pi < velocity.angle <= 3.0/4.0*math.pi:  # bottom wall
+                    location = pm.Vec2d(wall_location, -KineticReactantSelection.REACTION_VESSEL_SIZE)
+                elif 3.0/4.0*math.pi < velocity.angle <= 5.0/4.0*math.pi:  # left wall
+                    location = pm.Vec2d(-KineticReactantSelection.REACTION_VESSEL_SIZE, wall_location)
+                elif 5.0/4.0*math.pi < velocity.angle <= 7.0/4.0*math.pi:  # top wall
+                    location = pm.Vec2d(wall_location, KineticReactantSelection.REACTION_VESSEL_SIZE, )
+                else:  # right wall
+                    location = pm.Vec2d(KineticReactantSelection.REACTION_VESSEL_SIZE, wall_location)
+
+                self._add_molecule(molecule, location=location, velocity=velocity, collision_type=KineticReactantSelection.REACTANT)
+
+        logging.info("Population size = {}".format(len(self.get_population())))
 
     def get_reactants(self):
 

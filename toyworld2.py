@@ -9,13 +9,12 @@ class ToyWorld2:
         self.reactor = reactor
         self.product_selection = product_selection
 
-    def run(self, generations, state):
+    def run(self, generations, state, environment_target, environment_shape):
 
         generation = 1
         non_reaction = 0
 
         while generation <= generations:
-
 
             try:
                 partial_reaction = self.reactor.get_reactants()
@@ -36,10 +35,10 @@ class ToyWorld2:
                 except ValueError:
                     non_reaction += 1
                 else:
-                    logging.info("{}: reaction between {} giving {}".format(generation,str([r.get_symbol() for r in reaction.reactants]),
+                    logging.info("{}: reaction between {} giving {}".format(generation, str([r.get_symbol() for r in reaction.reactants]),
                                                                             str([p.get_symbol() for p in reaction.products])))
                     state.add(reaction.as_dict())
-                    # self.reactor.update_environment(environment.pop())
+                    self.reactor.update_environment(environment_target, environment_shape[generation-1])
                     generation += 1
                     non_reaction = 0
 
