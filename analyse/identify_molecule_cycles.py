@@ -65,7 +65,7 @@ class IdentifyMoleculeCycles(IdentifySpeciesCycles):
         reactant_stoichiometry = []
 
         #  find all cycles - each will be unique as from unique seed
-        cycles = list(self.find_shortest_paths(self.g, molecule, self.g.node[molecule]['smiles'], max_depth))
+        cycles = list(self.find_cycles_from_seed(self.g, molecule, max_depth))
 
         for cycle in cycles:
             stoichiometry = 1
@@ -88,45 +88,9 @@ class IdentifyMoleculeCycles(IdentifySpeciesCycles):
 
         return reactant_stoichiometry
 
-    def get_reactant_stoichiometry(self, acs_seed, minimum_stoichiometry=0, max_depth=5):
-        """
-        Find all unique cycles that include each node that has the SMILES of acs_seed.
-
-        :param acs_seed:
-        :param minimum_stoichiometry:
-        :param max_depth:
-        :return: [{'cycle':cycle, 'stoichiometry':stoichiometry}]
-        """
-        reactant_stoichiometry = []
-
-        for id_seed in self.smiles[acs_seed]:
-
-            #  find all cycles - each will be unique as from unique seed
-            cycles = list(self.find_shortest_paths(self.g, id_seed, acs_seed, max_depth))
-
-            for cycle in cycles:
-                stoichiometry = 1
-                for start_node, end_node in zip(cycle[0:-1], cycle[1:]):
-                    if self.is_reaction(start_node) and not self.is_reaction(end_node):  # end_node is product
-                        stoichiometry *= float(self.g[start_node][end_node]['stoichiometry'])
-                    if self.is_reaction(end_node) and not self.is_reaction(start_node):  # start_node must be reactant
-                        stoichiometry /= float(self.g[start_node][end_node]['stoichiometry'])
-
-                if stoichiometry >= minimum_stoichiometry:
-                    #  first make sure don't already have this cycle to a different end molecule of the same species
-                    unique = True
-                    for candidate_cycle in reactant_stoichiometry:
-                        x = candidate_cycle['cycle']
-                        if self.g.node[x[0]]['smiles'] == self.g.node[cycle[0]]['smiles'] and x[1:-1] == cycle[1:-1] and self.g.node[x[-1]]['smiles'] == self.g.node[cycle[-1]]['smiles']:
-                            unique = False
-                            break
-                    if unique:
-                        reactant_stoichiometry.append({'cycle': cycle, 'stoichiometry': stoichiometry})
-
-        return reactant_stoichiometry
-
     @staticmethod
-    def find_shortest_paths(network, source, target, max_depth=5):  # http://eddmann.com/posts/depth-first-search-and-breadth-first-search-in-python/
+    def find_cycles_from_seed(network, source, max_depth=5):  # http://eddmann.com/posts/depth-first-search-and-breadth-first-search-in-python/
+        target = network.node[source]['smiles']
         stack = [(source, [source])]
         while stack:
             (vertex, path) = stack.pop()
