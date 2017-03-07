@@ -21,7 +21,7 @@ import bond_energies
 BASE_DIR = 'C:\Users\Thom\Dropbox/Experiments'
 if not os.path.isdir(BASE_DIR):
     BASE_DIR = '/home/cosc/guest/tjy17/Dropbox/Experiments'
-BASE_DIR = '.'
+# BASE_DIR = '.'
 
 def initialise_logging(args, basedir):
     level = getattr(logging, args.log_level.upper())
@@ -84,6 +84,7 @@ def runner(population, factors, generations, number_of_repeats, number_of_enviro
     total_experiments = number_of_repeats * number_of_environments * len(list(experiments))
 
     with open(os.path.join(BASE_DIR, '{}-metadata.csv'.format(filebase)), 'w', buffering=0) as f:
+        f.write("Experiment, Reactant Selection, Product Selection, Target, Shape, Theta, Sigma, DFA, Sample Entropy\n")
 
         for experiment in (dict(itertools.izip(factors, x)) for x in itertools.product(*factors.itervalues())):
             for environment_number in range(0, number_of_environments):
@@ -99,6 +100,7 @@ def runner(population, factors, generations, number_of_repeats, number_of_enviro
                     environment = get_ar_timeseries2(*environment_specification, n=generations)
                 assert len(environment) >= generations
 
+                print(environment)
                 metadata = [str(experiment_number)]
                 metadata.extend([experiment['REACTANT_SELECTION'].__name__, experiment['PRODUCT_SELECTION'].__name__])
                 metadata.extend([experiment['ENVIRONMENT_TARGET'], experiment['ENVIRONMENT_SHAPE']])
@@ -141,5 +143,5 @@ if __name__ == "__main__":
         'ENVIRONMENT_TARGET': ['POPULATION', 'KE']
     }
 
-    runner(population, factors, generations=args.generations, number_of_repeats=1, number_of_environments=3)
+    runner(population, factors, generations=args.generations, number_of_repeats=1, number_of_environments=5)
 

@@ -80,7 +80,6 @@ class KineticReactantSelection(IReactantSelection):
         self._previous_value = None
 
     def update_environment(self, target, value):
-        print(value)
         if self._previous_value is not None:
             delta = self._previous_value - int(value)
             if delta != 0:
@@ -114,10 +113,13 @@ class KineticReactantSelection(IReactantSelection):
 
         if delta < 0:
             # Remove random molecules
-            kill_list = random.sample(self.shape2mol.values(), -delta)
+            delta = min(len(self.shape2mol), -delta)
+
+            kill_list = random.sample(self.shape2mol.values(), delta)
             self._remove_molecules(kill_list)
         else:
             # Add new molecules from foodset with ke=self.ke, with random direction from random wall
+            delta = min(len(self.foodset), delta)
             add_list = [ChemMolecule(smiles) for smiles in random.sample(self.foodset, delta)]
 
             for molecule in add_list:
@@ -148,7 +150,7 @@ class KineticReactantSelection(IReactantSelection):
             # Now step simulation
             self.space.step(self.step_size)  # trigger _begin_handler on collision
             if i > 30 and (len(self.reactant_list) == 0 or len(self.reactant_list) > 10):
-                self.step_size = self._calculate_step_size()
+                self.step_size = self._calculate_step_size()  # Throws ValueError if populaton size == 0
                 if self.step_size > 1E4:
                     raise ValueError
                 i = 0
@@ -276,6 +278,9 @@ class KineticReactantSelection(IReactantSelection):
 
         :return: float
         """
+
+        if len(self.shape2mol) == 0:
+            raise ValueError
 
         velocity_distribution = [shape.body.velocity.length for shape in self.shape2mol]
         return 1.0 * len(velocity_distribution) / sum(velocity_distribution)

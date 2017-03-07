@@ -19,7 +19,7 @@ class ToyWorld2:
             try:
                 partial_reaction = self.reactor.get_reactants()
             except ValueError:
-                logging.info("Stopping, lack of energy")
+                logging.info("Stopping, lack of energy or reactants")
                 break
             reactions = self.chemistry.enumerate(partial_reaction)
             reaction = weighted_selection(reactions, self.product_selection, 0)
