@@ -27,7 +27,7 @@ datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
 # /home/cosc/guest/tjy17/Dropbox/Experiments/1488820321-0-4-0-cycles.json
 # /home/cosc/guest/tjy17/Dropbox/Experiments/1488846568-2-1-0.json
 
-for filepath in sorted(glob.glob(os.path.join(datadir, '1488820321*cycles.json'))):
+for filepath in sorted(glob.glob(os.path.join(datadir, '1488846568*cycles.json'))):
     filename = os.path.splitext(os.path.basename(filepath))[0]
     nc = filename.split('-')
     filebase = '{}-{}-{}-{}'.format(nc[0], nc[1], nc[2], nc[3])
