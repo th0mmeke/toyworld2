@@ -53,7 +53,7 @@ class IdentifyMoleculeCycles(IdentifySpeciesCycles):
                 if not self.g.has_edge(canonical_products, id):
                     self.g.add_edge(canonical_products, id, stoichiometry=product_stoichiometry[smiles])
 
-    def sample_reactant_stoichiometry(self, molecule, minimum_stoichiometry=0, max_depth=15):
+    def sample_reactant_stoichiometry(self, molecule, minimum_stoichiometry=0, max_depth=30):
         """
         Find all unique cycles that include each node that has the SMILES of acs_seed.
 
@@ -90,6 +90,14 @@ class IdentifyMoleculeCycles(IdentifySpeciesCycles):
 
     @staticmethod
     def find_cycles_from_seed(network, source, max_depth=5):  # http://eddmann.com/posts/depth-first-search-and-breadth-first-search-in-python/
+        """
+
+        :param network:
+        :param source:
+        :param max_depth: Maximum number of nodes in path, excluding source node. Note that the path includes two nodes for each reaction in addition to a shared product/reactant node between two reactions.
+        :return:
+        """
+
         target = network.node[source]['smiles']
         stack = [(source, [source])]
         while stack:

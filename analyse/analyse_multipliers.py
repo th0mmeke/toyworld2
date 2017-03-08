@@ -4,30 +4,38 @@ import glob
 import cycle_utilities
 
 
-datadir = '/Users/Thom/Workspace/toyworld2'
-filebase = '1488600998'
+def evaluate(experiment_filepath, data_filepath, evaluator_filepath):
 
-
-for filename in glob.glob(os.path.join(datadir, filebase+'*sample.json')):
-
-    basename, ext = os.path.splitext(filename)
-    print(filename)
-    nc = basename.split('-')
-    source_basename = '{}-{}-{}-{}'.format(filebase, nc[1], nc[2], nc[3])
-    with open(os.path.join(datadir, filename)) as f:
+    with open(data_filepath) as f:
         try:
             all_cycles = json.load(f)
         except ValueError:
             pass
         else:
-            with open(os.path.join(datadir, '{}.json'.format(source_basename))) as f:
+            with open(experiment_filepath) as f:
                 state = json.load(f)
                 smiles = cycle_utilities.load_smiles(state['reactions'])
 
             species = cycle_utilities.discover_species(all_cycles, smiles)
-
             multipliers = cycle_utilities.discover_multipliers(species.itervalues())
 
-            evaluator_filename = os.path.join(datadir, '{}-multipliers.json'.format(source_basename))
-            with open(evaluator_filename, mode='w') as f:
+            with open(evaluator_filepath, mode='w') as f:
                 json.dump(multipliers, f)
+
+datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
+
+# /home/cosc/guest/tjy17/Dropbox/Experiments/1488820321-0-4-0-cycles.json
+# /home/cosc/guest/tjy17/Dropbox/Experiments/1488846568-2-1-0.json
+
+for filepath in sorted(glob.glob(os.path.join(datadir, '1488820321*cycles.json'))):
+    filename = os.path.splitext(os.path.basename(filepath))[0]
+    nc = filename.split('-')
+    filebase = '{}-{}-{}-{}'.format(nc[0], nc[1], nc[2], nc[3])
+
+    evaluator_filepath = os.path.join(datadir, filebase + "-multipliers.json")
+    data_filepath = os.path.join(datadir, filebase + "-cycles.json")
+    experiment_filepath = os.path.join(datadir, filebase + ".json")
+
+    if not os.path.exists(evaluator_filepath):
+        print(experiment_filepath, data_filepath, evaluator_filepath)
+        evaluate(experiment_filepath, data_filepath, evaluator_filepath)
