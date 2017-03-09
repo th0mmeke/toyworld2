@@ -21,7 +21,7 @@ def evaluate(data_filepath, evaluator_filepath):
         population_stoichiometry = []
         sample = random.sample(e.reactant_molecules, len(e.reactant_molecules)/20)
         for mol in sample:
-            for item in e.sample_reactant_stoichiometry(mol):
+            for item in e.sample_reactant_stoichiometry(mol, minimum_stoichiometry=2, max_depth=30):
                 population_stoichiometry.append(item)
 
         with open(evaluator_filepath, mode='w') as f:
