@@ -1,9 +1,8 @@
+import glob
 import json
 import os
-import glob
 
 import fgenerated_utilities
-
 from identify_species_cycles import IdentifySpeciesCycles
 
 datadir = 'C:\Users\Thom\Dropbox/Experiments'

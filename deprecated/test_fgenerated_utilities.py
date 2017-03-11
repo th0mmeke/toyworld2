@@ -1,9 +1,11 @@
-import unittest
-import networkx as nx
 import collections
+import unittest
 
-from identify_species_cycles import IdentifySpeciesCycles
 import fgenerated_utilities
+import networkx as nx
+
+from deprecated.identify_species_cycles import IdentifySpeciesCycles
+
 
 class TestFgenerated(unittest.TestCase):
 
@@ -71,10 +73,10 @@ class TestFgenerated(unittest.TestCase):
             {'reactants': {'11': 'f4', '12': 'f5'}, 'products': {'13': 'p1'}},  # r4
         ]
         e = IdentifySpeciesCycles(reactions=reactions)
-        expected_nodes = [node for node in e.g.nodes() if not IdentifySpeciesCycles.is_reaction(node)]
+        expected_nodes = [node for node in e.g.nodes() if not is_reaction(node)]
         raf = fgenerated_utilities.get_fgenerated(e.g, foodset)
         self.assertItemsEqual(expected_nodes, list(fgenerated_utilities.compute_closure(raf, foodset)))
-        actual_nodes = [node for node in raf if not IdentifySpeciesCycles.is_reaction(node)]
+        actual_nodes = [node for node in raf if not is_reaction(node)]
         self.assertListEqual(expected_nodes, actual_nodes)
 
         # Steel et al 2013 fig 2a - not F-generated

@@ -1,6 +1,6 @@
 import unittest
 
-from identify_species_cycles import IdentifySpeciesCycles
+from deprecated.identify_species_cycles import IdentifySpeciesCycles
 
 
 class TestIdentifySpeciesCycles(unittest.TestCase):

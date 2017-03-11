@@ -2,6 +2,7 @@ import networkx as nx
 import re
 from collections import Counter
 import string
+import cycle_utilities
 
 
 class IdentifySpeciesCycles(object):
@@ -60,9 +61,9 @@ class IdentifySpeciesCycles(object):
         for cycle in cycles:
             stoichiometry = 1
             for start_node, end_node in zip(cycle[0:-1], cycle[1:]):
-                if self.is_reaction(start_node) and not self.is_reaction(end_node):  # end_node is product
+                if cycle_utilities.is_reaction(start_node) and not cycle_utilities.is_reaction(end_node):  # end_node is product
                     stoichiometry *= float(self.g[start_node][end_node]['stoichiometry'])
-                if self.is_reaction(end_node) and not self.is_reaction(start_node):  # start_node must be reactant
+                if cycle_utilities.is_reaction(end_node) and not cycle_utilities.is_reaction(start_node):  # start_node must be reactant
                     stoichiometry /= float(self.g[start_node][end_node]['stoichiometry'])
 
             if stoichiometry >= minimum_stoichiometry:
@@ -93,14 +94,14 @@ class IdentifySpeciesCycles(object):
     #     :param cycle:
     #     :return:
     #     """
-    #     reactants = set([node for node in cycle if not IdentifySpeciesCycles.is_reaction(node)])
+    #     reactants = set([node for node in cycle if not cycle_utilities.is_reaction(node)])
     #     node_front = reactants
     #     for i in range(0, 3):
     #         new_front = []
     #         for node in node_front:
     #             predecessors = self.g.predecessors(node)
     #             for predecessor in predecessors:
-    #                 if IdentifySpeciesCycles.is_reaction(predecessor):
+    #                 if cycle_utilities.is_reaction(predecessor):
     #                     new_front.append(predecessor)
     #                 else:
     #                     reactants.add(predecessor)
@@ -113,14 +114,14 @@ class IdentifySpeciesCycles(object):
     #     :param cycle:
     #     :return:
     #     """
-    #     products = set([node for node in cycle if not IdentifySpeciesCycles.is_reaction(node)])
+    #     products = set([node for node in cycle if not cycle_utilities.is_reaction(node)])
     #     node_front = products
     #     for i in range(0, 3):
     #         new_front = []
     #         for node in node_front:
     #             successors = self.g.successors(node)
     #             for successor in successors:
-    #                 if IdentifySpeciesCycles.is_reaction(successor):
+    #                 if cycle_utilities.is_reaction(successor):
     #                     new_front.append(successor)
     #                 else:
     #                     products.add(successor)
@@ -144,7 +145,7 @@ class IdentifySpeciesCycles(object):
         for cycle in cycles:
             for node in cycle:
                 nodes.add(node)
-                if IdentifySpeciesCycles.is_reaction(node):
+                if cycle_utilities.is_reaction(node):
                     nodes.update(re.findall(re_exp, node))  # nodes that appear in reactions only
 
         try:
@@ -166,12 +167,12 @@ class IdentifySpeciesCycles(object):
             mapping[seed] = letters.pop(0)
 
             for node in nodes:
-                if IdentifySpeciesCycles.is_reaction(node):
+                if cycle_utilities.is_reaction(node):
                     new_label = letters.pop(0)
                     mapping[node] = new_label
 
             for node in nodes:
-                if IdentifySpeciesCycles.is_reaction(node):
+                if cycle_utilities.is_reaction(node):
                     # substitute new labels for old in reaction description, and add to mapping
                     new_label = node
 
@@ -190,18 +191,6 @@ class IdentifySpeciesCycles(object):
             nx.relabel_nodes(subgraph, mapping, copy=False)  # remap labels in-place
 
         nx.write_graphml(subgraph, path)
-
-    @staticmethod
-    def is_reaction(node):
-        return node[-1] == '>' or node[0] == '>'
-
-    @staticmethod
-    def is_reaction_a(node):
-        return node[-1] == '>'
-
-    @staticmethod
-    def is_reaction_b(node):
-        return node[0] == '>'
 
     def make_canonical(self, reactants):
         rle = Counter(sorted(reactants))  # Cannot rely on dict(a) == dict(b) if items in a == items in b, but in different order, so sort them first.

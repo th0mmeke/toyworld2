@@ -1,5 +1,6 @@
 import random
 
+import cycle_utilities
 from identify_species_cycles import IdentifySpeciesCycles
 
 
@@ -33,7 +34,7 @@ def compute_closure(g, foodset):
                             new_front.extend(g.successors(successor))  # add in reaction part b's
                     else:
                         visited.add(successor)
-                        if not IdentifySpeciesCycles.is_reaction(successor):
+                        if not is_reaction(successor):
                             closure.add(successor)
                         new_front.append(successor)
 
@@ -47,11 +48,11 @@ def get_reactions(g):
                  g.successors(reaction_a)]
 
 def get_reactions_b(g):
-    return [node for node in g.nodes_iter() if IdentifySpeciesCycles.is_reaction(node) and node[0] == '>']
+    return [node for node in g.nodes_iter() if is_reaction(node) and node[0] == '>']
 
 
 def get_reactions_a(g):
-    return [node for node in g.nodes_iter() if IdentifySpeciesCycles.is_reaction(node) and node[-1] == '>']
+    return [node for node in g.nodes_iter() if is_reaction(node) and node[-1] == '>']
 
 
 def get_fgenerated(e, foodset):
@@ -82,7 +83,7 @@ def get_fgenerated(e, foodset):
 
     closure = compute_closure(g, foodset)
     for node in g.nodes():
-        if not IdentifySpeciesCycles.is_reaction(node) and node not in closure:
+        if not is_reaction(node) and node not in closure:
             g.remove_node(node)
     return g
 
@@ -113,7 +114,7 @@ def get_irr_fgenerated(e, foodset):
             #     print("{}{} cannot".format(reaction_a, reaction_b))
 
     reactions = get_reactions(g)
-    molecules = [node for node in g.nodes() if not IdentifySpeciesCycles.is_reaction(node) and node not in foodset]
+    molecules = [node for node in g.nodes() if not is_reaction(node) and node not in foodset]
 
     return {'molecules': molecules, 'reactions': reactions}
 
