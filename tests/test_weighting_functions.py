@@ -26,6 +26,3 @@ class TestWeightingFunctions(unittest.TestCase):
         # 0 if reactant_value < product_value
         # reactant_value + product_value otherwise
         self.assertListEqual([0, 10, 20], [weighting_functions.least_energy_weighting(r, 0) for r in self.reactions])
-
-    def testReplicantWeighting(self):
-        self.assertListEqual([1, 1, 6], [weighting_functions.replicant_weighting(r, 0) for r in self.reactions])

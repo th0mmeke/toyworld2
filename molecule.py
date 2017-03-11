@@ -1,5 +1,5 @@
 from i_element import IElement
-
+import time
 
 class Molecule(IElement):
 
@@ -21,9 +21,15 @@ class Molecule(IElement):
             raise TypeError
 
         self.symbol = symbol
+        self._id = "{}.{}".format(id(self), time.clock())
+
+    def get_id(self):
+        return self._id
 
     def get_symbol(self):
         return self.symbol
 
     def __str__(self):
         return self.symbol
+
+

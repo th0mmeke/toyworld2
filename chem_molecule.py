@@ -32,9 +32,6 @@ class ChemMolecule(Molecule):
         self._symbol = Chem.MolToSmiles(mol)  # will include Hs
         self._id = "{}.{}".format(id(self), time.clock())
 
-    def get_id(self):
-        return self._id
-
     def get_symbol(self):
         return self._symbol
 
