@@ -4,7 +4,7 @@ from collections import defaultdict
 import networkx as nx
 
 import cycle_utilities
-from deprecated.identify_species_cycles import IdentifySpeciesCycles
+from identify_species_cycles import IdentifySpeciesCycles
 
 
 class IdentifyMoleculeCycles(IdentifySpeciesCycles):
@@ -104,7 +104,7 @@ class IdentifyMoleculeCycles(IdentifySpeciesCycles):
         while stack:
             (vertex, path) = stack.pop()
             for next_node in set(network.predecessors(vertex)) - set(path):
-                if not is_reaction(next_node) and network.node[next_node]['smiles'] == target:
+                if not cycle_utilities.is_reaction(next_node) and network.node[next_node]['smiles'] == target:
                     yield list(reversed(path + [next_node]))  # reverse order as path found in reverse direction
                 else:
                     if len(path) < max_depth:

@@ -1,10 +1,10 @@
 import collections
 import unittest
 
-import fgenerated_utilities
 import networkx as nx
 
-from deprecated.identify_species_cycles import IdentifySpeciesCycles
+import fgenerated_utilities
+from identify_species_cycles import IdentifySpeciesCycles
 
 
 class TestFgenerated(unittest.TestCase):

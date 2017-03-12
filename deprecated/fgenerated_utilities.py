@@ -1,6 +1,5 @@
 import random
 
-import cycle_utilities
 from identify_species_cycles import IdentifySpeciesCycles
 
 
