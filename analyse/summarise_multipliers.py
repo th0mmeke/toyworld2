@@ -34,7 +34,7 @@ metadata = get_metrics(metadata_filename)
 
 with open(evaluator_filename, mode='w') as f:
 
-    f.write("Dataset, Experiment, Environment, Replicate, S_Reactant, S_Product, Target, Shape, DFA, Sample Entropy, Multiplier Species, Average Lineage\n")
+    f.write("Dataset, Experiment, Environment, Replicate, S_Reactant, S_Product, Target, Shape, DFA, Sample Entropy, Multiplier Species, Lineages, Average Lineage Size\n")
 
     for data_filepath in sorted(glob.glob(os.path.join(datadir, filebase+'*multipliers.json'))):
 
@@ -54,6 +54,6 @@ with open(evaluator_filename, mode='w') as f:
                 nc = filename.split('-')
 
                 data = metadata[nc[1]][nc[2]]
-                s = ','.join([filebase, nc[1], nc[2], nc[3], data['s_reactant'], data['s_product'], data['target'], data['shape'], data['dfa'], data['sampen'], str(species), str(average_entities)])
+                s = ','.join([filebase, nc[1], nc[2], nc[3], data['s_reactant'], data['s_product'], data['target'], data['shape'], data['dfa'], data['sampen'], str(species), str(len(clusters)), str(average_entities)])
                 print(s)
                 f.write(s + "\n")
