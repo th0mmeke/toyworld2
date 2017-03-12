@@ -24,19 +24,16 @@ def get_metrics(filename):
 
 
 datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
-datadir = '/Users/Thom/Dropbox/Experiments'
-filebase = '1488846568'
+#datadir = '/Users/Thom/Dropbox/Experiments'
 
-metadata_filename = os.path.join(datadir, filebase + "-metadata.csv")
 evaluator_filename = os.path.join(datadir, 'multipliers.csv')
 
-metadata = get_metrics(metadata_filename)
-
+current_metadata_filename = None
 with open(evaluator_filename, mode='w') as f:
 
     f.write("Dataset, Experiment, Environment, Replicate, S_Reactant, S_Product, Target, Shape, DFA, Sample Entropy, Multiplier Species, Lineages, Average Lineage Size\n")
 
-    for data_filepath in sorted(glob.glob(os.path.join(datadir, filebase+'*multipliers.json'))):
+    for data_filepath in sorted(glob.glob(os.path.join(datadir, '*multipliers.json'))):
 
         with open(data_filepath) as f2:
             try:
@@ -53,7 +50,12 @@ with open(evaluator_filename, mode='w') as f:
                 filename = os.path.splitext(os.path.basename(data_filepath))[0]
                 nc = filename.split('-')
 
+                metadata_filename = os.path.join(datadir, nc[0] + "-metadata.csv")
+                if metadata_filename != current_metadata_filename:
+                    metadata = get_metrics(metadata_filename)
+                    current_metadata_filename = metadata_filename
+
                 data = metadata[nc[1]][nc[2]]
-                s = ','.join([filebase, nc[1], nc[2], nc[3], data['s_reactant'], data['s_product'], data['target'], data['shape'], data['dfa'], data['sampen'], str(species), str(len(clusters)), str(average_entities)])
+                s = ','.join([nc[0], nc[1], nc[2], nc[3], data['s_reactant'], data['s_product'], data['target'], data['shape'], data['dfa'], data['sampen'], str(species), str(len(clusters)), str(average_entities)])
                 print(s)
                 f.write(s + "\n")
