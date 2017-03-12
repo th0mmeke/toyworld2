@@ -1,9 +1,10 @@
-import networkx as nx
 from collections import Counter
 from collections import defaultdict
 
+import networkx as nx
 
-from identify_species_cycles import IdentifySpeciesCycles
+import cycle_utilities
+from deprecated.identify_species_cycles import IdentifySpeciesCycles
 
 
 class IdentifyMoleculeCycles(IdentifySpeciesCycles):
@@ -70,9 +71,9 @@ class IdentifyMoleculeCycles(IdentifySpeciesCycles):
         for cycle in cycles:
             stoichiometry = 1
             for start_node, end_node in zip(cycle[0:-1], cycle[1:]):
-                if self.is_reaction(start_node) and not self.is_reaction(end_node):  # end_node is product
+                if cycle_utilities.is_reaction(start_node) and not cycle_utilities.is_reaction(end_node):  # end_node is product
                     stoichiometry *= float(self.g[start_node][end_node]['stoichiometry'])
-                if self.is_reaction(end_node) and not self.is_reaction(start_node):  # start_node must be reactant
+                if cycle_utilities.is_reaction(end_node) and not cycle_utilities.is_reaction(start_node):  # start_node must be reactant
                     stoichiometry /= float(self.g[start_node][end_node]['stoichiometry'])
 
             if stoichiometry >= minimum_stoichiometry:
@@ -103,7 +104,7 @@ class IdentifyMoleculeCycles(IdentifySpeciesCycles):
         while stack:
             (vertex, path) = stack.pop()
             for next_node in set(network.predecessors(vertex)) - set(path):
-                if not IdentifySpeciesCycles.is_reaction(next_node) and network.node[next_node]['smiles'] == target:
+                if not is_reaction(next_node) and network.node[next_node]['smiles'] == target:
                     yield list(reversed(path + [next_node]))  # reverse order as path found in reverse direction
                 else:
                     if len(path) < max_depth:

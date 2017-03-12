@@ -2,6 +2,7 @@ import json
 import glob
 import os
 import csv
+import cycle_utilities
 
 
 def get_metrics(filename):
@@ -33,20 +34,26 @@ metadata = get_metrics(metadata_filename)
 
 with open(evaluator_filename, mode='w') as f:
 
-    f.write("Dataset, Experiment, Environment, Replicate, S_Reactant, S_Product, Target, Shape, DFA, Sample Entropy, Multipliers\n")
+    f.write("Dataset, Experiment, Environment, Replicate, S_Reactant, S_Product, Target, Shape, DFA, Sample Entropy, Multiplier Species, Average Lineage\n")
 
     for data_filepath in sorted(glob.glob(os.path.join(datadir, filebase+'*multipliers.json'))):
 
         with open(data_filepath) as f2:
             try:
-                clusters = json.load(f2)
+                clusters_by_species = json.load(f2)
             except ValueError:
                 pass
             else:
+                species = len(clusters_by_species)
+                clusters = cycle_utilities.flatten(clusters_by_species)
+                if len(clusters) == 0:
+                    average_entities = 0
+                else:
+                    average_entities = sum([len(cluster) for cluster in clusters])/len(clusters)
                 filename = os.path.splitext(os.path.basename(data_filepath))[0]
                 nc = filename.split('-')
 
                 data = metadata[nc[1]][nc[2]]
-                s = ','.join([filebase, nc[1], nc[2], nc[3], data['s_reactant'], data['s_product'], data['target'], data['shape'], data['dfa'], data['sampen'], str(len(clusters))])
+                s = ','.join([filebase, nc[1], nc[2], nc[3], data['s_reactant'], data['s_product'], data['target'], data['shape'], data['dfa'], data['sampen'], str(species), str(average_entities)])
                 print(s)
                 f.write(s + "\n")

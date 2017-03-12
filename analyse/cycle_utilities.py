@@ -1,9 +1,20 @@
 from collections import defaultdict
-from identify_species_cycles import IdentifySpeciesCycles
 
 
 def flatten(list_of_lists):
     return [a for b in list_of_lists for a in b]
+
+
+def is_reaction(node):
+    return node[-1] == '>' or node[0] == '>'
+
+
+def is_reaction_a(node):
+    return node[-1] == '>'
+
+
+def is_reaction_b(node):
+    return node[0] == '>'
 
 
 def map_id_to_smiles(molecule_cycle, id_to_smiles):
@@ -43,22 +54,24 @@ def get_molecules_in_cycle(cycle):
 
 
 def get_products(cycle):
-    return set(flatten([get_molecules(item) for item in cycle if IdentifySpeciesCycles.is_reaction_b(item)]))
+    return set(flatten([get_molecules(item) for item in cycle if is_reaction_b(item)]))
 
 
 def get_reactants(cycle):
-    return set(flatten([get_molecules(item) for item in cycle if IdentifySpeciesCycles.is_reaction_a(item)]))
+    return set(flatten([get_molecules(item) for item in cycle if is_reaction_a(item)]))
 
 
 def discover_species(molecular_cycles, smiles, length=9):
 
     """
-    Return dictionary with species (as frozenset) as key, and value a list of each molecular cycle of that species
+    Group all instances of cycles of the same species.
+
     :param molecular_cycles:
     :param smiles:
-    :param length:
-    :return:
+    :param length: Minimum length of any cycle to be considered for clustering (ignore short cycles)
+    :return: dictionary with species (as frozenset) as key, and value a list of each molecular cycle of that species
     """
+
     species = defaultdict(list)
     for cycle in molecular_cycles:
         if len(cycle['cycle']) >= length:
@@ -71,7 +84,8 @@ def discover_species(molecular_cycles, smiles, length=9):
 def identify_clusters(molecular_cycles):
 
     """
-    Add cycles into clusters of two or more cycles linked by one or more molecules in common.
+    Add cycles into clusters of two or more cycles of any species linked by one or more molecules in common.
+    Because molecules are consumed in reactions, if a molecule exists in two cycles it must be a product in one and a reactant in the other.
 
     :param molecular_cycles:
     :param clusters:
@@ -104,7 +118,7 @@ def identify_clusters(molecular_cycles):
         if not can_cluster:
             for unclustered in unclustereds:
                 if get_molecules_in_cycle(unclustered).intersection(cycle_molecules):
-                    clusters.append([unclustered, cycle])  # TODO: should now removed unclustered from unclusters...
+                    clusters.append([unclustered, cycle])  # TODO: should now remove unclustered from unclusters...
                     can_cluster = True
 
         # If still can't cluster, then add to unclustereds and hope for later...
@@ -113,93 +127,51 @@ def identify_clusters(molecular_cycles):
 
     return clusters
 
-#
-# def discover_multipliers(cycles, smiles):
-#     '''
-#     Stable cycles are those where there are a chain of two or more cycles...
-#     - linked by a product in one cycle being a reactant in another
-#     - and where the cycles have the same "form", or sequence of molecule species (smiles) in the cycle
-#
-#     :param cycles: [cycle in form of list of either cycle molecule or reactants ('r1+r2>') or products ('>p1+p2+...')]. Cycle molecules are identified by id, rather than by smiles.
-#     :return: {frozenset(cycle): [count]}
-#     '''
-#
-#     grouped_cycles = defaultdict(list)
-#
-#     for cycle in cycles:
-#         if type(cycle) == dict:
-#             grouped_cycles[len(cycle['cycle'])].append(cycle['cycle'])
-#         else:
-#             grouped_cycles[len(cycle)].append(cycle)
-#
-#     stable_cycles = defaultdict(list)
-#     cycle_form = {}
-#
-#     for cycles_of_length in grouped_cycles.itervalues():
-#         # cycles_of_length has all cycles of same length, but not guaranteed to be of same type
-#         smiles_cycles = defaultdict(list)
-#         for cycle in cycles_of_length:
-#             s = map_id_to_smiles(cycle, smiles)
-#             smiles_cycles[frozenset(s)].append(get_molecules_in_cycle(cycle))
-#
-#             cycle_form[frozenset(s)] = s
-#
-#         # smiles_cycles now contains lists of all identical cycles types, so just have to match up the connected ones
-#
-#         for cycle_type, cycles_of_type in smiles_cycles.iteritems():
-#             # cycle_type is the smiles form, cycles_of_type every unique cycle with molecule ids
-#             clusters = [cycles_of_type.pop()]
-#             counts = defaultdict(int)
-#             for cycle_molecules in cycles_of_type:
-#                 for i in range(0, len(clusters)):
-#                     if clusters[i].intersection(cycle_molecules):
-#                         clusters[i].union(cycle_molecules)
-#                         counts[i] += 1
-#                         break
-#             if len(counts) > 0 and max(counts.values()) > 1:
-#                 stable_cycles[max(counts.values())].append(cycle_form[cycle_type])  # Longest stable duration > 1
-#
-#     return stable_cycles, [x[0] for x in cycle_form.itervalues()]
-#
 
 def discover_multipliers(molecular_cycles_by_species):
     '''
     Stoichiometric autocatalysis occurs when a cycles has two or more linkage molecules, as products,
     to two or more different cycles.
 
-    Return a list for each cluster containing, where each element represents a cycle in the cluster and is either:
+    Return a list for each cluster where each element represents a cycle in the cluster and is either:
     - [] if this cycle is not an autocatalytic product of an earlier cycle
     - [reactant molecules that are also products of an earlier cycle] if this cycle is an autocatalytic product
 
     WARNING: if molecular_cycles_by_species contains overlapping cycles (alternative cycles) then the return from
     this method will contain duplicate entries also (at most one for each overlapping cycle)
 
+    :param molecular_cycles_by_species: [[cycle1, cycle2]] - a list of lists of cycles for a species
     :return: [[reactants in each downstream cycle in a cluster]]
     '''
 
-    autocatalytic = []
+    multipliers_by_species = []
 
     for cycles in molecular_cycles_by_species:
+        multipliers_in_species = []
         clusters = identify_clusters(cycles)
 
         for cluster in clusters:
-            # now look for cycle that is upstream of two or more other cycles
-            # "two or more other cycles":
-            #   linkages = find all molecules in two (or more) cycles
-            #   find all cycles with two (or more) linkage molecules
-            # "upstream":
-            #   linkage molecule appears as product, not reactant in upstream cycle
 
-            products = set(flatten([get_products(cycle) for cycle in cluster]))
-            reactants = set(flatten([get_reactants(cycle) for cycle in cluster]))
-            linkages = products.intersection(reactants)
-            if linkages:
-                product_linkage_molecules_by_cycle = [get_products(cycle).intersection(reactants) for cycle in cluster]
-                for linkage_molecules_in_cycle in product_linkage_molecules_by_cycle:
-                    reactant_linkages = [list(get_reactants(cycle).intersection(linkage_molecules_in_cycle)) for cycle in cluster]
-                    number_downstream_cycles = sum(map(int, [len(x) > 0 for x in reactant_linkages]))
-                    # print(reactant_linkages)
-                    if number_downstream_cycles > 1:  # two or more downstream cycles for single upstream -> autocatalytic
-                        autocatalytic.append(reactant_linkages)
+            products = set(flatten([get_products(cycle)-get_reactants(cycle) for cycle in cluster]))
+            reactants = set(flatten([get_reactants(cycle)-get_products(cycle) for cycle in cluster]))
+            linking_molecules = products.intersection(reactants)
 
-    return autocatalytic
+            # Skip over clusters that are not interconnected
+
+            if linking_molecules:
+
+                product_cycles = [cycle for cycle in cluster if get_products(cycle).intersection(linking_molecules)]
+                reactant_cycles = [cycle for cycle in cluster if get_reactants(cycle).intersection(linking_molecules)]
+
+                print(len(reactant_cycles), len(product_cycles), len(cluster), len(linking_molecules))
+                # If we have more cycles produced than consumed then autocatalytic by stoichiometry, and whole cluster is autocatalytic (as by defn of cluster, cluster is interconnected)
+                if len(reactant_cycles) > len(product_cycles):
+                    autocatalytic_cycles_in_cluster = [cycle for cycle in cluster if get_products(cycle).intersection(linking_molecules) or get_reactants(cycle).intersection(linking_molecules)]
+                    assert len(autocatalytic_cycles_in_cluster) == len(cluster)
+                    multipliers_in_species.append(autocatalytic_cycles_in_cluster)
+
+        if len(multipliers_in_species) > 0:
+            multipliers_by_species.append(multipliers_in_species)
+            print(multipliers_in_species)
+
+    return multipliers_by_species

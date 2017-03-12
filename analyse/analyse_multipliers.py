@@ -22,7 +22,7 @@ def evaluate(experiment_filepath, data_filepath, evaluator_filepath):
             with open(evaluator_filepath, mode='w') as f:
                 json.dump(multipliers, f)
 
-datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
+datadir = '/Users/Thom/Dropbox/Experiments'
 
 # /home/cosc/guest/tjy17/Dropbox/Experiments/1488820321-0-4-0-cycles.json
 # /home/cosc/guest/tjy17/Dropbox/Experiments/1488846568-2-1-0.json
