@@ -86,9 +86,18 @@ class KineticReactantSelection(IReactantSelection):
                 if target == "POPULATION":
                     self.adjust_population(delta)
                 elif target == "KE":
-                    self.ke += delta
+                    self.adjust_ke(delta)
 
         self._previous_value = int(value)
+
+    def adjust_ke(self, delta):
+        for body in self.mol2body.values():
+            # Can't set ke directly, so adjust velocity
+            new_ke = self.ke + delta
+            old_ke = body.kinetic_energy
+            body.velocity = body.velocity * new_ke / old_ke
+        # With changes in velocity, recalculate simulation rate
+        self.step_size = self._calculate_step_size()
 
     def adjust_population(self, delta):
         """
@@ -100,16 +109,6 @@ class KineticReactantSelection(IReactantSelection):
         :param new_size: New food set size
         :return: [ChemMolecule]
         """
-
-        # Adjust foodset size
-        # if increment > 0:
-        #     # add molecules to foodset
-        #     sample_size = max(0, min(len(self.foodset), increment))
-        #     self.foodset.extend(random.sample(self.foodset, sample_size))
-        # elif increment < 0:
-        #     # remove molecules from foodset
-        #     sample_size = max(0, min(len(self.foodset), len(self.foodset) + increment))
-        #     self.foodset = random.sample(self.foodset, sample_size)
 
         if delta < 0:
             # Remove random molecules

@@ -29,9 +29,10 @@ def evaluate(data_filepath, evaluator_filepath):
 
 
 datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
+datadir = 'C:\Users\Thom\Dropbox/Experiments'
 
 while True:
-    for data_filepath in sorted(glob.glob(os.path.join(datadir, '1488846568*.json'))):
+    for data_filepath in sorted(glob.glob(os.path.join(datadir, '1489311243*.json'))):
         evaluator_filename = os.path.splitext(os.path.basename(data_filepath))[0] + "-cycles.json"
         evaluator_filepath = os.path.join(datadir, evaluator_filename)
         if not os.path.exists(evaluator_filepath):

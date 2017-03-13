@@ -22,8 +22,8 @@ def get_metrics(filename):
     return metadata
 
 
-datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
-#datadir = '/Users/Thom/Dropbox/Experiments'
+# datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
+datadir = '/Users/Thom/Dropbox/Experiments'
 
 evaluator_filename = os.path.join(datadir, 'metadata.csv')
 
