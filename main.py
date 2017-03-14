@@ -44,10 +44,10 @@ def initialise_logging(args, basedir):
     logger.addHandler(fh)
 
 
-def get_ar_timeseries2(theta, sd, n):
+def get_ar_timeseries(theta, sd, n):
 
     """
-    Return an AR(1) timeseries.
+    Return an AR(1) timeseries changing every 1000 generations
 
     :param theta:
     :param sd:
@@ -58,7 +58,8 @@ def get_ar_timeseries2(theta, sd, n):
     ts = []
     value = 0
     for i in range(0, n+1):
-        value = theta * value + random.gauss(0, sd)
+        if i % 1000 == 0:
+            value = theta * value + random.gauss(0, sd)
         ts.append(value)
     return ts
 
@@ -97,18 +98,18 @@ def runner(population, factors, generations, number_of_repeats, number_of_enviro
                 if environment_number == 0:
                     environment = [0]*generations
                 elif experiment['ENVIRONMENT_SHAPE'] == 'BISTATE':
-                    environment = list(itertools.chain.from_iterable([[-20]*100 + [20]*100] * (int(generations/200)+1)))
+                    environment = list(itertools.chain.from_iterable([[-20]*10000 + [20]*10000] * (int(generations/20000)+1)))
                 else:
-                    environment = get_ar_timeseries2(*environment_specification, n=generations)
+                    environment = get_ar_timeseries(*environment_specification, n=generations)
                 assert len(environment) >= generations
 
-                #print(environment)
                 metadata = [str(experiment_number)]
                 metadata.extend([experiment['REACTANT_SELECTION'].__name__, experiment['PRODUCT_SELECTION'].__name__])
                 metadata.extend([experiment['ENVIRONMENT_TARGET'], experiment['ENVIRONMENT_SHAPE']])
                 metadata.extend([str(x) for x in environment_specification])
-                metadata.append(str(nolds.dfa(environment)))
-                metadata.append(str(nolds.sampen(environment)))
+                if experiment['ENVIRONMENT_SHAPE'] == 'AR':
+                    metadata.append(str(nolds.dfa(environment)))
+                    metadata.append(str(nolds.sampen(environment)))
 
                 f.write(','.join(metadata) + "\n")
 
@@ -130,7 +131,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     initialise_logging(args, os.getcwd())
 
-    args.generations = 1000
     defn = {"[H][H]": 10, "FO": 10, "O": 20, "[O-][N+](=O)[N+]([O-])=O": 10, "N(=O)[O]": 10, "O=C=O": 20}
     population = []
     for symbol, quantity in defn.iteritems():
@@ -141,9 +141,9 @@ if __name__ == "__main__":
     factors = {
         'REACTANT_SELECTION': [KineticReactantSelection],
         'PRODUCT_SELECTION': [weighting_functions.least_energy_weighting, weighting_functions.uniform_weighting],
-        'ENVIRONMENT_SHAPE': ['BISTATE', 'AR'],
+        'ENVIRONMENT_SHAPE': ['AR', 'BISTATE'],
         'ENVIRONMENT_TARGET': ['KE', 'POPULATION']
     }
 
-    runner(population, factors, generations=args.generations, number_of_repeats=1, number_of_environments=5)
+    runner(population, factors, generations=args.generations, number_of_repeats=2, number_of_environments=5)
 
