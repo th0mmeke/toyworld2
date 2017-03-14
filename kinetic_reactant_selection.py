@@ -71,33 +71,36 @@ class KineticReactantSelection(IReactantSelection):
         # Add them into the main space using the new locations
 
         for molecule, location in zip(population, locations):
-            velocity = pm.Vec2d(math.sqrt(2.0 * ke / molecule.mass), 0)
+            # PyMunk ke is mvv, not 0.5mvv, so take into account when setting velocity based on KE!
+            velocity = pm.Vec2d(math.sqrt(ke / molecule.mass), 0)
             velocity.angle = random.uniform(-math.pi, math.pi)
 
             self._add_molecule(molecule, location=location, velocity=velocity, collision_type=KineticReactantSelection.REACTANT)
 
         self.step_size = self._calculate_step_size()
-        self._previous_value = None
+        self._previous_value = 0
 
     def update_environment(self, target, value):
-        if self._previous_value is not None:
-            delta = self._previous_value - int(value)
-            if delta != 0:
-                if target == "POPULATION":
-                    self.adjust_population(delta)
-                elif target == "KE":
-                    self.adjust_ke(delta)
+        value = int(value)
+        delta = value - self._previous_value
+        self._previous_value = value
 
-        self._previous_value = int(value)
+        if target == "KE":
+            self.adjust_ke(delta)
+        elif target == "POPULATION":
+            self.adjust_population(delta)
 
     def adjust_ke(self, delta):
-        for body in self.mol2body.values():
-            # Can't set ke directly, so adjust velocity
-            new_ke = self.ke + delta
-            old_ke = body.kinetic_energy
-            body.velocity = body.velocity * new_ke / old_ke
-        # With changes in velocity, recalculate simulation rate
-        self.step_size = self._calculate_step_size()
+
+        if delta != 0:
+            logging.info("Adjusting KE by {}".format(delta))
+            velocity_ratio = math.sqrt((self.ke + delta)/(self.ke * 1.0))
+            for body in self.mol2body.values():
+                # Can't set ke directly, so adjust velocity
+                body.velocity *= velocity_ratio
+
+            # With changes in velocity, recalculate simulation rate
+            self.step_size = self._calculate_step_size()
 
     def adjust_population(self, delta):
         """
@@ -111,19 +114,22 @@ class KineticReactantSelection(IReactantSelection):
         """
 
         if delta < 0:
+            logging.info("Removing {} molecules from population of {} molecules".format(delta, len(self.get_population())))
             # Remove random molecules
             delta = min(len(self.shape2mol), -delta)
 
             kill_list = random.sample(self.shape2mol.values(), delta)
             self._remove_molecules(kill_list)
-        else:
+        elif delta > 0:
+            logging.info("Adding {} molecules to population of {} molecules".format(delta, len(self.get_population())))
             # Add new molecules from foodset with ke=self.ke, with random direction from random wall
             delta = min(len(self.foodset), delta)
             add_list = [ChemMolecule(smiles) for smiles in random.sample(self.foodset, delta)]
 
             for molecule in add_list:
 
-                velocity = pm.Vec2d(math.sqrt(2.0 * self.ke / molecule.mass), 0)
+                # PyMunk ke is mvv, not 0.5mvv, so take into account when setting velocity based on KE!
+                velocity = pm.Vec2d(math.sqrt(self.ke / molecule.mass), 0)
                 wall_location = random.uniform(-KineticReactantSelection.REACTION_VESSEL_SIZE, KineticReactantSelection.REACTION_VESSEL_SIZE)
                 velocity.angle = random.uniform(0, 2*math.pi)
 
@@ -138,8 +144,6 @@ class KineticReactantSelection(IReactantSelection):
 
                 self._add_molecule(molecule, location=location, velocity=velocity, collision_type=KineticReactantSelection.REACTANT)
 
-        logging.info("Population size = {}".format(len(self.get_population())))
-
     def get_reactants(self):
 
         i = 0
@@ -150,8 +154,6 @@ class KineticReactantSelection(IReactantSelection):
             self.space.step(self.step_size)  # trigger _begin_handler on collision
             if i > 30 and (len(self.reactant_list) == 0 or len(self.reactant_list) > 10):
                 self.step_size = self._calculate_step_size()  # Throws ValueError if populaton size == 0
-                if self.step_size > 1E4:
-                    raise ValueError
                 i = 0
 
         # Now weed out any reactions that involve a molecule that no longer exists because of a prior reaction
