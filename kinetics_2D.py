@@ -57,7 +57,7 @@ class Kinetics2D(object):
 
         :param reactants: [pm.Body]. Reactants - must have total KE > 0
         :param out_mass:[float]. Masses of the products of the reaction - must be 1, 2 or 3 products only
-        :rtype: [pm.Vec2d]
+        :rtype: change in ke, [pm.Vec2d] where change = in_ke - out_ke so always positive
         """
 
         def total_mv(mv):
@@ -81,18 +81,20 @@ class Kinetics2D(object):
         # Momentums add to zero in the CoM frame
         cm_in_v = cls.get_cm_velocity(reactants)
 
+        # The energy of the collision - over and above the energy of the centre of mass, which is invariant
         # Bound energy_of_collision to above zero (rounding errors for small values)
         # consistent sense with that in discover_reaction - final_PE = initial_PE + energy_delta => final_KE = initial_KE - energy_delta
         energy_of_collision = max(0, in_ke - cls.get_cm_energy(reactants))
         if energy_of_collision <= 0:
             raise ValueError
 
+        ke_in_cm_frame = random.uniform(energy_of_collision * 0.95, energy_of_collision)  # remainder will go to IE/PE
+
         if len(out_mass) == 1:
-            # One out particle is stationary in out_CoM frame
+            # One out particle is stationary in out_CoM frame - conservation of momentum
             out_v_in_com_frame = [pm.Vec2d(0, 0)]
 
         elif len(out_mass) == 2:
-            ke_in_cm_frame = random.uniform(0, energy_of_collision)
             mv = math.sqrt((2.0 * ke_in_cm_frame * out_mass[0] * out_mass[1]) / (out_mass[0] + out_mass[1]))
             v1 = pm.Vec2d([mv,0])
             v2 = pm.Vec2d([mv,0])
@@ -102,8 +104,9 @@ class Kinetics2D(object):
 
         elif len(out_mass) == 3:
             # Sum of vector momentums = 0, and in centre of momentum frame arranged as equilateral triangle, side mv
-            # Must then convert to velocities by dividing by particle mass, which means no longer equilateral...but unimportant, as only needed equilateral to initially arrange
-            ke_in_cm_frame = random.uniform(0, energy_of_collision)  # The energy of the collision - over and above the energy of the centre of mass, which is invariant
+            # Must then convert to velocities by dividing by particle mass, which means no longer equilateral...
+            # but unimportant, as only needed equilateral to initially arrange
+
             mv = math.sqrt((2.0 * ke_in_cm_frame * out_mass[0] * out_mass[1] * out_mass[2]) / (out_mass[0] * out_mass[1] + out_mass[1] * out_mass[2] + out_mass[0] * out_mass[2]))
             v1 = pm.Vec2d([mv,0])
             v2 = pm.Vec2d([mv,0])
@@ -119,7 +122,7 @@ class Kinetics2D(object):
         out_v = [v+cm_in_v for v in out_v_in_com_frame]
 
         #########################
-        # Confirm post-conditions
+        # Confirm post-conditions - inelastic collision so energy is NOT conserved, but must be sane
         # 1. Mass
         assert Ulps.almost_equal(sum(in_mass), sum(out_mass))  # should be safe
 
@@ -135,8 +138,7 @@ class Kinetics2D(object):
 
         # 3. Energy
         out_ke = sum([cls.get_ke(m, *v) for m, v in zip(out_mass, out_v)])
-        if not Ulps.almost_equal(in_ke, out_ke, max_diff=3000):
-            print(in_v, in_mass, out_v, out_mass)
-            raise ValueError  # if a calculation problem with the velocities, throw it back to the caller
+        if in_ke < out_ke:  # cannot create energy, only lose it (as heat for example)
+            raise ValueError
 
-        return out_v
+        return in_ke - out_ke, out_v

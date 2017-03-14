@@ -189,7 +189,10 @@ class KineticReactantSelection(IReactantSelection):
         # Add in product bodies to middle point of reaction
         product_masses = [molecule.mass for molecule in reaction.get_products()]
 
-        out_v = Kinetics2D.inelastic_collision(reactant_bodies, product_masses)  # might throw ValueError
+        try:
+            delta_ke, out_v = Kinetics2D.inelastic_collision(reactant_bodies, product_masses)  # might throw ValueError
+        except ValueError:
+            raise ValueError
 
         # Find middle point of reactant bodies
         midpoint = sum([b.position for b in reactant_bodies]) / len(reactant_bodies)  # Vec2d
