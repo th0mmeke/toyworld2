@@ -133,15 +133,8 @@ def discover_multipliers(molecular_cycles_by_species):
     Stoichiometric autocatalysis occurs when a cycles has two or more linkage molecules, as products,
     to two or more different cycles.
 
-    Return a list for each cluster where each element represents a cycle in the cluster and is either:
-    - [] if this cycle is not an autocatalytic product of an earlier cycle
-    - [reactant molecules that are also products of an earlier cycle] if this cycle is an autocatalytic product
-
-    WARNING: if molecular_cycles_by_species contains overlapping cycles (alternative cycles) then the return from
-    this method will contain duplicate entries also (at most one for each overlapping cycle)
-
     :param molecular_cycles_by_species: [[cycle1, cycle2]] - a list of lists of cycles for a species
-    :return: [[reactants in each downstream cycle in a cluster]]
+    :return: List of multipliers for a species, where each multiplier is a list of cycles
     '''
 
     multipliers_by_species = []
@@ -167,7 +160,6 @@ def discover_multipliers(molecular_cycles_by_species):
                 # If we have more cycles produced than consumed then autocatalytic by stoichiometry, and whole cluster is autocatalytic (as by defn of cluster, cluster is interconnected)
                 if len(reactant_cycles) > len(product_cycles):
                     autocatalytic_cycles_in_cluster = [cycle for cycle in cluster if get_products(cycle).intersection(linking_molecules) or get_reactants(cycle).intersection(linking_molecules)]
-                    assert len(autocatalytic_cycles_in_cluster) == len(cluster)
                     multipliers_in_species.append(autocatalytic_cycles_in_cluster)
 
         if len(multipliers_in_species) > 0:
@@ -175,3 +167,29 @@ def discover_multipliers(molecular_cycles_by_species):
             print(multipliers_in_species)
 
     return multipliers_by_species
+
+
+def discover_candidate_variable_multipliers(multipliers_by_species):
+
+    '''
+    Variable multipliers are chains of multipliers linked by common molecules, where:
+    - there is some repetition of multipliers e.g., A - A - B - B - B - A - A (not tested here)
+    - and the change of pattern is associated with a change in selective pressure (not tested here)
+
+    :param multipliers: [cycles by multiplier by species]
+    :return:
+    '''
+
+    candidate_variable_multiplier = []
+    multipliers = flatten(multipliers_by_species)
+
+    products = set(flatten([get_products(cycle) - get_reactants(cycle) for cycle in multipliers]))
+    reactants = set(flatten([get_reactants(cycle) - get_products(cycle) for cycle in multipliers]))
+    linking_molecules = products.intersection(reactants)
+
+    if linking_molecules:
+
+        candidate_variable_multiplier = [cycle for cycle in cluster if get_products(cycle).intersection(linking_molecules) or get_reactants(cycle).intersection(linking_molecules)]
+
+    return candidate_variable_multiplier
+
