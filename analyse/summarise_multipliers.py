@@ -17,6 +17,9 @@ def get_metrics(filename):
                 experiment = row[0]
                 environment = 0
                 metadata[experiment] = {}
+            if len(row) <= 7:
+                row.extend([str(0), str(0)])
+
             metadata[experiment][str(environment)] = {'s_reactant': row[1], 's_product': row[2], 'target': row[3], 'shape': row[4], 'dfa': row[7], 'sampen': row[8]}
             environment += 1
 
