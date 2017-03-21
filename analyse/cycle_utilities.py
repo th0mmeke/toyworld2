@@ -181,7 +181,7 @@ def discover_candidate_variable_multipliers(multipliers_by_species):
     '''
 
     candidate_variable_multiplier = []
-    multipliers = flatten(multipliers_by_species)
+    multipliers = flatten(flatten(multipliers_by_species))
 
     products = set(flatten([get_products(cycle) - get_reactants(cycle) for cycle in multipliers]))
     reactants = set(flatten([get_reactants(cycle) - get_products(cycle) for cycle in multipliers]))
@@ -189,7 +189,8 @@ def discover_candidate_variable_multipliers(multipliers_by_species):
 
     if linking_molecules:
 
-        candidate_variable_multiplier = [cycle for cycle in cluster if get_products(cycle).intersection(linking_molecules) or get_reactants(cycle).intersection(linking_molecules)]
+        linked_cycles = [cycle for cycle in multipliers if get_products(cycle).intersection(linking_molecules) or get_reactants(cycle).intersection(linking_molecules)]
+        candidate_variable_multipliers = identify_clusters(linked_cycles)
 
-    return candidate_variable_multiplier
+    return candidate_variable_multipliers
 
