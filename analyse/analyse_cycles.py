@@ -12,29 +12,29 @@ def evaluate(data_filepath, evaluator_filepath):
     p = 0.2
 
     with open(data_filepath) as f:
-        state = json.load(f)
-    try:
-        e = IdentifyMoleculeCycles(reactions=state['reactions'])
-    except:
-        pass
-    else:
-        print(len(e.reactants), len(e.reactant_molecules))
+        try:
+            state = json.load(f)
+            e = IdentifyMoleculeCycles(reactions=state['reactions'])
+        except:
+            pass
+        else:
+            print(len(e.reactants), len(e.reactant_molecules))
 
-        population_stoichiometry = []
-        sample = random.sample(e.reactant_molecules, int(len(e.reactant_molecules)*p))
-        for mol in sample:
-            for item in e.sample_reactant_stoichiometry(mol, minimum_stoichiometry=2, max_depth=30):
-                population_stoichiometry.append(item)
+            population_stoichiometry = []
+            sample = random.sample(e.reactant_molecules, int(len(e.reactant_molecules)*p))
+            for mol in sample:
+                for item in e.sample_reactant_stoichiometry(mol, minimum_stoichiometry=2, max_depth=30):
+                    population_stoichiometry.append(item)
 
-        with open(evaluator_filepath, mode='w') as f:
-            json.dump(population_stoichiometry, f)
+            with open(evaluator_filepath, mode='w') as f2:
+                json.dump(population_stoichiometry, f2)
 
 
-datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
-#datadir = 'C:\Users\Thom\Dropbox/Experiments'
+#datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
+datadir = 'C:\Users\Thom\Dropbox/Experiments'
 
-files = sorted(glob.glob(os.path.join(datadir, '1489554358*.json')))
-for data_filepath in random.sample(files, 3):
+files = sorted(glob.glob(os.path.join(datadir, '1489565574*.json')))
+for data_filepath in files:
     evaluator_filename = os.path.splitext(os.path.basename(data_filepath))[0] + "-cycles.json"
     evaluator_filepath = os.path.join(datadir, evaluator_filename)
     if not os.path.exists(evaluator_filepath):
