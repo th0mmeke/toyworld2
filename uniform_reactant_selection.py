@@ -11,6 +11,9 @@ class UniformReactantSelection(IReactantSelection):
             raise TypeError
         self.population = population
 
+    def update_environment(self, target, value):
+        pass
+
     def get_reactants(self):
 
         if len(self.population) > 1:
