@@ -76,7 +76,8 @@ def discover_species(molecular_cycles, smiles, length=9):
     for cycle in molecular_cycles:
         if len(cycle['cycle']) >= length:
             key = map_id_to_smiles(cycle['cycle'], smiles)
-            species[frozenset(key)].append(cycle['cycle'])
+            assert(len(key) == len(cycle['cycle']))
+            species[tuple(key)].append(cycle['cycle'])
 
     return species
 
@@ -141,9 +142,14 @@ def discover_multipliers(molecular_cycles_by_species):
 
     for cycles in molecular_cycles_by_species:
         multipliers_in_species = []
+
+        assert len(set([len(cycle) for cycle in cycles])) == 1
+
         clusters = identify_clusters(cycles)
 
         for cluster in clusters:
+
+            assert len(set([len(cycle) for cycle in cluster])) == 1
 
             products = set(flatten([get_products(cycle)-get_reactants(cycle) for cycle in cluster]))
             reactants = set(flatten([get_reactants(cycle)-get_products(cycle) for cycle in cluster]))
@@ -156,11 +162,14 @@ def discover_multipliers(molecular_cycles_by_species):
                 product_cycles = [cycle for cycle in cluster if get_products(cycle).intersection(linking_molecules)]
                 reactant_cycles = [cycle for cycle in cluster if get_reactants(cycle).intersection(linking_molecules)]
 
-                print(len(reactant_cycles), len(product_cycles), len(cluster), len(linking_molecules))
                 # If we have more cycles produced than consumed then autocatalytic by stoichiometry, and whole cluster is autocatalytic (as by defn of cluster, cluster is interconnected)
                 if len(reactant_cycles) > len(product_cycles):
                     autocatalytic_cycles_in_cluster = [cycle for cycle in cluster if get_products(cycle).intersection(linking_molecules) or get_reactants(cycle).intersection(linking_molecules)]
+
+                    assert len(set([len(cycle) for cycle in autocatalytic_cycles_in_cluster])) == 1
+
                     multipliers_in_species.append(autocatalytic_cycles_in_cluster)
+                    print(len(reactant_cycles), len(product_cycles), len(cluster), len(autocatalytic_cycles_in_cluster), len(linking_molecules))
 
         if len(multipliers_in_species) > 0:
             multipliers_by_species.append(multipliers_in_species)
