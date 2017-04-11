@@ -140,8 +140,8 @@ if __name__ == "__main__":
     logging.info("Generations: {}".format(args.generations))
     factors = {
         'REACTANT_SELECTION': [KineticReactantSelection],
-        'PRODUCT_SELECTION': [weighting_functions.least_energy_weighting, weighting_functions.uniform_weighting],
-        'ENVIRONMENT_SHAPE': ['AR', 'BISTATE'],
+        'PRODUCT_SELECTION': [weighting_functions.uniform_weighting],
+        'ENVIRONMENT_SHAPE': ['BISTATE', 'AR'],
         'ENVIRONMENT_TARGET': ['KE', 'POPULATION']
     }
 
