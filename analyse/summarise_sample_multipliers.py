@@ -2,9 +2,11 @@ import json
 import glob
 import os
 import cycle_utilities
+import ijson
 
 
-evaldir = 'C:\Users\Thom\Dropbox\Experiments\samplerate'
+# evaldir = 'C:\Users\Thom\Dropbox\Experiments\samplerate'
+evaldir = '/home/cosc/guest/tjy17/Dropbox/Experiments/samplerate'
 evaluator_filename = os.path.join(evaldir, 'cycles_and_multipliers.csv')
 
 with open(evaluator_filename, mode='w') as f:
@@ -18,12 +20,27 @@ with open(evaluator_filename, mode='w') as f:
         filebase = '{}-{}-{}-{}-{}'.format(nc[0], nc[1], nc[2], nc[3], nc[4])
         print(filepath, filebase)
 
-        with open(os.path.join(evaldir, filebase + '.json')) as f1:
-            number_of_cycles = len(json.load(f1))
+        ok = True
 
-        with open(os.path.join(evaldir, filebase + '-multipliers.json')) as f2:
-            clusters_by_species = json.load(f2)
+        number_of_cycles = 0
+        try:
+            with open(os.path.join(evaldir, filebase + '.json')) as f1:
+                for cycle in ijson.items(f1, "item"):
+                    number_of_cycles += 1
+            print("Number of cycles", number_of_cycles)
+        except:
+            ok = False
 
+        if ok:
+            try:
+                with open(os.path.join(evaldir, filebase + '-multipliers.json')) as f2:
+                    clusters_by_species = json.load(f2)
+                print("Clusters", len(clusters_by_species))
+            except:
+                ok = False
+
+
+        if ok:
             species = len(clusters_by_species)
             clusters = cycle_utilities.flatten(clusters_by_species)
             if len(clusters) == 0:

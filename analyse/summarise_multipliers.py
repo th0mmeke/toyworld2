@@ -27,16 +27,18 @@ def get_metrics(filename):
 
 
 datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
+evaldir = '/home/cosc/guest/tjy17/Dropbox/Experiments/Sampled-at-0.20'
+
 #datadir = '/Users/Thom/Dropbox/Experiments'
 
-evaluator_filename = os.path.join(datadir, 'multipliers.csv')
+evaluator_filename = os.path.join(evaldir, 'multipliers.csv')
 
 current_metadata_filename = None
 with open(evaluator_filename, mode='w') as f:
 
     f.write("Dataset, Experiment, Environment, Replicate, S_Reactant, S_Product, Target, Shape, DFA, Sample Entropy, Multiplier Species, Lineages, Average Lineage Size\n")
 
-    for data_filepath in sorted(glob.glob(os.path.join(datadir, '*multipliers.json'))):
+    for data_filepath in sorted(glob.glob(os.path.join(evaldir, '*multipliers.json'))):
 
         with open(data_filepath) as f2:
             try:

@@ -10,6 +10,7 @@ def evaluate(experiment_filepath, data_filepath, evaluator_filepath):
         try:
             all_cycles = json.load(f)
         except ValueError:
+            print("Can't load cycles from {}".format(data_filepath))
             pass
         else:
             with open(experiment_filepath) as f:
@@ -22,8 +23,8 @@ def evaluate(experiment_filepath, data_filepath, evaluator_filepath):
             with open(evaluator_filepath, mode='w') as f:
                 json.dump(multipliers, f)
 
-datadir = 'C:\Users\Thom\Dropbox\Experiments'
-evaldir = 'C:\Users\Thom\Dropbox\Experiments\sampled-at-0.05'
+datadir = '/home/cosc/guest/tjy17/Dropbox/Experiments'
+evaldir = '/home/cosc/guest/tjy17/Dropbox/Experiments/Sampled-at-0.20'
 
 for filepath in sorted(glob.glob(os.path.join(evaldir, '*cycles.json'))):
     filename = os.path.splitext(os.path.basename(filepath))[0]
