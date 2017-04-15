@@ -5,13 +5,13 @@ import cycle_utilities
 import ijson
 
 
-# evaldir = 'C:\Users\Thom\Dropbox\Experiments\samplerate'
-evaldir = '/home/cosc/guest/tjy17/Dropbox/Experiments/samplerate'
+evaldir = 'C:\Users\Thom\Dropbox\Experiments\samplerate'
+#evaldir = '/home/cosc/guest/tjy17/Dropbox/Experiments/samplerate'
 evaluator_filename = os.path.join(evaldir, 'cycles_and_multipliers.csv')
 
 with open(evaluator_filename, mode='w') as f:
 
-    f.write("Dataset, Experiment, Environment, Replicate, Number of Cycles, Multiplier Species, Lineages, Average Lineage Size\n")
+    f.write("Dataset, Experiment, Environment, Replicate, Sample Rate, Number of Cycles, Multiplier Species, Lineages, Average Lineage Size\n")
 
     for filepath in sorted(glob.glob(os.path.join(evaldir, '*p*.json'))):
 
