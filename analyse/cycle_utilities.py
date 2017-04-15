@@ -189,7 +189,7 @@ def discover_candidate_variable_multipliers(multipliers_by_species):
     :return:
     '''
 
-    candidate_variable_multiplier = []
+    candidate_variable_multipliers = []
     multipliers = flatten(flatten(multipliers_by_species))
 
     products = set(flatten([get_products(cycle) - get_reactants(cycle) for cycle in multipliers]))
